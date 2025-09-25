@@ -15,7 +15,7 @@ class ClipboardManager {
     
     // MARK: - 属性
     
-    /// 定义了可接受的最大文本长度。
+    /// 使用翻译服务基类中定义的最大文本长度，避免重复定义。
     private let maxTextLength: Int = 5000
     
     // MARK: - 公共方法
