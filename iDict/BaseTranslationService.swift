@@ -14,6 +14,7 @@ import Foundation
 /// 
 /// 此类提供翻译服务的通用功能，包括文本验证和错误处理
 /// 具体的翻译服务应该继承此类并实现具体的翻译逻辑
+@MainActor
 class BaseTranslationService: TranslationServiceProtocol {
     
     // MARK: - TranslationServiceProtocol 实现
@@ -30,6 +31,13 @@ class BaseTranslationService: TranslationServiceProtocol {
     
     /// 定义了可接受的最大文本长度
     let maxTextLength: Int = 5000
+    
+    // MARK: - 初始化
+    
+    @MainActor
+    init() {
+        // 基类初始化
+    }
     
     // MARK: - 公共方法
     

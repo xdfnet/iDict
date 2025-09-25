@@ -89,29 +89,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// 2. 从剪贴板获取复制的文本
     /// 3. 调用MenuBarController进行翻译并显示翻译结果
     private func performQuickTranslation() async {
-        do {
-            // 1. 模拟键盘 "Cmd+C" 复制命令。
-            let copyResult = await KeyboardSimulator.simulateCopyCommand()
-            if case .success = copyResult {
-                // 短暂等待，确保剪贴板有时间更新。
-                try? await Task.sleep(nanoseconds: 150_000_000) // 150ms
-            }
-            
-            // 2. 从剪贴板获取文本。
-            let clipboardResult = await clipboardManager.getClipboardText()
-            guard case .success(let text) = clipboardResult else {
-                await showMessage("剪贴板中没有英文文本或文本过长")
-                return
-            }
-            
-            // 3. 使用MenuBarController进行翻译
-            // MenuBarController会处理翻译逻辑和结果显示
-            menuBarController?.performQuickTranslation(text: text)
-            
-        } catch {
-            // 捕获任何环节的错误并显示。
-            await showMessage("翻译失败: \(error.localizedDescription)")
+        // 1. 模拟键盘 "Cmd+C" 复制命令。
+        let copyResult = await KeyboardSimulator.simulateCopyCommand()
+        if case .success = copyResult {
+            // 短暂等待，确保剪贴板有时间更新。
+            try? await Task.sleep(nanoseconds: 150_000_000) // 150ms
         }
+        
+        // 2. 从剪贴板获取文本。
+        let clipboardResult = await clipboardManager.getClipboardText()
+        guard case .success(let text) = clipboardResult else {
+            await showMessage("剪贴板中没有英文文本或文本过长")
+            return
+        }
+        
+        // 3. 使用MenuBarController进行翻译
+        // MenuBarController会处理翻译逻辑和结果显示
+        menuBarController?.performQuickTranslation(text: text)
     }
     
     /// 以自定义的无边框窗口显示消息。

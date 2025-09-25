@@ -14,11 +14,15 @@
 //
 import Cocoa
 import SwiftUI
+import Combine
 
 // MARK: - 菜单栏控制器
 class MenuBarController: NSObject, ObservableObject {
     
     // MARK: - 属性
+    
+    /// ObservableObject 协议要求
+    let objectWillChange = ObservableObjectPublisher()
     
     /// UI 组件
     private var statusBarItem: NSStatusItem?

@@ -15,7 +15,6 @@ import Foundation
 /// 
 /// 此类负责调用腾讯翻译君API执行文本翻译
 /// 注意：该服务将于2025年4月15日关闭
-@MainActor
 class TranslationService_Tencent: BaseTranslationService {
     
     // MARK: - TranslationServiceProtocol 实现
@@ -33,7 +32,8 @@ class TranslationService_Tencent: BaseTranslationService {
     }
     
     // MARK: - 初始化
-    
+
+    @MainActor
     override init() {
         // 腾讯翻译君使用公开接口，无需API密钥
         super.init()

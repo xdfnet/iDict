@@ -15,7 +15,6 @@ import Foundation
 /// 
 /// 此类负责调用Google翻译API执行文本翻译
 /// 支持自动语言检测和中文翻译，使用公开接口无需API密钥
-@MainActor
 class TranslationService_google: BaseTranslationService {
     
     // MARK: - TranslationServiceProtocol 实现
@@ -25,9 +24,10 @@ class TranslationService_google: BaseTranslationService {
     }
     
     // MARK: - 初始化
-    
+
+    @MainActor
     override init() {
-        // 此服务使用公开接口，无需API密钥
+        // 谷歌翻译使用公开接口，无需API密钥
         super.init()
     }
     
