@@ -16,40 +16,25 @@ import Foundation
 /// 此类负责调用Google翻译API执行文本翻译
 /// 支持自动语言检测和中文翻译，使用公开接口无需API密钥
 @MainActor
-class TranslationService_google: TranslationServiceProtocol {
+class TranslationService_google: BaseTranslationService {
     
     // MARK: - TranslationServiceProtocol 实现
     
-    var serviceType: TranslationServiceType {
+    override var serviceType: TranslationServiceType {
         return .google
     }
     
-    var isAvailable: Bool {
-        return serviceType.isAvailable
-    }
-    
-    // MARK: - 属性
-    
-    /// 定义了可接受的最大文本长度
-    private let maxTextLength: Int = 5000
-    
     // MARK: - 初始化
     
-    init() {
+    override init() {
         // 此服务使用公开接口，无需API密钥
+        super.init()
     }
     
-    // MARK: - 公共方法
+    // MARK: - 受保护的方法
     
-    /// 翻译给定的文本
-    /// - Parameter text: 要翻译的源文本
-    /// - Returns: 翻译后的目标文本
-    /// - Throws: 如果文本无效或翻译失败，则抛出 `TranslationError`
-    func translateText(_ text: String) async throws -> String {
-        guard !text.isEmpty && text.count <= maxTextLength else {
-            throw TranslationError.invalidTextLength
-        }
-        
+    /// 执行Google翻译API调用
+    override func performTranslation(_ text: String) async throws -> String {
         return try await performGoogleTranslation(text)
     }
     

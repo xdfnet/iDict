@@ -16,40 +16,33 @@ import Foundation
 /// 此类负责调用腾讯翻译君API执行文本翻译
 /// 注意：该服务将于2025年4月15日关闭
 @MainActor
-class TranslationService_Tencent: TranslationServiceProtocol {
+class TranslationService_Tencent: BaseTranslationService {
     
     // MARK: - TranslationServiceProtocol 实现
     
-    var serviceType: TranslationServiceType {
+    override var serviceType: TranslationServiceType {
         return .tencent
     }
     
-    var isAvailable: Bool {
-        return serviceType.isAvailable
+    override var isAvailable: Bool {
+        let isAvailable = super.isAvailable
+        if !isAvailable {
+            print("⚠️ 警告：腾讯翻译君API已于2025年4月15日关闭")
+        }
+        return isAvailable
     }
-    
-    // MARK: - 属性
-    
-    /// 定义了可接受的最大文本长度
-    private let maxTextLength: Int = 5000
     
     // MARK: - 初始化
     
-    init() {
+    override init() {
         // 腾讯翻译君使用公开接口，无需API密钥
+        super.init()
     }
     
-    // MARK: - 公共方法
+    // MARK: - 受保护的方法
     
-    /// 翻译给定的文本
-    /// - Parameter text: 要翻译的源文本
-    /// - Returns: 翻译后的目标文本
-    /// - Throws: 如果文本无效或翻译失败，则抛出 `TranslationError`
-    func translateText(_ text: String) async throws -> String {
-        guard !text.isEmpty && text.count <= maxTextLength else {
-            throw TranslationError.invalidTextLength
-        }
-        
+    /// 执行腾讯翻译API调用
+    override func performTranslation(_ text: String) async throws -> String {
         guard isAvailable else {
             throw TranslationError.serviceUnavailable("腾讯翻译君")
         }

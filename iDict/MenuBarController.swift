@@ -14,7 +14,6 @@
 //
 import Cocoa
 import SwiftUI
-import Combine
 
 // MARK: - 菜单栏控制器
 class MenuBarController: NSObject, ObservableObject {
