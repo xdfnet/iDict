@@ -1,5 +1,9 @@
 # iDict - macOS 快速翻译工具
 
+[![Version](https://img.shields.io/badge/version-v1.0.13-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)](https://swift.org/)
+
 一个轻量级的 macOS 菜单栏应用程序，提供快速文本翻译功能。通过全局热键 `Cmd + D` 即可快速翻译选中的英文文本为中文。
 
 ## ✨ 功能特性
@@ -27,7 +31,7 @@
 
 ### 安装要求
 
-- macOS 10.15 或更高版本
+- macOS 13.0 (Ventura) 或更高版本
 - Xcode 命令行工具
 - 翻译服务配置（根据使用的服务选择）：
   - Google Translate（推荐，使用公开接口，无需API密钥）
@@ -92,12 +96,13 @@
 
 - **语言**: Swift 5.0+
 - **UI 框架**: SwiftUI (菜单栏界面) + AppKit (窗口管理)
+- **响应式编程**: Combine Framework (状态管理和数据绑定)
 - **系统集成**: 
   - Carbon Framework (全局热键)
   - ApplicationServices (键盘事件模拟)
   - CommonCrypto (API 签名)
 - **网络**: URLSession (HTTP 请求)
-- **翻译服务**: 腾讯云机器翻译 API
+- **翻译服务**: Google Translate + 腾讯云机器翻译 API
 
 ### 权限要求
 
@@ -128,10 +133,14 @@ iDict/
 ├── HotKeyManager.swift               # 全局热键管理，Carbon 框架集成
 ├── ClipboardManager.swift            # 剪贴板管理，文本验证和处理
 ├── TranslationServiceType.swift      # 翻译服务类型定义和管理器，错误处理
+├── BaseTranslationService.swift      # 翻译服务基类，通用功能和验证逻辑
 ├── TranslationService_google.swift   # Google Translate 服务实现
 ├── TranslationService_Tencent.swift  # 腾讯云翻译服务实现
+├── BorderlessWindow.swift            # 无边框窗口实现，自定义窗口行为
+├── ClickableContentView.swift        # 可点击内容视图，窗口交互处理
 ├── KeyboardSimulator.swift           # 键盘事件模拟，ApplicationServices 集成
 ├── Assets.xcassets/                  # 应用图标和资源文件
+├── Info.plist                        # 应用配置信息
 └── iDict.entitlements                # 应用权限配置文件
 ```
 
@@ -141,8 +150,11 @@ iDict/
 - **AppDelegate.swift** - 核心业务逻辑，集成翻译服务管理器，管理翻译窗口和热键
 - **MenuBarController.swift** - 状态栏菜单控制器，管理菜单项、翻译功能和服务切换
 - **TranslationServiceType.swift** - 翻译服务类型定义、管理器和统一错误处理
+- **BaseTranslationService.swift** - 翻译服务基类，提供通用功能和文本验证逻辑
 - **TranslationService_google.swift** - Google Translate API 集成和实现
 - **TranslationService_Tencent.swift** - 腾讯云翻译 API 集成和实现
+- **BorderlessWindow.swift** - 无边框窗口实现，自定义窗口行为和样式
+- **ClickableContentView.swift** - 可点击内容视图，处理窗口交互和焦点管理
 - **HotKeyManager.swift** - 全局热键注册和管理，使用 Carbon 框架
 - **ClipboardManager.swift** - 剪贴板内容获取和文本验证
 - **KeyboardSimulator.swift** - 模拟 Cmd+C 复制操作，需要输入监控权限
@@ -171,8 +183,9 @@ make uninstall
 
 ### 技术栈
 
-- **语言**: Swift
+- **语言**: Swift 5.0+
 - **UI框架**: SwiftUI + AppKit
+- **响应式编程**: Combine Framework
 - **翻译API**: Google Translate + 腾讯翻译君（公开接口）
 - **构建系统**: Make + xcodebuild
 - **权限管理**: Carbon + ApplicationServices
