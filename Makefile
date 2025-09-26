@@ -21,9 +21,7 @@ RED = \033[0;31m
 GREEN = \033[0;32m
 YELLOW = \033[0;33m
 BLUE = \033[0;34m
-PURPLE = \033[0;35m
 CYAN = \033[0;36m
-WHITE = \033[0;37m
 NC = \033[0m # No Color
 
 # =============================================================================
@@ -62,22 +60,7 @@ help:
 	@echo "  $(YELLOW)help$(NC)       - 显示此帮助信息"
 	@echo ""
 	@echo "$(GREEN)Git 命令:$(NC)"
-	@echo "  $(YELLOW)git-status$(NC)     - 查看 Git 状态"
-	@echo "  $(YELLOW)git-add$(NC)        - 添加所有更改到暂存区"
-	@echo "  $(YELLOW)git-commit$(NC)     - 提交更改 (需要 MSG=\"提交信息\")"
-	@echo "  $(YELLOW)git-push$(NC)       - 推送到远程仓库"
-	@echo "  $(YELLOW)git-push-all$(NC)   - 推送所有分支和标签"
-	@echo "  $(YELLOW)commit$(NC)         - 添加并提交 (需要 MSG=\"提交信息\")"
-	@echo "  $(YELLOW)commit-push$(NC)    - 添加、提交并推送 (需要 MSG=\"提交信息\")"
-	@echo "  $(YELLOW)tag$(NC)            - 创建版本标签 (需要 TAG=\"v1.0.x\")"
-	@echo "  $(YELLOW)git-release$(NC)    - 完整发布流程 (需要 MSG 和 TAG)"
-	@echo ""
-	@echo "$(GREEN)Git 工具:$(NC)"
-	@echo "  $(YELLOW)git-log$(NC)        - 查看最近提交记录"
-	@echo "  $(YELLOW)git-diff$(NC)       - 查看未暂存的更改"
-	@echo "  $(YELLOW)git-diff-staged$(NC) - 查看已暂存的更改"
-	@echo "  $(YELLOW)git-branch$(NC)     - 查看分支信息"
-	@echo "  $(YELLOW)git-remote$(NC)     - 查看远程仓库信息"
+	@echo "  $(YELLOW)push$(NC)       - 一键提交推送 (需要 MSG=\"提交信息\")"
 
 # =============================================================================
 # 清理命令
@@ -148,21 +131,25 @@ _update_version:
 
 run: debug
 	@echo "$(BLUE)启动 Debug 应用...$(NC)"
-	@$(MAKE) _stop_app
-	@$(MAKE) _run_app
+	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
+	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
+	if [ -n "$$APP_PATH" ]; then \
+		open "$$APP_PATH"; \
+		echo "$(GREEN)✅ 应用已启动$(NC)"; \
+	else \
+		echo "$(RED)❌ 找不到构建的应用程序$(NC)"; \
+		exit 1; \
+	fi
 
 run-release: release
 	@echo "$(BLUE)启动 Release 应用...$(NC)"
-	@$(MAKE) _stop_app
-	@$(MAKE) _run_app
-
-_run_app:
+	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \
-		echo "$(GREEN)启动应用: $$APP_PATH$(NC)"; \
 		open "$$APP_PATH"; \
+		echo "$(GREEN)✅ 应用已启动$(NC)"; \
 	else \
-		echo "$(RED)错误: 找不到构建的应用程序$(NC)"; \
+		echo "$(RED)❌ 找不到构建的应用程序$(NC)"; \
 		exit 1; \
 	fi
 
@@ -171,44 +158,22 @@ _run_app:
 # =============================================================================
 
 install: release
-	@echo "$(BLUE)安装应用到 Applications 文件夹...$(NC)"
-	@$(MAKE) _stop_app
-	@$(MAKE) _uninstall_app
-	@$(MAKE) _install_app
-
-_stop_app:
-	@echo "$(YELLOW)关闭正在运行的应用...$(NC)"
-	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || echo "$(CYAN)应用未运行$(NC)"
-
-_uninstall_app:
-	@echo "$(YELLOW)卸载旧版本应用...$(NC)"
-	@if [ -d "$(INSTALL_DIR)/$(PROJECT_NAME).app" ]; then \
-		rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app"; \
-		echo "$(GREEN)旧版本已卸载$(NC)"; \
-	else \
-		echo "$(CYAN)未找到已安装的应用$(NC)"; \
-	fi
-
-_install_app:
+	@echo "$(BLUE)安装应用到 Applications...$(NC)"
+	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
+	@rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app" 2>/dev/null || true
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \
-		echo "$(YELLOW)复制应用到 $(INSTALL_DIR)...$(NC)"; \
 		cp -R "$$APP_PATH" $(INSTALL_DIR)/; \
-		echo "$(GREEN)安装完成: $(INSTALL_DIR)/$(PROJECT_NAME).app$(NC)"; \
-		echo "$(CYAN)应用已注册到 Launch Services$(NC)"; \
+		echo "$(GREEN)✅ 安装完成: $(INSTALL_DIR)/$(PROJECT_NAME).app$(NC)"; \
 	else \
-		echo "$(RED)错误: 找不到构建的应用程序$(NC)"; \
+		echo "$(RED)❌ 错误: 找不到构建的应用程序$(NC)"; \
 		exit 1; \
 	fi
 
 uninstall:
-	@echo "$(YELLOW)从 Applications 卸载应用...$(NC)"
-	@if [ -d "$(INSTALL_DIR)/$(PROJECT_NAME).app" ]; then \
-		rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app"; \
-		echo "$(GREEN)卸载完成$(NC)"; \
-	else \
-		echo "$(YELLOW)应用未安装$(NC)"; \
-	fi
+	@echo "$(YELLOW)卸载应用...$(NC)"
+	@rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app"
+	@echo "$(GREEN)✅ 卸载完成$(NC)"
 
 # =============================================================================
 # 归档命令
