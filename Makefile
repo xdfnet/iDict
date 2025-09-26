@@ -277,77 +277,15 @@ info:
 		echo "$(YELLOW)应用未安装$(NC)"; \
 	fi
 
-# Git 相关命令
-git-status:
-	@echo "$(CYAN)Git 状态:$(NC)"
-	@git status --porcelain
-
-git-add:
-	@echo "$(BLUE)添加所有更改到暂存区...$(NC)"
-	@git add .
-	@echo "$(GREEN)文件已添加到暂存区$(NC)"
-
-git-commit:
-	@echo "$(BLUE)提交更改...$(NC)"
+# Git 命令 - 一键提交推送
+push:
+	@echo "$(BLUE)提交并推送到GitHub...$(NC)"
 	@if [ -z "$(MSG)" ]; then \
 		echo "$(RED)错误: 请提供提交信息$(NC)"; \
-		echo "$(YELLOW)使用方法: make git-commit MSG=\"你的提交信息\"$(NC)"; \
+		echo "$(YELLOW)使用方法: make push MSG=\"你的提交信息\"$(NC)"; \
 		exit 1; \
 	fi
+	@git add .
 	@git commit -m "$(MSG)"
-	@echo "$(GREEN)提交完成: $(MSG)$(NC)"
-
-git-push:
-	@echo "$(BLUE)推送到远程仓库...$(NC)"
 	@git push origin main
-	@echo "$(GREEN)推送完成$(NC)"
-
-git-push-all:
-	@echo "$(BLUE)推送所有分支和标签...$(NC)"
-	@git push --all origin
-	@git push --tags origin
-	@echo "$(GREEN)所有分支和标签推送完成$(NC)"
-
-# 组合命令
-commit: git-add git-commit
-	@echo "$(GREEN)本地提交完成$(NC)"
-
-commit-push: git-add git-commit git-push
-	@echo "$(GREEN)提交并推送完成$(NC)"
-
-# 发布相关
-tag:
-	@echo "$(BLUE)创建版本标签...$(NC)"
-	@if [ -z "$(TAG)" ]; then \
-		echo "$(RED)错误: 请提供标签名称$(NC)"; \
-		echo "$(YELLOW)使用方法: make tag TAG=\"v1.0.20\"$(NC)"; \
-		exit 1; \
-	fi
-	@git tag -a $(TAG) -m "Release $(TAG)"
-	@echo "$(GREEN)标签 $(TAG) 创建完成$(NC)"
-
-git-release: commit-push tag
-	@echo "$(BLUE)推送标签到远程仓库...$(NC)"
-	@git push origin $(TAG)
-	@echo "$(GREEN)发布完成: $(TAG)$(NC)"
-
-# Git 工具命令
-git-log:
-	@echo "$(CYAN)最近的提交记录:$(NC)"
-	@git log --oneline -10
-
-git-diff:
-	@echo "$(CYAN)未暂存的更改:$(NC)"
-	@git diff
-
-git-diff-staged:
-	@echo "$(CYAN)已暂存的更改:$(NC)"
-	@git diff --staged
-
-git-branch:
-	@echo "$(CYAN)分支信息:$(NC)"
-	@git branch -v
-
-git-remote:
-	@echo "$(CYAN)远程仓库信息:$(NC)"
-	@git remote -v
+	@echo "$(GREEN)✅ 提交并推送完成: $(MSG)$(NC)"
