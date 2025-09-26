@@ -71,6 +71,38 @@
    make run
    ```
 
+### 开发命令
+
+项目提供了完整的 Makefile 构建系统，支持开发、构建、测试和发布的全流程：
+
+#### 构建和运行
+```bash
+make debug          # 构建 Debug 版本
+make release        # 构建 Release 版本
+make run            # 构建并运行 Debug 版本
+make run-release    # 构建并运行 Release 版本
+```
+
+#### Git 版本控制
+```bash
+make git-status     # 查看 Git 状态
+make git-add        # 添加所有更改到暂存区
+make commit MSG="提交信息"           # 添加并提交更改
+make commit-push MSG="提交信息"      # 添加、提交并推送到远程
+make tag TAG="v1.0.x"              # 创建版本标签
+make git-release MSG="提交信息" TAG="v1.0.x"  # 完整发布流程
+```
+
+#### 开发工具
+```bash
+make clean          # 清理构建文件
+make test           # 运行测试
+make lint           # 代码检查
+make format         # 代码格式化
+make info           # 显示项目信息
+make help           # 显示所有可用命令
+```
+
 ### 权限配置
 
 首次运行时，应用会请求以下权限：
