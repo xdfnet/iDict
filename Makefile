@@ -60,6 +60,24 @@ help:
 	@echo "  $(YELLOW)format$(NC)     - 代码格式化"
 	@echo "  $(YELLOW)info$(NC)       - 显示项目信息"
 	@echo "  $(YELLOW)help$(NC)       - 显示此帮助信息"
+	@echo ""
+	@echo "$(GREEN)Git 命令:$(NC)"
+	@echo "  $(YELLOW)git-status$(NC)     - 查看 Git 状态"
+	@echo "  $(YELLOW)git-add$(NC)        - 添加所有更改到暂存区"
+	@echo "  $(YELLOW)git-commit$(NC)     - 提交更改 (需要 MSG=\"提交信息\")"
+	@echo "  $(YELLOW)git-push$(NC)       - 推送到远程仓库"
+	@echo "  $(YELLOW)git-push-all$(NC)   - 推送所有分支和标签"
+	@echo "  $(YELLOW)commit$(NC)         - 添加并提交 (需要 MSG=\"提交信息\")"
+	@echo "  $(YELLOW)commit-push$(NC)    - 添加、提交并推送 (需要 MSG=\"提交信息\")"
+	@echo "  $(YELLOW)tag$(NC)            - 创建版本标签 (需要 TAG=\"v1.0.x\")"
+	@echo "  $(YELLOW)git-release$(NC)    - 完整发布流程 (需要 MSG 和 TAG)"
+	@echo ""
+	@echo "$(GREEN)Git 工具:$(NC)"
+	@echo "  $(YELLOW)git-log$(NC)        - 查看最近提交记录"
+	@echo "  $(YELLOW)git-diff$(NC)       - 查看未暂存的更改"
+	@echo "  $(YELLOW)git-diff-staged$(NC) - 查看已暂存的更改"
+	@echo "  $(YELLOW)git-branch$(NC)     - 查看分支信息"
+	@echo "  $(YELLOW)git-remote$(NC)     - 查看远程仓库信息"
 
 # =============================================================================
 # 清理命令
@@ -130,10 +148,12 @@ _update_version:
 
 run: debug
 	@echo "$(BLUE)启动 Debug 应用...$(NC)"
+	@$(MAKE) _stop_app
 	@$(MAKE) _run_app
 
 run-release: release
 	@echo "$(BLUE)启动 Release 应用...$(NC)"
+	@$(MAKE) _stop_app
 	@$(MAKE) _run_app
 
 _run_app:
@@ -256,3 +276,78 @@ info:
 	else \
 		echo "$(YELLOW)应用未安装$(NC)"; \
 	fi
+
+# Git 相关命令
+git-status:
+	@echo "$(CYAN)Git 状态:$(NC)"
+	@git status --porcelain
+
+git-add:
+	@echo "$(BLUE)添加所有更改到暂存区...$(NC)"
+	@git add .
+	@echo "$(GREEN)文件已添加到暂存区$(NC)"
+
+git-commit:
+	@echo "$(BLUE)提交更改...$(NC)"
+	@if [ -z "$(MSG)" ]; then \
+		echo "$(RED)错误: 请提供提交信息$(NC)"; \
+		echo "$(YELLOW)使用方法: make git-commit MSG=\"你的提交信息\"$(NC)"; \
+		exit 1; \
+	fi
+	@git commit -m "$(MSG)"
+	@echo "$(GREEN)提交完成: $(MSG)$(NC)"
+
+git-push:
+	@echo "$(BLUE)推送到远程仓库...$(NC)"
+	@git push origin main
+	@echo "$(GREEN)推送完成$(NC)"
+
+git-push-all:
+	@echo "$(BLUE)推送所有分支和标签...$(NC)"
+	@git push --all origin
+	@git push --tags origin
+	@echo "$(GREEN)所有分支和标签推送完成$(NC)"
+
+# 组合命令
+commit: git-add git-commit
+	@echo "$(GREEN)本地提交完成$(NC)"
+
+commit-push: git-add git-commit git-push
+	@echo "$(GREEN)提交并推送完成$(NC)"
+
+# 发布相关
+tag:
+	@echo "$(BLUE)创建版本标签...$(NC)"
+	@if [ -z "$(TAG)" ]; then \
+		echo "$(RED)错误: 请提供标签名称$(NC)"; \
+		echo "$(YELLOW)使用方法: make tag TAG=\"v1.0.20\"$(NC)"; \
+		exit 1; \
+	fi
+	@git tag -a $(TAG) -m "Release $(TAG)"
+	@echo "$(GREEN)标签 $(TAG) 创建完成$(NC)"
+
+git-release: commit-push tag
+	@echo "$(BLUE)推送标签到远程仓库...$(NC)"
+	@git push origin $(TAG)
+	@echo "$(GREEN)发布完成: $(TAG)$(NC)"
+
+# Git 工具命令
+git-log:
+	@echo "$(CYAN)最近的提交记录:$(NC)"
+	@git log --oneline -10
+
+git-diff:
+	@echo "$(CYAN)未暂存的更改:$(NC)"
+	@git diff
+
+git-diff-staged:
+	@echo "$(CYAN)已暂存的更改:$(NC)"
+	@git diff --staged
+
+git-branch:
+	@echo "$(CYAN)分支信息:$(NC)"
+	@git branch -v
+
+git-remote:
+	@echo "$(CYAN)远程仓库信息:$(NC)"
+	@git remote -v

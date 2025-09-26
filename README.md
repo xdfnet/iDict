@@ -1,27 +1,46 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.13-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.19-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)](https://swift.org/)
 
 一个轻量级的 macOS 菜单栏应用程序，提供快速文本翻译功能。通过全局热键 `Cmd + D` 即可快速翻译选中的英文文本为中文。
 
+## 📖 目录
+
+- [功能特性](#-功能特性)
+- [界面预览](#-界面预览)
+- [快速开始](#-快速开始)
+- [使用说明](#-使用说明)
+- [翻译服务配置](#-翻译服务配置)
+- [技术架构](#-技术架构)
+- [开发指南](#-开发指南)
+- [故障排除](#-故障排除)
+- [许可证](#-许可证)
+
 ## ✨ 功能特性
 
+### 核心功能
 - 🚀 **一键翻译** - 使用 `Cmd + D` 热键快速翻译选中的英文文本
-- 🔄 **多翻译服务** - 支持 Google Translate 和腾讯云翻译，可在菜单栏中切换
+- 🔄 **多翻译服务** - 支持 Google Translate、Microsoft Translator 和 DeepL 翻译，可在菜单栏中切换
 - 📊 **服务状态检测** - 自动检测翻译服务可用性，智能提示服务状态
-- 🎨 **无边框窗口** - 简洁美观的翻译结果显示界面，支持自定义样式
-- 🖱️ **拖拽移动** - 可以自由移动翻译窗口到任意位置，提升用户体验
-- 🎯 **智能焦点** - 点击或鼠标悬停时自动恢复窗口焦点，支持键盘操作
+
+### 界面体验
+- 🎨 **无边框窗口** - 简洁美观的翻译结果显示界面
+- 🖱️ **拖拽移动** - 可以自由移动翻译窗口到任意位置
+- 🎯 **智能焦点** - 点击或鼠标悬停时自动恢复窗口焦点
 - ⌨️ **快捷键支持** - ESC 键和 Cmd+W 快速关闭翻译窗口
-- 📏 **内容自适应** - 窗口大小根据翻译内容自动调整，最佳显示效果
-- 🪟 **单窗口管理** - 智能管理翻译窗口，避免重复翻译时出现多个窗口
+- 📏 **内容自适应** - 窗口大小根据翻译内容自动调整
+
+### 安全隐私
 - 🔒 **隐私保护** - 本地处理剪贴板内容，不存储翻译历史
 - 🛡️ **权限管理** - 智能检测和请求必要的系统权限
+- 🪟 **单窗口管理** - 智能管理翻译窗口，避免重复翻译时出现多个窗口
+
+### 智能特性
 - 🌐 **高质量翻译** - 集成多个翻译服务API，提供高质量翻译结果
 - 📝 **智能文本检测** - 自动检测英文文本，过滤非英文内容
-- ⚠️ **服务迁移提醒** - 腾讯云翻译将于2025年4月15日停用，建议使用Google Translate
+- ⚡ **服务稳定性** - 使用稳定可靠的免费翻译API，确保长期可用性
 
 ## 🖼️ 界面预览
 
@@ -29,15 +48,12 @@
 
 ## 🚀 快速开始
 
-### 安装要求
+### 系统要求
 
 - macOS 13.0 (Ventura) 或更高版本
 - Xcode 命令行工具
-- 翻译服务配置（根据使用的服务选择）：
-  - Google Translate（推荐，使用公开接口，无需API密钥）
-  - 腾讯云机器翻译（使用公开接口，将于2025年4月15日停用）
 
-### 构建和安装
+### 安装步骤
 
 1. **克隆项目**
    ```bash
@@ -45,119 +61,170 @@
    cd iDict
    ```
 
-2. **翻译服务配置**
-   
-   本应用使用公开翻译接口，无需配置API密钥：
-   
-   **Google Translate（推荐）**：
-   - 使用 Google 公开翻译接口
-   - 无需API密钥配置
-   - 支持自动语言检测
-   
-   **腾讯云翻译**：
-   - 使用腾讯翻译君公开接口
-   - 无需API密钥配置
-   - 注意：该服务将于2025年4月15日停用
-
-3. **构建并安装**
+2. **构建并安装**
    ```bash
    make install
    ```
 
-4. **运行应用**
+3. **运行应用**
    ```bash
    make run
    ```
 
-### 使用说明
+### 权限配置
 
-1. **首次运行** - 应用会请求以下权限：
-   - 辅助功能权限（用于全局热键）
-   - 输入监控权限（用于模拟复制操作）
+首次运行时，应用会请求以下权限：
+- **辅助功能权限** - 用于全局热键 `Cmd + D`
+- **输入监控权限** - 用于模拟复制操作 `Cmd + C`
 
-2. **选择翻译服务**：
+## 📱 使用说明
+
+### 基本操作
+
+1. **选择翻译服务**
    - 点击菜单栏中的 iDict 图标
-   - 在下拉菜单中选择翻译服务（Google Translate 或腾讯云翻译）
+   - 在下拉菜单中选择翻译服务（Google Translate、Microsoft Translator 或 DeepL 翻译）
    - 系统会自动检测服务可用性并显示状态
 
-3. **翻译文本**：
+2. **翻译文本**
    - 选中要翻译的文本
    - 按下 `Cmd + D` 热键
    - 翻译结果会在浮动窗口中显示
 
-4. **操作翻译窗口**：
+3. **操作翻译窗口**
    - 拖拽移动窗口
    - 按 ESC 或 Cmd+W 关闭窗口
    - 点击窗口恢复焦点
 
-## 🔧 技术架构
+### 快捷键
 
-### 核心技术栈
+| 快捷键 | 功能 |
+|--------|------|
+| `Cmd + D` | 翻译选中文本 |
+| `ESC` | 关闭翻译窗口 |
+| `Cmd + W` | 关闭翻译窗口 |
+
+## 🔧 翻译服务配置
+
+本应用使用公开翻译接口，无需配置API密钥。
+
+### Google Translate（推荐）
+
+- **API地址**: `https://translate.googleapis.com/translate_a/single`
+- **请求方法**: GET
+- **参数说明**:
+  - `client=gtx` - 客户端类型
+  - `sl=en` - 源语言（英文）
+  - `tl=zh` - 目标语言（中文）
+  - `dt=t` - 数据类型
+  - `q={text}` - 待翻译文本（URL编码）
+
+**示例URL**:
+```
+https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=hello
+```
+
+**特点**:
+- 无需API密钥
+- 支持自动语言检测
+- 响应速度快，翻译质量高
+
+### Microsoft Translator
+
+- **API地址**: `https://api.mymemory.translated.net/get`
+- **请求方法**: GET
+- **参数说明**:
+  - `q={text}` - 待翻译文本（URL编码）
+  - `langpair=en|zh-CN` - 语言对（英文到简体中文）
+  - `de=microsoft@mymemory.translated.net` - 指定使用Microsoft引擎
+
+**示例URL**:
+```
+https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=microsoft@mymemory.translated.net
+```
+
+**特点**:
+- 基于Microsoft Translator引擎
+- 无需API密钥配置
+- 企业级翻译质量，支持多种语言
+- 在技术文档翻译方面表现优秀
+
+### DeepL 翻译
+
+- **API地址**: `https://api.mymemory.translated.net/get`
+- **请求方法**: GET
+- **参数说明**:
+  - `q={text}` - 待翻译文本（URL编码）
+  - `langpair=en|zh-CN` - 语言对（英文到简体中文）
+  - `de=deepl@mymemory.translated.net` - 指定使用DeepL引擎
+
+**示例URL**:
+```
+https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymemory.translated.net
+```
+
+**特点**:
+- 基于DeepL高质量翻译引擎
+- 无需API密钥配置
+- 翻译质量优秀，语义理解准确
+
+## 🏗️ 技术架构
+
+### 技术栈
 
 - **语言**: Swift 5.0+
-- **UI 框架**: SwiftUI (菜单栏界面) + AppKit (窗口管理)
-- **响应式编程**: Combine Framework (状态管理和数据绑定)
-- **系统集成**: 
-  - Carbon Framework (全局热键)
-  - ApplicationServices (键盘事件模拟)
-  - CommonCrypto (API 签名)
-- **网络**: URLSession (HTTP 请求)
-- **翻译服务**: Google Translate + 腾讯云机器翻译 API
+- **UI框架**: SwiftUI + AppKit
+- **响应式编程**: Combine Framework
+- **系统集成**: Carbon Framework (全局热键) + ApplicationServices (键盘事件)
+- **网络**: URLSession
+- **翻译API**: Google Translate API + Microsoft Translator API + DeepL API (通过MyMemory代理)
 
-### 权限要求
+### 核心组件
 
-应用需要以下 macOS 系统权限：
-
-1. **辅助功能权限** - 用于注册全局热键 `Cmd + D`
-2. **输入监控权限** - 用于模拟 `Cmd + C` 复制操作
-
-首次运行时，应用会自动引导用户授予这些权限。
+| 组件 | 功能 |
+|------|------|
+| `iDictApp.swift` | 应用主入口，SwiftUI App 生命周期 |
+| `AppDelegate.swift` | 核心业务逻辑，服务集成 |
+| `MenuBarController.swift` | 状态栏菜单管理和翻译功能 |
+| `HotKeyManager.swift` | 全局热键注册和管理 |
+| `ClipboardManager.swift` | 剪贴板内容获取和文本验证 |
+| `translationservice.swift` | 翻译服务类型定义和三种翻译服务实现 |
+| `BorderlessWindow.swift` | 无边框窗口实现 |
+| `ClickableContentView.swift` | 窗口交互处理 |
+| `KeyboardSimulator.swift` | 键盘事件模拟器 |
 
 ### 工作流程
 
 1. 用户选中文本并按下 `Cmd + D`
 2. 应用模拟 `Cmd + C` 复制选中文本到剪贴板
 3. 从剪贴板获取文本并验证是否为英文
-4. 调用腾讯云翻译 API 进行英译中
+4. 调用选定的翻译服务API进行英译中
 5. 在无边框浮动窗口中显示翻译结果
 
-## 🛠️ 开发
+## 🛠️ 开发指南
 
 ### 项目结构
 
 ```
 iDict/
-├── iDictApp.swift                    # 应用主入口，SwiftUI App 生命周期
-├── AppDelegate.swift                 # 应用委托，核心业务逻辑和服务集成
-├── MenuBarController.swift           # 菜单栏控制器，状态栏菜单管理和翻译功能
-├── HotKeyManager.swift               # 全局热键管理，Carbon 框架集成
-├── ClipboardManager.swift            # 剪贴板管理，文本验证和处理
-├── TranslationServiceType.swift      # 翻译服务类型定义和管理器，错误处理
-├── BaseTranslationService.swift      # 翻译服务基类，通用功能和验证逻辑
-├── TranslationService_google.swift   # Google Translate 服务实现
-├── TranslationService_Tencent.swift  # 腾讯云翻译服务实现
-├── BorderlessWindow.swift            # 无边框窗口实现，自定义窗口行为
-├── ClickableContentView.swift        # 可点击内容视图，窗口交互处理
-├── KeyboardSimulator.swift           # 键盘事件模拟，ApplicationServices 集成
-├── Assets.xcassets/                  # 应用图标和资源文件
-├── Info.plist                        # 应用配置信息
-└── iDict.entitlements                # 应用权限配置文件
+├── iDict.xcodeproj/                  # Xcode 项目文件
+├── iDict/                            # 源代码目录
+│   ├── iDictApp.swift                # 应用主入口
+│   ├── AppDelegate.swift             # 应用委托，核心业务逻辑
+│   ├── MenuBarController.swift       # 菜单栏控制器
+│   ├── HotKeyManager.swift           # 全局热键管理
+│   ├── ClipboardManager.swift        # 剪贴板管理
+│   ├── translationservice.swift     # 翻译服务（Google、Microsoft、DeepL）
+│   ├── BorderlessWindow.swift        # 无边框窗口实现
+│   ├── ClickableContentView.swift    # 可点击内容视图
+│   ├── KeyboardSimulator.swift       # 键盘事件模拟
+│   ├── Assets.xcassets/              # 应用图标和资源文件
+│   ├── Info.plist                    # 应用配置信息
+│   └── iDict.entitlements            # 应用权限配置文件
+├── Makefile                          # 构建脚本
+├── README.md                         # 项目文档
+└── LICENSE                           # 许可证文件
 ```
-
-### 核心组件说明
-
-- **iDictApp.swift** - 应用主入口，使用 SwiftUI App 生命周期
-- **AppDelegate.swift** - 核心业务逻辑，集成翻译服务管理器，管理翻译窗口和热键
-- **MenuBarController.swift** - 状态栏菜单控制器，管理菜单项、翻译功能和服务切换
-- **TranslationServiceType.swift** - 翻译服务类型定义、管理器和统一错误处理
-- **BaseTranslationService.swift** - 翻译服务基类，提供通用功能和文本验证逻辑
-- **TranslationService_google.swift** - Google Translate API 集成和实现
-- **TranslationService_Tencent.swift** - 腾讯云翻译 API 集成和实现
-- **BorderlessWindow.swift** - 无边框窗口实现，自定义窗口行为和样式
-- **ClickableContentView.swift** - 可点击内容视图，处理窗口交互和焦点管理
-- **HotKeyManager.swift** - 全局热键注册和管理，使用 Carbon 框架
-- **ClipboardManager.swift** - 剪贴板内容获取和文本验证
-- **KeyboardSimulator.swift** - 模拟 Cmd+C 复制操作，需要输入监控权限
 
 ### 构建命令
 
@@ -181,66 +248,28 @@ make clean
 make uninstall
 ```
 
-### 技术栈
-
-- **语言**: Swift 5.0+
-- **UI框架**: SwiftUI + AppKit
-- **响应式编程**: Combine Framework
-- **翻译API**: Google Translate + 腾讯翻译君（公开接口）
-- **构建系统**: Make + xcodebuild
-- **权限管理**: Carbon + ApplicationServices
-
-## 📋 权限说明
-
-应用需要以下 macOS 权限：
-
-1. **辅助功能** - 用于注册全局热键
-2. **输入监控** - 用于模拟键盘操作
-
-这些权限在首次使用时由系统自动请求。
-
-## 🔧 配置
-
-### 翻译服务配置
-
-本应用使用公开翻译接口，无需配置API密钥：
-
-**Google Translate（推荐）**：
-- 使用 Google 公开翻译接口
-- 无需API密钥配置
-- 支持自动语言检测
-
-**腾讯云翻译**：
-- 使用腾讯翻译君公开接口  
-- 无需API密钥配置
-- 注意：该服务将于2025年4月15日停用
-
-### 热键配置
-
-默认热键为 `Cmd + D`，可在 `HotKeyManager.swift` 中修改。
-
 ## 🐛 故障排除
 
 ### 常见问题
 
-1. **热键不响应**
-   - 检查是否授予了辅助功能权限
-   - 确保没有其他应用占用相同热键
+**热键不响应**
+- 检查是否授予了辅助功能权限
+- 确保没有其他应用占用相同热键
 
-2. **翻译失败**
-   - 检查网络连接
-   - 确认选中的文本是否为有效的英文内容
-   - 尝试切换到其他可用的翻译服务
-   - 检查文本长度是否超过限制（最大5000字符）
+**翻译失败**
+- 检查网络连接
+- 确认选中的文本是否为有效的英文内容
+- 尝试切换到其他可用的翻译服务
+- 检查文本长度是否超过限制（最大5000字符）
 
-3. **翻译服务不可用**
-   - 腾讯云翻译将于2025年4月15日停用，建议切换到 Google Translate
-   - 检查菜单栏中的服务状态提示
-   - 确认网络连接正常，可以访问翻译服务
+**翻译服务不可用**
+- 尝试切换到其他可用的翻译服务
+- 检查菜单栏中的服务状态提示
+- 确认网络连接正常
 
-4. **窗口无法移动**
-   - 确保点击窗口内容区域进行拖拽
-   - 检查窗口是否有焦点
+**窗口无法移动**
+- 确保点击窗口内容区域进行拖拽
+- 检查窗口是否有焦点
 
 ## 📄 许可证
 
@@ -256,4 +285,4 @@ make uninstall
 
 ---
 
-**注意**: 请确保在使用前授予必要的系统权限（辅助功能和输入监控），并保持网络连接正常。
+**注意**: 请确保在使用前授予必要的系统权限，并保持网络连接正常。

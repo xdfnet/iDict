@@ -28,14 +28,15 @@ class MenuBarController: NSObject, ObservableObject {
     private var statusBarItem: NSStatusItem?
     
     /// 翻译服务管理器
-    private let translationServiceManager = TranslationServiceManager()
+    private let translationServiceManager: TranslationServiceManager
     
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
     
     // MARK: - 初始化
     
-    override init() {
+    init(translationServiceManager: TranslationServiceManager) {
+        self.translationServiceManager = translationServiceManager
         super.init()
         setupStatusBar()
     }
@@ -58,7 +59,7 @@ class MenuBarController: NSObject, ObservableObject {
             button.target = self
             
             // 设置图标
-            if let image = NSImage(systemSymbolName: "translate", accessibilityDescription: "翻译") {
+            if let image = NSImage(systemSymbolName: "translate", accessibilityDescription: "Translate") {
                 image.size = NSSize(width: 16, height: 16)
                 button.image = image
             }
@@ -111,11 +112,6 @@ class MenuBarController: NSObject, ObservableObject {
                 menuItem.state = .on
             }
             
-            // 如果服务不可用，禁用菜单项
-            if !serviceType.isAvailable {
-                menuItem.isEnabled = false
-            }
-            
             serviceSubmenu.addItem(menuItem)
         }
         
@@ -125,9 +121,23 @@ class MenuBarController: NSObject, ObservableObject {
     
     /// 选择翻译服务
     @objc private func selectTranslationService(_ sender: NSMenuItem) {
-        guard let serviceType = sender.representedObject as? TranslationServiceType else { return }
-        translationServiceManager.switchService(to: serviceType)
+        guard let serviceType = sender.representedObject as? TranslationServiceType else { 
+            print("❌ 无法获取服务类型")
+            return 
+        }
+        
+        // 确保在主线程执行服务切换
+        Task { @MainActor in
+            // 执行服务切换
+            translationServiceManager.switchService(to: serviceType)
+            print("✅ 已切换到: \(serviceType.displayName)")
+            
+            // 切换服务后重新创建菜单以更新选中状态
+            statusBarItem?.menu = createMenu()
+        }
     }
+    
+
 
     
     /// 创建About菜单
@@ -195,16 +205,10 @@ class MenuBarController: NSObject, ObservableObject {
     /// 执行翻译
     private func performTranslation(text: String) {
         Task {
-            do {
-                let result = try await translationServiceManager.translateText(text)
-                
-                DispatchQueue.main.async {
-                    self.showTranslationWindow?(result)
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.showTranslationWindow?("翻译失败: \(error.localizedDescription)")
-                }
+            let result = await translationServiceManager.translateText(text)
+            
+            DispatchQueue.main.async {
+                self.showTranslationWindow?(result)
             }
         }
     }

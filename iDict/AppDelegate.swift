@@ -49,8 +49,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 设置应用为附件类型，不在Dock中显示图标。
         NSApp.setActivationPolicy(.accessory)
         
-        // 初始化菜单栏控制器
-        menuBarController = MenuBarController()
+        // 初始化菜单栏控制器，传递共享的翻译服务管理器
+        menuBarController = MenuBarController(translationServiceManager: translationServiceManager)
         
         // 设置翻译窗口显示回调
         menuBarController?.showTranslationWindow = { [weak self] message in
