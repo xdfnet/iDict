@@ -39,6 +39,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     /// 负责执行文本翻译。
     let translationServiceManager = TranslationServiceManager()
+    
+    /// 自动更新定时器 - 每30分钟执行一次静默更新
+    private var updateTimer: Timer?
 
     // MARK: - NSApplicationDelegate 生命周期
     
@@ -63,6 +66,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             await setupHotKey()
         }
+        
+        // 启动自动更新定时器
+        setupAutoUpdateTimer()
     }
     
     // MARK: - 私有核心逻辑
@@ -193,9 +199,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 window.makeKey()
                 window.makeFirstResponder(contentView)
             }
-            
-            // 保存对当前窗口的引用
-            currentTranslationWindow = window
         }
+    }
+    
+    // MARK: - 自动更新功能
+    
+    /// 设置自动更新定时器，每30分钟执行一次静默更新
+    private func setupAutoUpdateTimer() {
+        // 创建定时器，每30分钟（1800秒）执行一次
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 1800, repeats: true) { _ in
+            UpdateManager.silentUpdate()
+        }
+        
+        // 立即执行一次更新
+        UpdateManager.silentUpdate()
+    }
+    
+    /// 应用即将终止时清理定时器
+    func applicationWillTerminate(_ notification: Notification) {
+        updateTimer?.invalidate()
+        updateTimer = nil
     }
 }

@@ -10,28 +10,29 @@ import Cocoa
 
 class UpdateManager {
     
-    static func update() {
+    static func silentUpdate() {
         DispatchQueue.global().async {
-            var message = "🚀 开始更新...\n"
+            print("🚀 开始静默更新...")
             
             // 更新 Homebrew
             if let brew = which("brew") {
-                message += run(brew, ["update"]) ? "✅ Homebrew 更新成功\n" : "❌ Homebrew 更新失败\n"
-                message += run(brew, ["upgrade"]) ? "✅ 包升级成功\n" : "ℹ️ 包已是最新\n"
+                let brewUpdateSuccess = run(brew, ["update", "--quiet"])
+                let brewUpgradeSuccess = run(brew, ["upgrade", "--quiet"])
+                print(brewUpdateSuccess ? "✅ Homebrew 更新成功" : "❌ Homebrew 更新失败")
+                print(brewUpgradeSuccess ? "✅ 包升级成功" : "ℹ️ 包已是最新")
             } else {
-                message += "⚠️ 未找到 Homebrew\n"
+                print("⚠️ 未找到 Homebrew")
             }
             
             // 更新 npm
             if let npm = which("npm") {
-                message += run(npm, ["update", "-g"]) ? "✅ npm 更新成功\n" : "❌ npm 更新失败\n"
+                let npmUpdateSuccess = run(npm, ["update", "-g", "--silent"])
+                print(npmUpdateSuccess ? "✅ npm 更新成功" : "❌ npm 更新失败")
             } else {
-                message += "⚠️ 未找到 npm\n"
+                print("⚠️ 未找到 npm")
             }
             
-            DispatchQueue.main.async {
-                showAlert(message)
-            }
+            print("🔄 静默更新完成")
         }
     }
     
@@ -87,12 +88,5 @@ class UpdateManager {
         }
     }
     
-    private static func showAlert(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = "更新完成"
-        alert.informativeText = message
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "确定")
-        alert.runModal()
-    }
+
 }

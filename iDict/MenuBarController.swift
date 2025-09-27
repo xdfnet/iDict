@@ -83,10 +83,6 @@ class MenuBarController: NSObject, ObservableObject {
         menu.addItem(createServiceSelectionMenu())
         menu.addItem(NSMenuItem.separator())
         
-        // Update Menu
-        menu.addItem(createUpdateMenu())
-        menu.addItem(NSMenuItem.separator())
-        
         // About
         menu.addItem(createAboutMenu())
         menu.addItem(NSMenuItem.separator())
@@ -125,12 +121,7 @@ class MenuBarController: NSObject, ObservableObject {
         return serviceMenuItem
     }
     
-    /// 创建更新菜单
-    private func createUpdateMenu() -> NSMenuItem {
-        let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "u")
-        updateItem.target = self
-        return updateItem
-    }
+    
     
     /// 选择翻译服务
     @objc private func selectTranslationService(_ sender: NSMenuItem) {
@@ -213,10 +204,7 @@ class MenuBarController: NSObject, ObservableObject {
         NSApplication.shared.terminate(nil)
     }
     
-    /// 检查更新
-    @objc private func checkForUpdates() {
-        UpdateManager.update()
-    }
+
     
 
     
