@@ -36,6 +36,23 @@ class UpdateManager {
     }
     
     private static func which(_ cmd: String) -> String? {
+        // 常见的命令路径
+        let commonPaths = [
+            "/usr/bin/\(cmd)",
+            "/usr/local/bin/\(cmd)",
+            "/opt/homebrew/bin/\(cmd)",
+            "/Users/\(NSUserName())/.npm-packages/bin/\(cmd)",
+            "/Users/\(NSUserName())/.local/bin/\(cmd)"
+        ]
+        
+        // 检查每个路径是否存在可执行文件
+        for path in commonPaths {
+            if FileManager.default.isExecutableFile(atPath: path) {
+                return path
+            }
+        }
+        
+        // 如果常见路径都没找到，尝试使用 which 命令
         let task = Process()
         task.launchPath = "/usr/bin/which"
         task.arguments = [cmd]

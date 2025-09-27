@@ -127,7 +127,7 @@ class MenuBarController: NSObject, ObservableObject {
     
     /// 创建更新菜单
     private func createUpdateMenu() -> NSMenuItem {
-        let updateItem = NSMenuItem(title: "检查更新", action: #selector(checkForUpdates), keyEquivalent: "u")
+        let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "u")
         updateItem.target = self
         return updateItem
     }
