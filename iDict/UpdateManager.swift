@@ -2,71 +2,43 @@
 //  UpdateManager.swift
 //  iDict
 //
-//  简化的更新管理器
+//  极简更新管理器
 //
 
+import Foundation
 import Cocoa
 
-class UpdateManager: NSObject {
+class UpdateManager {
     
-    // MARK: - 回调
-    var progressCallback: ((String) -> Void)?
-    var completionCallback: ((Bool, String) -> Void)?
-    
-    // MARK: - 公共方法
-    func checkAndUpdate() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.performUpdate()
+    static func update() {
+        DispatchQueue.global().async {
+            var message = "🚀 开始更新...\n"
+            
+            // 更新 Homebrew
+            if let brew = which("brew") {
+                message += run(brew, ["update"]) ? "✅ Homebrew 更新成功\n" : "❌ Homebrew 更新失败\n"
+                message += run(brew, ["upgrade"]) ? "✅ 包升级成功\n" : "ℹ️ 包已是最新\n"
+            } else {
+                message += "⚠️ 未找到 Homebrew\n"
+            }
+            
+            // 更新 npm
+            if let npm = which("npm") {
+                message += run(npm, ["update", "-g"]) ? "✅ npm 更新成功\n" : "❌ npm 更新失败\n"
+            } else {
+                message += "⚠️ 未找到 npm\n"
+            }
+            
+            DispatchQueue.main.async {
+                showAlert(message)
+            }
         }
     }
     
-    // MARK: - 私有方法
-    private func performUpdate() {
-        updateProgress("🚀 开始检查更新...")
-        
-        var results: [String] = []
-        var hasError = false
-        
-        // 更新 Homebrew
-        if let brewPath = findCommand("brew") {
-            updateProgress("🍺 更新 Homebrew...")
-            if runCommand(brewPath, args: ["update", "--quiet"]) {
-                results.append("✅ Homebrew 更新成功")
-                if runCommand(brewPath, args: ["upgrade", "--quiet"]) {
-                    results.append("✅ Homebrew 包升级成功")
-                }
-            } else {
-                results.append("❌ Homebrew 更新失败")
-                hasError = true
-            }
-        } else {
-            results.append("⚠️ 未找到 Homebrew")
-        }
-        
-        // 更新 npm
-        if let npmPath = findCommand("npm") {
-            updateProgress("🟢 更新 npm 包...")
-            if runCommand(npmPath, args: ["update", "-g", "--silent"]) {
-                results.append("✅ npm 包更新成功")
-            } else {
-                results.append("❌ npm 包更新失败")
-                hasError = true
-            }
-        } else {
-            results.append("⚠️ 未找到 npm")
-        }
-        
-        // 完成回调
-        let message = results.joined(separator: "\n")
-        DispatchQueue.main.async { [weak self] in
-            self?.completionCallback?(!hasError, message)
-        }
-    }
-    
-    private func findCommand(_ command: String) -> String? {
+    private static func which(_ cmd: String) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/which"
-        task.arguments = [command]
+        task.arguments = [cmd]
         
         let pipe = Pipe()
         task.standardOutput = pipe
@@ -84,7 +56,7 @@ class UpdateManager: NSObject {
         return nil
     }
     
-    private func runCommand(_ path: String, args: [String]) -> Bool {
+    private static func run(_ path: String, _ args: [String]) -> Bool {
         let task = Process()
         task.launchPath = path
         task.arguments = args
@@ -98,9 +70,12 @@ class UpdateManager: NSObject {
         }
     }
     
-    private func updateProgress(_ message: String) {
-        DispatchQueue.main.async { [weak self] in
-            self?.progressCallback?(message)
-        }
+    private static func showAlert(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "更新完成"
+        alert.informativeText = message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "确定")
+        alert.runModal()
     }
 }

@@ -30,9 +30,6 @@ class MenuBarController: NSObject, ObservableObject {
     /// 翻译服务管理器
     private let translationServiceManager: TranslationServiceManager
     
-    /// 更新管理器
-    private let updateManager: UpdateManager
-    
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
     
@@ -40,10 +37,8 @@ class MenuBarController: NSObject, ObservableObject {
     
     init(translationServiceManager: TranslationServiceManager) {
         self.translationServiceManager = translationServiceManager
-        self.updateManager = UpdateManager()
         super.init()
         setupStatusBar()
-        setupUpdateManager()
     }
     
     // MARK: - 生命周期管理
@@ -71,20 +66,7 @@ class MenuBarController: NSObject, ObservableObject {
         }
     }
     
-    /// 设置更新管理器
-    private func setupUpdateManager() {
-        updateManager.progressCallback = { [weak self] message in
-            DispatchQueue.main.async {
-                self?.showUpdateProgress(message)
-            }
-        }
-        
-        updateManager.completionCallback = { [weak self] success, message in
-            DispatchQueue.main.async {
-                self?.showUpdateResult(success: success, message: message)
-            }
-        }
-    }
+
     
     /// 点击状态栏按钮时动态创建菜单
     @objc private func statusBarButtonClicked() {
@@ -233,51 +215,10 @@ class MenuBarController: NSObject, ObservableObject {
     
     /// 检查更新
     @objc private func checkForUpdates() {
-        // 显示开始更新的提示
-        showUpdateProgress("🚀 开始检查软件包更新...")
-        
-        // 执行更新
-        updateManager.checkAndUpdate()
+        UpdateManager.update()
     }
     
-    /// 显示更新进度
-    private func showUpdateProgress(_ message: String) {
-        // 创建进度通知
-        let notification = NSUserNotification()
-        notification.title = "iDict 更新"
-        notification.informativeText = message
-        notification.soundName = nil
-        
-        NSUserNotificationCenter.default.deliver(notification)
-        
-        // 同时在控制台输出
-        print("📱 iDict Update: \(message)")
-    }
-    
-    /// 显示更新结果
-    private func showUpdateResult(success: Bool, message: String) {
-        let notification = NSUserNotification()
-        notification.title = "iDict 更新"
-        notification.informativeText = message
-        notification.soundName = success ? NSUserNotificationDefaultSoundName : nil
-        
-        NSUserNotificationCenter.default.deliver(notification)
-        
-        // 显示弹窗确认
-        let alert = NSAlert()
-        alert.messageText = "软件包更新"
-        alert.informativeText = message
-        alert.alertStyle = success ? .informational : .warning
-        alert.addButton(withTitle: "确定")
-        
-        if success {
-            alert.icon = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Success")
-        } else {
-            alert.icon = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Warning")
-        }
-        
-        alert.runModal()
-    }
+
     
     // MARK: - 翻译功能
     
