@@ -7,6 +7,7 @@
 
 import Foundation
 import Cocoa
+import UserNotifications
 
 class UpdateManager {
     
@@ -14,12 +15,29 @@ class UpdateManager {
         DispatchQueue.global().async {
             print("🚀 开始静默更新...")
             
+            var updateResults: [String] = []
+            var hasUpdates = false
+            
             // 更新 Homebrew
             if let brew = which("brew") {
                 let brewUpdateSuccess = run(brew, ["update", "--quiet"])
                 let brewUpgradeSuccess = run(brew, ["upgrade", "--quiet"])
-                print(brewUpdateSuccess ? "✅ Homebrew 更新成功" : "❌ Homebrew 更新失败")
-                print(brewUpgradeSuccess ? "✅ 包升级成功" : "ℹ️ 包已是最新")
+                
+                if brewUpdateSuccess {
+                    print("✅ Homebrew 更新成功")
+                    updateResults.append("✅ Homebrew 更新成功")
+                    hasUpdates = true
+                } else {
+                    print("❌ Homebrew 更新失败")
+                }
+                
+                if brewUpgradeSuccess {
+                    print("✅ 包升级成功")
+                    updateResults.append("✅ 包升级成功")
+                    hasUpdates = true
+                } else {
+                    print("ℹ️ 包已是最新")
+                }
             } else {
                 print("⚠️ 未找到 Homebrew")
             }
@@ -27,12 +45,23 @@ class UpdateManager {
             // 更新 npm
             if let npm = which("npm") {
                 let npmUpdateSuccess = run(npm, ["update", "-g", "--silent"])
-                print(npmUpdateSuccess ? "✅ npm 更新成功" : "❌ npm 更新失败")
+                if npmUpdateSuccess {
+                    print("✅ npm 更新成功")
+                    updateResults.append("✅ npm 更新成功")
+                    hasUpdates = true
+                } else {
+                    print("❌ npm 更新失败")
+                }
             } else {
                 print("⚠️ 未找到 npm")
             }
             
             print("🔄 静默更新完成")
+            
+            // 发送系统通知
+            DispatchQueue.main.async {
+                sendUpdateNotification(results: updateResults, hasUpdates: hasUpdates)
+            }
         }
     }
     
@@ -88,5 +117,42 @@ class UpdateManager {
         }
     }
     
+    private static func sendUpdateNotification(results: [String], hasUpdates: Bool) {
+        // 请求通知权限
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if granted {
+                DispatchQueue.main.async {
+                    let content = UNMutableNotificationContent()
+                    content.title = "iDict 更新完成"
+                    
+                    if hasUpdates && !results.isEmpty {
+                        content.body = results.joined(separator: "\n")
+                        content.sound = .default
+                    } else {
+                        content.body = "所有包都已是最新版本"
+                        content.sound = nil // 无更新时不播放声音
+                    }
+                    
+                    // 创建通知请求
+                    let request = UNNotificationRequest(
+                        identifier: "iDict.update.completed",
+                        content: content,
+                        trigger: nil // 立即显示
+                    )
+                    
+                    // 发送通知
+                    UNUserNotificationCenter.current().add(request) { error in
+                        if let error = error {
+                            print("发送通知失败: \(error.localizedDescription)")
+                        } else {
+                            print("📱 系统通知已发送")
+                        }
+                    }
+                }
+            } else {
+                print("⚠️ 通知权限未授权")
+            }
+        }
+    }
 
 }
