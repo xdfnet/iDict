@@ -1,7 +1,7 @@
 //
 //  KeyboardSimulator.swift
-//  键盘事件模拟文件，基于CoreGraphics实现自动化操作。
-//  提供Cmd+C复制模拟、权限检查和错误处理功能。
+//  键盘事件模拟文件，基于CoreGraphics实现自动化操作
+//  提供Cmd+C复制模拟、权限检查和错误处理功能
 //
 
 import Foundation

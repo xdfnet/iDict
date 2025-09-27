@@ -1,8 +1,8 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.19-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.28-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
-[![Swift](https://img.shields.io/badge/Swift-5.0+-orange.svg)](https://swift.org/)
+[![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
 
 一个轻量级的 macOS 菜单栏应用程序，提供快速文本翻译功能。通过全局热键 `Cmd + D` 即可快速翻译选中的英文文本为中文。
 
@@ -204,7 +204,7 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 
 ### 技术栈
 
-- **语言**: Swift 5.0+
+- **语言**: Swift 6.2+
 - **UI框架**: SwiftUI + AppKit
 - **响应式编程**: Combine Framework
 - **系统集成**: Carbon Framework (全局热键) + ApplicationServices (键盘事件)

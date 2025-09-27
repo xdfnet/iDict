@@ -1,9 +1,7 @@
 //
 //  TranslationService.swift
-//  iDict
-//
-//  Created by iDict Team
-//  Copyright © 2025 iDict App. All rights reserved.
+//  翻译服务管理文件，提供多种翻译引擎支持
+//  实现Google、Microsoft、DeepL翻译服务和统一管理接口
 //
 
 import Foundation

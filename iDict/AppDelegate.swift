@@ -40,8 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// 负责执行文本翻译。
     let translationServiceManager = TranslationServiceManager()
     
-    /// 自动更新定时器 - 每30分钟执行一次静默更新
-    private var updateTimer: Timer?
+
 
     // MARK: - NSApplicationDelegate 生命周期
     
@@ -67,8 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             await setupHotKey()
         }
         
-        // 启动自动更新定时器
-        setupAutoUpdateTimer()
+
     }
     
     // MARK: - 私有核心逻辑
@@ -116,17 +114,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     /// 以自定义的无边框窗口显示消息。
     /// 
-    /// 创建一个无边框的浮动窗口来显示翻译结果或错误信息。
+    /// 复用同一个无边框浮动窗口来显示翻译结果，避免每次翻译都创建新窗口。
     /// 窗口会自动调整大小以适应文本内容，并在鼠标点击时自动关闭。
     /// 
     /// - Parameter message: 要显示的消息文本
     private func showMessage(_ message: String) async {
         // 确保UI操作在主线程上执行。
         await MainActor.run {
-            // 如果已存在翻译窗口，先关闭它。
-            currentTranslationWindow?.close()
-            currentTranslationWindow = nil
-            
             // --- 1. 计算窗口和内容的尺寸 ---
             let font = NSFont.systemFont(ofSize: 14)
             let maxWidth: CGFloat = 600  // 窗口最大宽度
@@ -147,28 +141,49 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // 根据文本尺寸和边距计算最终的窗口尺寸。
             let windowWidth = textWidth + padding
             let windowHeight = textHeight + padding
+            let newWindowSize = NSSize(width: windowWidth, height: windowHeight)
             
-            // --- 2. 创建和配置无边框窗口 ---
-            let window = BorderlessWindow(
-                contentRect: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight),
-                styleMask: [.borderless], // 无边框样式
-                backing: .buffered,
-                defer: false
-            )
-            
-            // 将窗口居中于屏幕。
-            window.center()
-            
-            // 配置窗口属性
-            window.isReleasedWhenClosed = false // 关闭时不释放，以便复用
-            window.backgroundColor = .clear     // 背景透明
-            window.isOpaque = false             // 窗口不透明
-            window.hasShadow = true             // 显示阴影
-            window.level = .floating            // 窗口置于顶层
-            window.hidesOnDeactivate = false    // 应用失活时不清空
+            // --- 2. 复用或创建窗口 ---
+            let window: BorderlessWindow
+            if let existingWindow = currentTranslationWindow as? BorderlessWindow {
+                // 复用现有窗口
+                window = existingWindow
+                
+                // 调整窗口大小以适应新内容
+                let currentFrame = window.frame
+                let newFrame = NSRect(
+                    x: currentFrame.origin.x,
+                    y: currentFrame.origin.y + (currentFrame.height - windowHeight), // 保持窗口顶部位置不变
+                    width: windowWidth,
+                    height: windowHeight
+                )
+                window.setFrame(newFrame, display: true, animate: true)
+            } else {
+                // 创建新窗口
+                window = BorderlessWindow(
+                    contentRect: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight),
+                    styleMask: [.borderless], // 无边框样式
+                    backing: .buffered,
+                    defer: false
+                )
+                
+                // 将窗口居中于屏幕。
+                window.center()
+                
+                // 配置窗口属性
+                window.isReleasedWhenClosed = false // 关闭时不释放，以便复用
+                window.backgroundColor = .clear     // 背景透明
+                window.isOpaque = false             // 窗口不透明
+                window.hasShadow = true             // 显示阴影
+                window.level = .floating            // 窗口置于顶层
+                window.hidesOnDeactivate = false    // 应用失活时不清空
+                
+                // 保存窗口引用
+                currentTranslationWindow = window
+            }
             
             // --- 3. 创建和配置自定义内容视图 ---
-            let contentView = ClickableContentView(frame: window.contentView!.bounds)
+            let contentView = ClickableContentView(frame: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight))
             contentView.wantsLayer = true
             contentView.layer?.backgroundColor = NSColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.95).cgColor
             contentView.layer?.cornerRadius = 10
@@ -188,6 +203,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             textLabel.isSelectable = true
             contentView.addSubview(textLabel)
             
+            // 更新窗口内容视图
             window.contentView = contentView
             
             // --- 5. 显示窗口并激活 ---
@@ -202,22 +218,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    // MARK: - 自动更新功能
-    
-    /// 设置自动更新定时器，每30分钟执行一次静默更新
-    private func setupAutoUpdateTimer() {
-        // 创建定时器，每30分钟（1800秒）执行一次
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1800, repeats: true) { _ in
-            UpdateManager.silentUpdate()
-        }
-        
-        // 立即执行一次更新
-        UpdateManager.silentUpdate()
-    }
-    
-    /// 应用即将终止时清理定时器
+    /// 应用即将终止时清理资源
     func applicationWillTerminate(_ notification: Notification) {
-        updateTimer?.invalidate()
-        updateTimer = nil
+        // 关闭翻译窗口
+        currentTranslationWindow?.close()
+        currentTranslationWindow = nil
     }
 }
