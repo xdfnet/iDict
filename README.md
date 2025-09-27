@@ -1,6 +1,6 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.30-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.31-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
 
@@ -61,46 +61,26 @@
    cd iDict
    ```
 
-2. **构建并安装**
+2. **构建并运行**
    ```bash
-   make install
-   ```
-
-3. **运行应用**
-   ```bash
-   make run
+   make debug
    ```
 
 ### 开发命令
 
-项目提供了完整的 Makefile 构建系统，支持开发、构建、测试和发布的全流程：
+项目提供了简化的 Makefile 构建系统，支持开发和发布的核心流程：
 
-#### 构建和运行
+#### 核心命令
 ```bash
-make debug          # 构建 Debug 版本
-make release        # 构建 Release 版本
-make run            # 构建并运行 Debug 版本
-make run-release    # 构建并运行 Release 版本
-```
-
-#### Git 版本控制
-```bash
-make git-status     # 查看 Git 状态
-make git-add        # 添加所有更改到暂存区
-make commit MSG="提交信息"           # 添加并提交更改
-make commit-push MSG="提交信息"      # 添加、提交并推送到远程
-make tag TAG="v1.0.x"              # 创建版本标签
-make git-release MSG="提交信息" TAG="v1.0.x"  # 完整发布流程
-```
-
-#### 开发工具
-```bash
-make clean          # 清理构建文件
-make test           # 运行测试
-make lint           # 代码检查
-make format         # 代码格式化
-make info           # 显示项目信息
+make debug          # 构建并运行 Debug 版本
+make push MSG="提交信息"  # 构建、安装、更新版本并推送到Git
 make help           # 显示所有可用命令
+```
+
+#### 使用示例
+```bash
+make debug                    # 开发调试
+make push MSG="修复翻译bug"    # 完整发布流程
 ```
 
 ### 权限配置
@@ -205,24 +185,26 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 ### 技术栈
 
 - **语言**: Swift 6.2+
+- **系统要求**: macOS 13.0 (Ventura) 或更高版本
 - **UI框架**: SwiftUI + AppKit
 - **响应式编程**: Combine Framework
 - **系统集成**: Carbon Framework (全局热键) + ApplicationServices (键盘事件)
 - **网络**: URLSession
 - **翻译API**: Google Translate API + Microsoft Translator API + DeepL API (通过MyMemory代理)
+- **构建工具**: Xcode + Makefile
 
 ### 核心组件
 
 | 组件 | 功能 |
 |------|------|
 | `iDictApp.swift` | 应用主入口，SwiftUI App 生命周期 |
-| `AppDelegate.swift` | 核心业务逻辑，服务集成 |
+| `AppDelegate.swift` | 核心业务逻辑，服务集成和翻译窗口管理 |
 | `MenuBarController.swift` | 状态栏菜单管理和翻译功能 |
 | `HotKeyManager.swift` | 全局热键注册和管理 |
 | `ClipboardManager.swift` | 剪贴板内容获取和文本验证 |
 | `translationservice.swift` | 翻译服务类型定义和三种翻译服务实现 |
 | `BorderlessWindow.swift` | 无边框窗口实现 |
-| `ClickableContentView.swift` | 窗口交互处理 |
+| `ClickableContentView.swift` | 窗口交互处理和拖拽支持 |
 | `KeyboardSimulator.swift` | 键盘事件模拟器 |
 
 ### 工作流程
@@ -254,8 +236,7 @@ iDict/
 │   ├── Info.plist                    # 应用配置信息
 │   └── iDict.entitlements            # 应用权限配置文件
 ├── Makefile                          # 构建脚本
-├── README.md                         # 项目文档
-└── LICENSE                           # 许可证文件
+└── README.md                         # 项目文档
 ```
 
 ### 构建命令
@@ -264,20 +245,11 @@ iDict/
 # 查看所有可用命令
 make help
 
-# 构建 Release 版本
-make release
+# 构建并运行 Debug 版本
+make debug
 
-# 构建并安装
-make install
-
-# 运行应用
-make run
-
-# 清理构建文件
-make clean
-
-# 卸载应用
-make uninstall
+# 构建、安装、更新版本并推送到Git
+make push MSG="提交信息"
 ```
 
 ## 🐛 故障排除
