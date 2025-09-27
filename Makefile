@@ -3,7 +3,7 @@
 # 作者: David
 # 版本: 2.0
 
-.PHONY: debug install push help
+.PHONY: debug push help _update_version
 
 # =============================================================================
 # 项目配置
@@ -28,6 +28,8 @@ NC = \033[0m # No Color
 # 默认目标
 # =============================================================================
 
+.DEFAULT_GOAL := help
+
 
 
 # =============================================================================
@@ -40,16 +42,14 @@ help:
 	@echo ""
 	@echo "$(GREEN)核心命令:$(NC)"
 	@echo "  $(YELLOW)debug$(NC)       - 构建并运行 Debug 版本"
-	@echo "  $(YELLOW)push$(NC)        - Git 提交推送 (需要 MSG=\"提交信息\")"
+	@echo "  $(YELLOW)push$(NC)        - 构建、安装、更新版本并推送到Git (需要 MSG=\"提交信息\")"
 	@echo ""
 	@echo "$(GREEN)其他:$(NC)"
 	@echo "  $(YELLOW)help$(NC)        - 显示此帮助信息"
-
-
-
-# =============================================================================
-# 构建命令
-# =============================================================================
+	@echo ""
+	@echo "$(GREEN)使用示例:$(NC)"
+	@echo "  $(CYAN)make debug$(NC)                    - 开发调试"
+	@echo "  $(CYAN)make push MSG=\"修复bug\"$(NC)       - 完整发布流程"
 
 debug:
 	@echo "$(BLUE)开始 Debug 构建和运行...$(NC)"
@@ -78,8 +78,6 @@ debug:
 		echo "$(RED)❌ 找不到构建的应用程序$(NC)"; \
 		exit 1; \
 	fi
-
-
 
 _update_version:
 	@echo "$(YELLOW)更新版本信息...$(NC)"
@@ -111,13 +109,13 @@ _update_version:
 		exit 1; \
 	fi
 
-# =============================================================================
-# Git 命令
-# =============================================================================
-
-
 push:
-	@echo "$(BLUE)开始完整安装流程...$(NC)"
+	@echo "$(BLUE)开始完整构建安装和推送流程...$(NC)"
+	@if [ -z "$(MSG)" ]; then \
+		echo "$(RED)错误: 请提供提交信息$(NC)"; \
+		echo "$(YELLOW)使用方法: make push MSG=\"你的提交信息\"$(NC)"; \
+		exit 1; \
+	fi
 	@echo "$(YELLOW)1. 清理构建文件...$(NC)"
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
@@ -148,13 +146,7 @@ push:
 		echo "$(RED)❌ 错误: 找不到构建的应用程序$(NC)"; \
 		exit 1; \
 	fi
-
-	@echo "$(BLUE)提交并推送到GitHub...$(NC)"
-	@if [ -z "$(MSG)" ]; then \
-		echo "$(RED)错误: 请提供提交信息$(NC)"; \
-		echo "$(YELLOW)使用方法: make push MSG=\"你的提交信息\"$(NC)"; \
-		exit 1; \
-	fi
+	@echo "$(YELLOW)7. 提交并推送到GitHub...$(NC)"
 	@CURRENT_BRANCH=$$(git branch --show-current); \
 	if [ -z "$$CURRENT_BRANCH" ]; then \
 		echo "$(RED)错误: 无法获取当前分支$(NC)"; \
