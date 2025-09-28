@@ -1,10 +1,5 @@
 //
 //  BorderlessWindow.swift
-//  iDict
-//
-//  Created by iDict Team
-//  Copyright © 2025 iDict App. All rights reserved.
-//
 //  无边框窗口类：支持键盘焦点和快捷键关闭
 //
 

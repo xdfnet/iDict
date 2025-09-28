@@ -1,10 +1,5 @@
 //
 //  ClickableContentView.swift
-//  iDict
-//
-//  Created by iDict Team
-//  Copyright © 2025 iDict App. All rights reserved.
-//
 //  可交互内容视图：支持拖拽和焦点管理
 //
 

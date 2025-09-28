@@ -1,10 +1,5 @@
 //
 //  MenuBarController.swift
-//  iDict
-//
-//  Created by iDict Team
-//  Copyright © 2025 iDict App. All rights reserved.
-//
 //  菜单栏控制器：负责状态栏文本展示与菜单交互
 //
 //  功能说明：
