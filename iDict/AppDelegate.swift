@@ -149,11 +149,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 复用现有窗口
                 window = existingWindow
                 
-                // 调整窗口大小以适应新内容
+                // 调整窗口大小以适应新内容，保持窗口中心位置不变
                 let currentFrame = window.frame
+                let currentCenterX = currentFrame.midX
+                let currentCenterY = currentFrame.midY
                 let newFrame = NSRect(
-                    x: currentFrame.origin.x,
-                    y: currentFrame.origin.y + (currentFrame.height - windowHeight), // 保持窗口顶部位置不变
+                    x: currentCenterX - windowWidth / 2,
+                    y: currentCenterY - windowHeight / 2,
                     width: windowWidth,
                     height: windowHeight
                 )
@@ -167,8 +169,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     defer: false
                 )
                 
-                // 将窗口居中于屏幕。
-                window.center()
+                // 将窗口居中于屏幕
+                let visibleScreenFrame = NSScreen.main?.visibleFrame ?? NSRect.zero
+                let screenCenterX = visibleScreenFrame.midX
+                let screenCenterY = visibleScreenFrame.midY
+                let windowCenterX = screenCenterX - windowWidth / 2
+                let windowCenterY = screenCenterY - windowHeight / 2
+                let centeredFrame = NSRect(
+                    x: windowCenterX,
+                    y: windowCenterY,
+                    width: windowWidth,
+                    height: windowHeight
+                )
+                window.setFrame(centeredFrame, display: true)
                 
                 // 配置窗口属性
                 window.isReleasedWhenClosed = false // 关闭时不释放，以便复用

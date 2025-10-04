@@ -21,40 +21,36 @@ class ClipboardManager {
     // MARK: - 公共方法
     
     /// 获取并验证剪贴板文本是否符合翻译要求。
+    ///
+    /// 执行以下验证步骤：
+    /// 1. 检查剪贴板中是否存在有效文本内容
+    /// 2. 验证文本长度限制
+    ///
+    /// - Returns: 成功时返回处理后的文本，失败时返回对应的错误信息
     func getClipboardText() async -> Result<String, ClipboardError> {
         let pasteboard = NSPasteboard.general
-        
-        // 1. 检查剪贴板中是否存在字符串内容。
+
+        // 步骤1：检查剪贴板中是否存在字符串内容
         guard let text = pasteboard.string(forType: .string) else {
             return .failure(.emptyOrNonText)
         }
-        
-        // 2. 清理字符串首尾的空白和换行符。
-        let cleanText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if cleanText.isEmpty {
+
+        // 步骤2：清理和规范化文本内容（去除首尾空白、清理连续空格）
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let components = trimmedText.components(separatedBy: .whitespaces)
+        let normalizedText = components.filter { !$0.isEmpty }.joined(separator: " ")
+
+        // 步骤3：检查清理后的文本是否为空
+        guard !normalizedText.isEmpty else {
             return .failure(.emptyOrNonText)
         }
-        
-        // 3. 检查文本长度是否超出限制。
-        if cleanText.count > self.maxTextLength {
+
+        // 步骤4：检查文本长度是否超出限制
+        guard normalizedText.count <= self.maxTextLength else {
             return .failure(.textTooLong)
         }
-        
-        // 4. 检查文本是否主要由英文字符组成，以避免翻译非英文内容。
-        let englishCharCount = cleanText.filter { $0.isLetter && $0.isASCII }.count
-        let totalCharCount = cleanText.count
-        
-        // 如果文本总字符数大于0，计算英文字符比例。
-        if totalCharCount > 0 {
-            let englishRatio = Double(englishCharCount) / Double(totalCharCount)
-            // 如果英文字符比例低于50%，则认为不是有效的翻译对象。
-            if englishRatio <= 0.5 {
-                return .failure(.notEnglishText)
-            }
-        }
-        
-        return .success(cleanText)
+
+        return .success(normalizedText)
     }
 }
 
@@ -64,16 +60,13 @@ class ClipboardManager {
 enum ClipboardError: LocalizedError {
     case emptyOrNonText
     case textTooLong
-    case notEnglishText
-    
+
     var errorDescription: String? {
         switch self {
         case .emptyOrNonText:
             return "剪贴板中没有文本内容。"
         case .textTooLong:
             return "选中文本过长，请缩短后再试。"
-        case .notEnglishText:
-            return "选中文本似乎不是英文，暂不支持。"
         }
     }
 }

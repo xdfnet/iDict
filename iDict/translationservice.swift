@@ -26,10 +26,10 @@ enum TranslationServiceType: String, CaseIterable {
 struct GoogleTranslationService {
     static func translate(_ text: String) async -> String {
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=\(encodedText)") else {
+              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh&dt=t&q=\(encodedText)") else {
             return text
         }
-        
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [Any],
@@ -48,9 +48,9 @@ struct GoogleTranslationService {
 // MARK: - Microsoft翻译服务
 struct MicrosoftTranslationService {
     static func translate(_ text: String) async -> String {
-        // 使用Microsoft Translator通过MyMemory代理
+        // 使用Microsoft Translator通过MyMemory代理，自动检测源语言
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=en|zh-CN&de=microsoft@mymemory.translated.net") else {
+              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=auto|zh-CN&de=microsoft@mymemory.translated.net") else {
             return text
         }
         
@@ -85,9 +85,9 @@ struct MicrosoftTranslationService {
 // MARK: - DeepL翻译服务
 struct DeepLTranslationService {
     static func translate(_ text: String) async -> String {
-        // 使用DeepL的免费翻译API（通过第三方代理）
+        // 使用DeepL的免费翻译API（通过第三方代理），自动检测源语言
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=en|zh-CN&de=deepl@mymemory.translated.net") else {
+              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=auto|zh-CN&de=deepl@mymemory.translated.net") else {
             return text
         }
         
