@@ -32,10 +32,11 @@ struct GoogleTranslationService {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [Any],
-               let firstLevel = jsonObject.first as? [Any],
-               let secondLevel = firstLevel.first as? [Any],
-               let translatedText = secondLevel.first as? String {
-                return translatedText
+               let sentences = jsonObject.first as? [[Any]] {
+                let translatedText = sentences.compactMap { $0.first as? String }.joined()
+                if !translatedText.isEmpty {
+                    return translatedText
+                }
             }
         } catch {
             // 网络错误时返回原文
@@ -66,11 +67,24 @@ struct MicrosoftTranslationService {
             if let httpResponse = response as? HTTPURLResponse,
                httpResponse.statusCode == 200 {
                 
-                if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let responseData = jsonObject["responseData"] as? [String: Any],
-                   let translatedText = responseData["translatedText"] as? String,
-                   !translatedText.isEmpty {
-                    return translatedText
+                if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    if let translatedText = jsonObject["translatedText"] as? String, !translatedText.isEmpty {
+                        return translatedText
+                    }
+                    if let matches = jsonObject["matches"] as? [[String: Any]] {
+                        let combinedMatches = matches.compactMap { match -> String? in
+                            guard let matchText = match["translation"] as? String else { return nil }
+                            return matchText
+                        }.joined()
+                        if !combinedMatches.isEmpty {
+                            return combinedMatches
+                        }
+                    }
+                    if let responseData = jsonObject["responseData"] as? [String: Any],
+                       let translatedText = responseData["translatedText"] as? String,
+                       !translatedText.isEmpty {
+                        return translatedText
+                    }
                 }
             }
         } catch {
@@ -103,11 +117,24 @@ struct DeepLTranslationService {
             if let httpResponse = response as? HTTPURLResponse,
                httpResponse.statusCode == 200 {
                 
-                if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let responseData = jsonObject["responseData"] as? [String: Any],
-                   let translatedText = responseData["translatedText"] as? String,
-                   !translatedText.isEmpty {
-                    return translatedText
+                if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    if let translatedText = jsonObject["translatedText"] as? String, !translatedText.isEmpty {
+                        return translatedText
+                    }
+                    if let matches = jsonObject["matches"] as? [[String: Any]] {
+                        let combinedMatches = matches.compactMap { match -> String? in
+                            guard let matchText = match["translation"] as? String else { return nil }
+                            return matchText
+                        }.joined(separator: " ")
+                        if !combinedMatches.isEmpty {
+                            return combinedMatches
+                        }
+                    }
+                    if let responseData = jsonObject["responseData"] as? [String: Any],
+                       let translatedText = responseData["translatedText"] as? String,
+                       !translatedText.isEmpty {
+                        return translatedText
+                    }
                 }
             }
         } catch {
