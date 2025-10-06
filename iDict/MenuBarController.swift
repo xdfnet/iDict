@@ -9,15 +9,11 @@
 //
 import Cocoa
 import SwiftUI
-import Combine
 
 // MARK: - 菜单栏控制器
-class MenuBarController: NSObject, ObservableObject {
+class MenuBarController: NSObject {
     
     // MARK: - 属性
-    
-    /// ObservableObject 协议要求
-    let objectWillChange = ObservableObjectPublisher()
     
     /// UI 组件
     private var statusBarItem: NSStatusItem?
@@ -93,7 +89,7 @@ class MenuBarController: NSObject, ObservableObject {
         let serviceMenuItem = NSMenuItem(title: "Translation Service", action: nil, keyEquivalent: "")
         let serviceSubmenu = NSMenu()
         
-        let currentService = translationServiceManager.currentServiceType
+        let currentService = translationServiceManager.getCurrentServiceType()
         
         for serviceType in TranslationServiceType.allCases {
             let menuItem = NSMenuItem(

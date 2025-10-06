@@ -5,7 +5,6 @@
 //
 
 import Foundation
-import Combine
 
 // MARK: - 翻译服务类型
 enum TranslationServiceType: String, CaseIterable {
@@ -26,7 +25,7 @@ enum TranslationServiceType: String, CaseIterable {
 struct GoogleTranslationService {
     static func translate(_ text: String) async -> String {
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh&dt=t&q=\(encodedText)") else {
+              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=\(encodedText)") else {
             return text
         }
 
@@ -48,9 +47,9 @@ struct GoogleTranslationService {
 // MARK: - Microsoft翻译服务
 struct MicrosoftTranslationService {
     static func translate(_ text: String) async -> String {
-        // 使用Microsoft Translator通过MyMemory代理，自动检测源语言
+        // 使用Microsoft Translator通过MyMemory代理，指定英文到中文翻译
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=auto|zh-CN&de=microsoft@mymemory.translated.net") else {
+              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=en|zh-CN&de=microsoft@mymemory.translated.net") else {
             return text
         }
         
@@ -85,9 +84,9 @@ struct MicrosoftTranslationService {
 // MARK: - DeepL翻译服务
 struct DeepLTranslationService {
     static func translate(_ text: String) async -> String {
-        // 使用DeepL的免费翻译API（通过第三方代理），自动检测源语言
+        // 使用DeepL的免费翻译API（通过第三方代理），指定英文到中文翻译
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=auto|zh-CN&de=deepl@mymemory.translated.net") else {
+              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encodedText)&langpair=en|zh-CN&de=deepl@mymemory.translated.net") else {
             return text
         }
         
@@ -121,8 +120,8 @@ struct DeepLTranslationService {
 
 // MARK: - 翻译服务管理器
 @MainActor
-final class TranslationServiceManager: ObservableObject {
-    @Published var currentServiceType: TranslationServiceType = .google
+final class TranslationServiceManager {
+    private var currentServiceType: TranslationServiceType = .google
     
     init() {
         // 从用户偏好设置中恢复上次选择的服务
@@ -146,5 +145,9 @@ final class TranslationServiceManager: ObservableObject {
     func switchService(to serviceType: TranslationServiceType) {
         currentServiceType = serviceType
         UserDefaults.standard.set(serviceType.rawValue, forKey: "selectedTranslationService")
+    }
+    
+    func getCurrentServiceType() -> TranslationServiceType {
+        return currentServiceType
     }
 }
