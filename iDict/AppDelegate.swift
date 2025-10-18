@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // 根据文本尺寸和边距计算最终的窗口尺寸。
             let windowWidth = textWidth + padding
             let windowHeight = textHeight + padding
-            let newWindowSize = NSSize(width: windowWidth, height: windowHeight)
+            _ = NSSize(width: windowWidth, height: windowHeight)
             
             // --- 2. 复用或创建窗口 ---
             let window: BorderlessWindow
@@ -149,13 +149,61 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 复用现有窗口
                 window = existingWindow
                 
-                // 调整窗口大小以适应新内容，保持窗口中心位置不变
-                let currentFrame = window.frame
-                let currentCenterX = currentFrame.midX
-                let currentCenterY = currentFrame.midY
+                // 获取鼠标当前位置并在鼠标上方显示窗口
+                let mouseLocation = NSEvent.mouseLocation
+                
+                // 获取鼠标所在的屏幕（支持多显示器环境）
+                let mouseScreen = NSScreen.screens.first { screen in
+                    let frame = screen.frame
+                    return mouseLocation.x >= frame.minX && mouseLocation.x <= frame.maxX &&
+                           mouseLocation.y >= frame.minY && mouseLocation.y <= frame.maxY
+                } ?? NSScreen.main
+                
+                
+                let visibleScreenFrame = mouseScreen?.visibleFrame ?? NSRect.zero
+                let screenFrame = mouseScreen?.frame ?? NSRect.zero
+                
+                // 将鼠标位置从全局坐标转换为当前屏幕坐标
+                let adjustedMouseX = mouseLocation.x - screenFrame.origin.x
+                let adjustedMouseY = mouseLocation.y - screenFrame.origin.y
+                
+                // 检测屏幕方向（竖屏或横屏）
+                let isPortrait = screenFrame.height > screenFrame.width
+                
+                // 计算窗口位置，使其显示在鼠标上方，留出一些间距
+                let offsetFromMouse: CGFloat = 20  // 窗口与鼠标的间距
+                let windowX = adjustedMouseX - windowWidth / 2  // 水平居中于鼠标
+                let windowY = adjustedMouseY + offsetFromMouse  // 在鼠标上方
+                
+                // 确保窗口不会超出屏幕边界
+                var finalX = max(0, min(windowX, visibleScreenFrame.width - windowWidth))
+                var finalY = max(0, min(windowY, visibleScreenFrame.height - windowHeight))
+                
+                // 针对竖屏显示器的特殊处理
+                if isPortrait {
+                    // 在竖屏上，如果窗口会超出顶部，则显示在鼠标下方
+                    if windowY > visibleScreenFrame.height - windowHeight {
+                        finalY = adjustedMouseY - windowHeight - offsetFromMouse
+                        // 确保不会超出底部
+                        finalY = max(0, finalY)
+                    }
+                    
+                    // 在竖屏上，如果窗口会超出左右边界，则调整水平位置
+                    if windowX < 0 {
+                        finalX = 0
+                    } else if windowX > visibleScreenFrame.width - windowWidth {
+                        finalX = visibleScreenFrame.width - windowWidth
+                    }
+                }
+                
+                
+                // 计算窗口在全局坐标系中的位置
+                let globalX = finalX + screenFrame.origin.x
+                let globalY = finalY + screenFrame.origin.y
+                
                 let newFrame = NSRect(
-                    x: currentCenterX - windowWidth / 2,
-                    y: currentCenterY - windowHeight / 2,
+                    x: globalX,
+                    y: globalY,
                     width: windowWidth,
                     height: windowHeight
                 )
@@ -169,19 +217,66 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     defer: false
                 )
                 
-                // 将窗口居中于屏幕
-                let visibleScreenFrame = NSScreen.main?.visibleFrame ?? NSRect.zero
-                let screenCenterX = visibleScreenFrame.midX
-                let screenCenterY = visibleScreenFrame.midY
-                let windowCenterX = screenCenterX - windowWidth / 2
-                let windowCenterY = screenCenterY - windowHeight / 2
-                let centeredFrame = NSRect(
-                    x: windowCenterX,
-                    y: windowCenterY,
+                // 获取鼠标当前位置并在鼠标上方显示窗口
+                let mouseLocation = NSEvent.mouseLocation
+                
+                // 获取鼠标所在的屏幕（支持多显示器环境）
+                let mouseScreen = NSScreen.screens.first { screen in
+                    let frame = screen.frame
+                    return mouseLocation.x >= frame.minX && mouseLocation.x <= frame.maxX &&
+                           mouseLocation.y >= frame.minY && mouseLocation.y <= frame.maxY
+                } ?? NSScreen.main
+                
+                
+                let visibleScreenFrame = mouseScreen?.visibleFrame ?? NSRect.zero
+                let screenFrame = mouseScreen?.frame ?? NSRect.zero
+                
+                // 将鼠标位置从全局坐标转换为当前屏幕坐标
+                let adjustedMouseX = mouseLocation.x - screenFrame.origin.x
+                let adjustedMouseY = mouseLocation.y - screenFrame.origin.y
+                
+                
+                // 检测屏幕方向（竖屏或横屏）
+                let isPortrait = screenFrame.height > screenFrame.width
+                
+                // 计算窗口位置，使其显示在鼠标上方，留出一些间距
+                let offsetFromMouse: CGFloat = 20  // 窗口与鼠标的间距
+                let windowX = adjustedMouseX - windowWidth / 2  // 水平居中于鼠标
+                let windowY = adjustedMouseY + offsetFromMouse  // 在鼠标上方
+                
+                // 确保窗口不会超出屏幕边界
+                var finalX = max(0, min(windowX, visibleScreenFrame.width - windowWidth))
+                var finalY = max(0, min(windowY, visibleScreenFrame.height - windowHeight))
+                
+                // 针对竖屏显示器的特殊处理
+                if isPortrait {
+                    // 在竖屏上，如果窗口会超出顶部，则显示在鼠标下方
+                    if windowY > visibleScreenFrame.height - windowHeight {
+                        finalY = adjustedMouseY - windowHeight - offsetFromMouse
+                        // 确保不会超出底部
+                        finalY = max(0, finalY)
+                    }
+                    
+                    // 在竖屏上，如果窗口会超出左右边界，则调整水平位置
+                    if windowX < 0 {
+                        finalX = 0
+                    } else if windowX > visibleScreenFrame.width - windowWidth {
+                        finalX = visibleScreenFrame.width - windowWidth
+                    }
+                }
+                
+                
+                // 计算窗口在全局坐标系中的位置
+                let globalX = finalX + screenFrame.origin.x
+                let globalY = finalY + screenFrame.origin.y
+                
+                let mouseFrame = NSRect(
+                    x: globalX,
+                    y: globalY,
                     width: windowWidth,
                     height: windowHeight
                 )
-                window.setFrame(centeredFrame, display: true)
+                window.setFrame(mouseFrame, display: true)
                 
                 // 配置窗口属性
                 window.isReleasedWhenClosed = false // 关闭时不释放，以便复用
