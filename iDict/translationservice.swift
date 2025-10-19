@@ -16,7 +16,7 @@ enum TranslationServiceType: String, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .tencent: return "腾讯翻译"
+        case .tencent: return "Tencent Translate"
         case .google: return "Google Translate"
         case .microsoft: return "Microsoft Translator"
         case .deepl: return "DeepL Translate"
