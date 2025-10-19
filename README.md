@@ -1,6 +1,6 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.42-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.43-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
 
@@ -22,7 +22,7 @@
 
 ### 核心功能
 - 🚀 **一键翻译** - 使用 `Cmd + D` 热键快速翻译选中的英文文本
-- 🔄 **多翻译服务** - 支持 Google Translate、Microsoft Translator 和 DeepL 翻译，可在菜单栏中切换
+- 🔄 **多翻译服务** - 支持 腾讯翻译、Google Translate、Microsoft Translator 和 DeepL 翻译，可在菜单栏中切换
 - 📊 **服务状态检测** - 自动检测翻译服务可用性，智能提示服务状态
 
 ### 界面体验
@@ -95,7 +95,7 @@ make push MSG="修复翻译bug"    # 完整发布流程
 
 1. **选择翻译服务**
    - 点击菜单栏中的 iDict 图标
-   - 在下拉菜单中选择翻译服务（Google Translate、Microsoft Translator 或 DeepL 翻译）
+   - 在下拉菜单中选择翻译服务（腾讯翻译、Google Translate、Microsoft Translator 或 DeepL 翻译）
    - 系统会自动检测服务可用性并显示状态
 
 2. **翻译文本**
@@ -118,9 +118,53 @@ make push MSG="修复翻译bug"    # 完整发布流程
 
 ## 🔧 翻译服务配置
 
-本应用使用公开翻译接口，无需配置API密钥。
+本应用支持多种翻译服务，其中腾讯翻译需要配置API密钥，其他服务使用公开接口。
 
-### Google Translate（推荐）
+### 腾讯翻译（默认，推荐）
+
+腾讯翻译提供高质量的中文翻译结果，是本应用的默认翻译服务。
+
+#### 获取API密钥
+
+1. 访问 [腾讯云控制台](https://console.cloud.tencent.com/)
+2. 登录你的腾讯云账号
+3. 进入"访问管理 > API密钥管理"
+4. 创建新的API密钥或使用现有密钥
+5. 记录你的SecretId和SecretKey
+
+#### 配置环境变量
+
+在终端中编辑你的shell配置文件（如.zshrc）：
+
+```bash
+# 打开.zshrc文件
+open ~/.zshrc
+
+# 添加以下两行到文件末尾
+export SecretId=你的SecretId
+export SecretKey=你的SecretKey
+
+# 保存文件后，重新加载配置
+source ~/.zshrc
+```
+
+#### 验证配置
+
+确保环境变量已正确设置：
+
+```bash
+echo $SecretId
+echo $SecretKey
+```
+
+#### 注意事项
+
+- 请妥善保管你的API密钥，不要泄露给他人
+- 腾讯云翻译服务有免费额度，超出后会产生费用
+- 如果遇到API调用失败，请检查环境变量是否正确设置、网络是否正常
+- 使用环境变量是更安全的配置方式，避免将敏感信息硬编码在代码中
+
+### Google Translate
 
 - **API地址**: `https://translate.googleapis.com/translate_a/single`
 - **请求方法**: GET
@@ -190,7 +234,7 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 - **响应式编程**: Combine Framework
 - **系统集成**: Carbon Framework (全局热键) + ApplicationServices (键盘事件)
 - **网络**: URLSession
-- **翻译API**: Google Translate API + Microsoft Translator API + DeepL API (通过MyMemory代理)
+- **翻译API**: 腾讯翻译API + Google Translate API + Microsoft Translator API + DeepL API (通过MyMemory代理)
 - **构建工具**: Xcode + Makefile
 
 ### 核心组件
@@ -202,7 +246,7 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 | `MenuBarController.swift` | 状态栏菜单管理和翻译功能 |
 | `HotKeyManager.swift` | 全局热键注册和管理 |
 | `ClipboardManager.swift` | 剪贴板内容获取和文本验证 |
-| `translationservice.swift` | 翻译服务类型定义和三种翻译服务实现 |
+| `translationservice.swift` | 翻译服务类型定义和四种翻译服务实现（腾讯、Google、Microsoft、DeepL） |
 | `BorderlessWindow.swift` | 无边框窗口实现 |
 | `ClickableContentView.swift` | 窗口交互处理和拖拽支持 |
 | `KeyboardSimulator.swift` | 键盘事件模拟器 |
@@ -282,6 +326,56 @@ make push MSG="提交信息"
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+## 🎨 图标设计规范
+
+### 基本形状与设计风格
+
+- **形状**：圆角矩形形状（squircle）
+- **视角**：正面透视视角
+- **位置**：水平位置
+- **阴影效果**：统一的阴影效果，确保系统中的视觉一致性
+- **不透明度**：图标应完全不透明，避免使用透明背景
+
+### 尺寸规范（必须提供所有尺寸）
+
+| 尺寸 | 用途 |
+|------|------|
+| 16×16 | Finder、菜单栏等小尺寸显示 |
+| 32×32 | Finder、文件信息等 |
+| 64×64 | 32×32 的 @2x 版本（Retina 显示屏） |
+| 128×128 | Finder 图标视图等 |
+| 256×256 | 各种中等尺寸显示 |
+| 512×512 | Dock、大图标视图等 |
+| 1024×1024 | 512×512 的 @2x 版本（Retina 显示屏） |
+
+### 设计注意事项
+
+- **避免使用照片**：小尺寸下照片细节难以辨认
+- **避免使用屏幕截图**：可能导致图标过于复杂
+- **避免使用界面元素**：影响图标的识别度
+- **简洁背景**：使用简单的背景，避免影响附近的其他应用图标
+- **测试不同背景**：在不同壁纸和背景下测试图标可见性
+
+### macOS Big Sur 及以后的设计风格
+
+- **统一外观**：强调统一的外观轮廓和精致的细节
+- **一致性**：与系统其他图标保持视觉一致性
+- **正面透视**：采用正面透视视角
+- **阴影效果**：加入一致的阴影效果
+
+### 在 Xcode 中实现
+
+- **Asset Catalog**：使用 Xcode 的 Asset Catalog 添加应用图标
+- **AppIcon 集合**：在 Assets.xcassets 中创建 AppIcon 图标集
+- **文件格式**：提供 PNG 格式的各尺寸图标
+- **自动生成**：Xcode 会自动生成 .icns 文件
+
+### 图标文件格式
+
+- **最终格式**：macOS 应用图标最终使用 .icns 格式
+- **包含内容**：一个 .icns 文件包含多种尺寸的图标
+- **生成方式**：通过 Xcode 的 Asset Catalog 自动生成
 
 ## 📞 支持
 
