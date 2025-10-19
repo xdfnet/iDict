@@ -27,19 +27,36 @@ enum TranslationServiceType: String, CaseIterable {
 // MARK: - 腾讯翻译服务
 struct TencentTranslationService {
     // 腾讯云机器翻译API配置
-    // 从环境变量中获取API密钥
-    private static let secretId = ProcessInfo.processInfo.environment["SecretId"] ?? ""
-    private static let secretKey = ProcessInfo.processInfo.environment["SecretKey"] ?? ""
+    // 从UserDefaults中获取API密钥
+    private static var secretId: String {
+        return UserDefaults.standard.string(forKey: "TencentSecretId") ?? ""
+    }
+    
+    private static var secretKey: String {
+        return UserDefaults.standard.string(forKey: "TencentSecretKey") ?? ""
+    }
+    
     private static let region = "ap-beijing"
     private static let endpoint = "tmt.tencentcloudapi.com"
     private static let action = "TextTranslate"
     private static let version = "2018-03-21"
     private static let service = "tmt"
     
+    // 提供设置API密钥的方法
+    static func setAPIKeys(secretId: String, secretKey: String) {
+        UserDefaults.standard.set(secretId, forKey: "TencentSecretId")
+        UserDefaults.standard.set(secretKey, forKey: "TencentSecretKey")
+    }
+    
+    // 检查API密钥是否已配置
+    static func isAPIKeyConfigured() -> Bool {
+        return !secretId.isEmpty && !secretKey.isEmpty
+    }
+    
     static func translate(_ text: String) async -> String {
-        // 检查环境变量是否已配置
+        // 检查API密钥是否已配置
         guard !secretId.isEmpty && !secretKey.isEmpty else {
-            print("腾讯翻译API密钥未配置，请检查环境变量SecretId和SecretKey")
+            print("腾讯翻译API密钥未配置，请在设置中配置API密钥")
             return "腾讯翻译API密钥未配置"
         }
         

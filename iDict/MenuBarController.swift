@@ -74,6 +74,10 @@ class MenuBarController: NSObject {
         menu.addItem(createServiceSelectionMenu())
         menu.addItem(NSMenuItem.separator())
         
+        // Settings
+        menu.addItem(createSettingsMenu())
+        menu.addItem(NSMenuItem.separator())
+        
         // About
         menu.addItem(createAboutMenu())
         menu.addItem(NSMenuItem.separator())
@@ -110,6 +114,43 @@ class MenuBarController: NSObject {
         
         serviceMenuItem.submenu = serviceSubmenu
         return serviceMenuItem
+    }
+    
+    /// 创建设置菜单
+    private func createSettingsMenu() -> NSMenuItem {
+        let settingsItem = NSMenuItem(title: "Settings", action: #selector(showSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        return settingsItem
+    }
+    
+    /// 显示设置窗口
+    @objc private func showSettings() {
+        // 检查是否已有设置窗口存在
+        if let existingWindow = NSApp.windows.first(where: { $0.title == "Settings" }) {
+            existingWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+        
+        let settingsWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        
+        settingsWindow.title = "Settings"
+        settingsWindow.center()
+        
+        // 设置窗口为非模态窗口，不会阻止其他操作
+        settingsWindow.isReleasedWhenClosed = false
+        
+        // 创建设置界面
+        let settingsView = SettingsView()
+        let hostingView = NSHostingView(rootView: settingsView)
+        settingsWindow.contentView = hostingView
+        
+        // 显示窗口
+        settingsWindow.makeKeyAndOrderFront(nil)
     }
     
     /// 选择翻译服务
