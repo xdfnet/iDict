@@ -112,8 +112,6 @@ class MenuBarController: NSObject {
         return serviceMenuItem
     }
     
-    
-    
     /// 选择翻译服务
     @objc private func selectTranslationService(_ sender: NSMenuItem) {
         guard let serviceType = sender.representedObject as? TranslationServiceType else { 

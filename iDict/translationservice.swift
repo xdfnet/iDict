@@ -5,19 +5,143 @@
 //
 
 import Foundation
+import CommonCrypto
 
 // MARK: - 翻译服务类型
 enum TranslationServiceType: String, CaseIterable {
+    case tencent = "Tencent"
     case google = "Google"
     case microsoft = "Microsoft"
     case deepl = "DeepL"
     
     var displayName: String {
         switch self {
+        case .tencent: return "腾讯翻译"
         case .google: return "Google Translate"
         case .microsoft: return "Microsoft Translator"
         case .deepl: return "DeepL Translate"
         }
+    }
+}
+
+// MARK: - 腾讯翻译服务
+struct TencentTranslationService {
+    // 腾讯云机器翻译API配置
+    // 从环境变量中获取API密钥
+    private static let secretId = ProcessInfo.processInfo.environment["SecretId"] ?? ""
+    private static let secretKey = ProcessInfo.processInfo.environment["SecretKey"] ?? ""
+    private static let region = "ap-beijing"
+    private static let endpoint = "tmt.tencentcloudapi.com"
+    private static let action = "TextTranslate"
+    private static let version = "2018-03-21"
+    private static let service = "tmt"
+    
+    static func translate(_ text: String) async -> String {
+        // 检查环境变量是否已配置
+        guard !secretId.isEmpty && !secretKey.isEmpty else {
+            print("腾讯翻译API密钥未配置，请检查环境变量SecretId和SecretKey")
+            return "腾讯翻译API密钥未配置"
+        }
+        
+        // 创建请求参数
+        let source = "en"
+        let target = "zh"
+        let projectId = 0
+        
+        // 生成时间戳和随机数
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let nonce = Int.random(in: 1...1000000)
+        
+        // 构建请求参数
+        var params: [String: Any] = [
+            "Action": action,
+            "Version": version,
+            "Region": region,
+            "Timestamp": timestamp,
+            "Nonce": nonce,
+            "SecretId": secretId,
+            "SourceText": text,
+            "Source": source,
+            "Target": target,
+            "ProjectId": projectId
+        ]
+        
+        // 生成签名
+        let signature = generateSignature(params: params, secretKey: secretKey)
+        params["Signature"] = signature
+        
+        // 创建请求
+        guard let url = URL(string: "https://\(endpoint)") else {
+            return text
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        // 构建请求体
+        var bodyComponents: [String] = []
+        for (key, value) in params {
+            let encodedKey = key.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? key
+            let encodedValue = "\(value)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "\(value)"
+            bodyComponents.append("\(encodedKey)=\(encodedValue)")
+        }
+        request.httpBody = bodyComponents.joined(separator: "&").data(using: .utf8)
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            // 检查HTTP状态码
+            if let httpResponse = response as? HTTPURLResponse,
+               httpResponse.statusCode == 200 {
+                
+                if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    // 检查是否有错误
+                    if let responseError = jsonObject["Error"] as? [String: Any],
+                       let code = responseError["Code"] as? String {
+                        print("腾讯翻译API错误: \(code)")
+                        return text
+                    }
+                    
+                    // 获取翻译结果
+                    if let responseDict = jsonObject["Response"] as? [String: Any],
+                       let translatedText = responseDict["TargetText"] as? String,
+                       !translatedText.isEmpty {
+                        return translatedText
+                    }
+                }
+            }
+        } catch {
+            print("腾讯翻译网络错误: \(error.localizedDescription)")
+        }
+        
+        return text
+    }
+    
+    // 生成腾讯云API签名
+    private static func generateSignature(params: [String: Any], secretKey: String) -> String {
+        // 1. 对参数进行字典序排序
+        let sortedParams = params.sorted { $0.key < $1.key }
+        
+        // 2. 构建查询字符串
+        let queryString = sortedParams.map { key, value in
+            let encodedKey = key.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? key
+            let encodedValue = "\(value)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "\(value)"
+            return "\(encodedKey)=\(encodedValue)"
+        }.joined(separator: "&")
+        
+        // 3. 构建签名字符串
+        let signatureString = "POST\(endpoint)/?\(queryString)"
+        
+        // 4. 使用HMAC-SHA1计算签名
+        let signatureData = signatureString.data(using: .utf8)!
+        let keyData = secretKey.data(using: .utf8)!
+        
+        var digest = [UInt8](repeating: 0, count: Int(CC_SHA1_DIGEST_LENGTH))
+        CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA1), keyData.withUnsafeBytes { $0.baseAddress }, keyData.count, signatureData.withUnsafeBytes { $0.baseAddress }, signatureData.count, &digest)
+        
+        let signatureDataResult = Data(digest)
+        return signatureDataResult.base64EncodedString()
     }
 }
 
@@ -148,7 +272,7 @@ struct DeepLTranslationService {
 // MARK: - 翻译服务管理器
 @MainActor
 final class TranslationServiceManager {
-    private var currentServiceType: TranslationServiceType = .google
+    private var currentServiceType: TranslationServiceType = .tencent
     
     init() {
         // 从用户偏好设置中恢复上次选择的服务
@@ -160,6 +284,8 @@ final class TranslationServiceManager {
     
     func translateText(_ text: String) async -> String {
         switch currentServiceType {
+        case .tencent:
+            return await TencentTranslationService.translate(text)
         case .google:
             return await GoogleTranslationService.translate(text)
         case .microsoft:
