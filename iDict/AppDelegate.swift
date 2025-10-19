@@ -301,7 +301,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let textLabel = NSTextField(labelWithString: message)
             textLabel.frame = NSRect(x: padding / 2, y: padding / 2, width: textWidth, height: textHeight)
             textLabel.font = font
-            textLabel.alignment = .center
+            textLabel.alignment = .left
             textLabel.isEditable = false
             textLabel.isBordered = false
             textLabel.backgroundColor = .clear
