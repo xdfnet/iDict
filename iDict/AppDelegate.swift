@@ -40,6 +40,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// 负责执行文本翻译。
     let translationServiceManager = TranslationServiceManager()
     
+    /// 负责媒体控制的HTTP服务器
+    private let mediaHTTPServer = MediaHTTPServer()
+
 
 
     // MARK: - NSApplicationDelegate 生命周期
@@ -61,11 +64,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
+        // 设置消息显示回调
+        menuBarController?.showMessage = { [weak self] message in
+            Task { @MainActor in
+                await self?.showMessage(message)
+            }
+        }
+        
         // 异步任务，设置全局热键。
         Task {
             await setupHotKey()
         }
         
+        // 启动媒体控制HTTP服务器
+        setupMediaControlServer()
 
     }
     
@@ -83,6 +95,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 如果热键注册失败，显示错误信息。
         if case .failure(let error) = registrationResult {
             await showMessage("快捷键注册失败: \(error.localizedDescription)")
+        }
+    }
+    
+    /// 设置媒体控制服务器
+    private func setupMediaControlServer() {
+        let result = mediaHTTPServer.start()
+        
+        switch result {
+        case .success:
+            print("✅ 媒体控制服务器启动成功")
+            if let url = mediaHTTPServer.serverURL {
+                print("🌐 访问地址: \(url)")
+                // 显示服务器地址给用户
+                Task { @MainActor in
+                    await showMessage("媒体控制服务器已启动\n访问地址: \(url)")
+                }
+            }
+        case .failure(let error):
+            print("❌ 媒体控制服务器启动失败: \(error.localizedDescription)")
+            Task { @MainActor in
+                await showMessage("媒体控制服务器启动失败: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -331,5 +365,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 关闭翻译窗口
         currentTranslationWindow?.close()
         currentTranslationWindow = nil
+        
+        // 停止媒体控制服务器
+        mediaHTTPServer.stop()
     }
 }

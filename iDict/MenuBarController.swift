@@ -9,6 +9,7 @@
 //
 import Cocoa
 import SwiftUI
+import Foundation
 
 // MARK: - 菜单栏控制器
 class MenuBarController: NSObject {
@@ -23,6 +24,9 @@ class MenuBarController: NSObject {
     
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
+    
+    /// 显示消息的回调
+    var showMessage: ((String) -> Void)?
     
     // MARK: - 初始化
     
@@ -115,6 +119,7 @@ class MenuBarController: NSObject {
         serviceMenuItem.submenu = serviceSubmenu
         return serviceMenuItem
     }
+    
     
     /// 创建设置菜单
     private func createSettingsMenu() -> NSMenuItem {
@@ -229,6 +234,7 @@ class MenuBarController: NSObject {
     // MARK: - 菜单事件处理
     
 
+    
     
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
