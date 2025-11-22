@@ -19,6 +19,7 @@ final class MediaController {
     private enum MediaKey: Int32 {
         case playPause = 16, nextTrack = 17, prevTrack = 18
         case volumeUp = 0, volumeDown = 1, mute = 7
+        case arrowUp = 126, arrowDown = 125
     }
     
     static func playPause() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.playPause) }
@@ -27,6 +28,8 @@ final class MediaController {
     static func volumeUp() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.volumeUp) }
     static func volumeDown() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.volumeDown) }
     static func toggleMute() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.mute) }
+    static func arrowUp() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowUp) }
+    static func arrowDown() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowDown) }
     
     static func checkInputMonitoringPermission() -> Bool {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": false] as CFDictionary)
@@ -54,6 +57,23 @@ final class MediaController {
         
         doKey(down: true)
         doKey(down: false)
+        return .success(())
+    }
+    
+    private static func simulateArrowKey(_ key: MediaKey) async -> Result<Void, MediaControllerError> {
+        guard checkInputMonitoringPermission() else {
+            logger.warning("无辅助功能权限")
+            return .failure(.permissionDenied)
+        }
+        
+        let source = CGEventSource(stateID: .hidSystemState)
+        guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(key.rawValue), keyDown: true),
+              let keyUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(key.rawValue), keyDown: false) else {
+            return .failure(.eventCreationFailed)
+        }
+        
+        keyDown.post(tap: .cghidEventTap)
+        keyUp.post(tap: .cghidEventTap)
         return .success(())
     }
 }
@@ -158,6 +178,8 @@ class MediaHTTPServer: ObservableObject {
             case "volumeup": _ = await MediaController.volumeUp()
             case "volumedown": _ = await MediaController.volumeDown()
             case "mute": _ = await MediaController.toggleMute()
+            case "arrowup": _ = await MediaController.arrowUp()
+            case "arrowdown": _ = await MediaController.arrowDown()
             default: result = "unknown"; error = "未知操作"
             }
             
@@ -194,12 +216,15 @@ class MediaHTTPServer: ObservableObject {
                 .play-row{display:flex;justify-content:center;align-items:center;gap:36px}
                 .volume{display:flex;flex-direction:column;gap:20px}
                 .volume-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.3);padding:18px 24px;border-radius:18px;gap:20px}
+                .arrow-controls{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:40px}
                 button{background:none;border:none;cursor:pointer;color:#fff;transition:all .15s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center;border-radius:50%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
                 button:active{transform:scale(.88);opacity:.75}
                 .play{width:100px;height:100px;background:#fff;color:#000;box-shadow:0 6px 24px rgba(255,255,255,.4)}
                 .play:active{background:rgba(255,255,255,.85)}
                 .secondary{width:68px;height:68px;background:rgba(255,255,255,.12)}
                 .secondary:active{background:rgba(255,255,255,.22)}
+                .arrow{width:68px;height:68px;background:rgba(255,255,255,.12)}
+                .arrow:active{background:rgba(255,255,255,.22)}
                 .volume-row button{width:60px;height:60px;background:rgba(255,255,255,.1)}
                 .volume-row button:active{background:rgba(255,255,255,.2)}
                 svg{fill:currentColor;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
@@ -218,6 +243,10 @@ class MediaHTTPServer: ObservableObject {
                         <button class="play" onclick="send('playpause')" aria-label="播放/暂停"><svg width="44" height="44" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                     </div>
                     <button class="secondary" onclick="send('next')" aria-label="下一曲"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+                </div>
+                <div class="arrow-controls">
+                    <button class="arrow" onclick="send('arrowup')" aria-label="向上"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg></button>
+                    <button class="arrow" onclick="send('arrowdown')" aria-label="向下"><svg width="30" height="30" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
                 </div>
                 <div class="volume">
                     <div class="volume-row">
