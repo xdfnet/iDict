@@ -210,22 +210,21 @@ class MediaHTTPServer: ObservableObject {
             <style>
                 *{margin:0;padding:0;box-sizing:border-box}
                 body{font-family:-apple-system,sans-serif;background:linear-gradient(180deg,#1c1c1e,#000);color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;padding:env(safe-area-inset-top,20px) env(safe-area-inset-right,20px) env(safe-area-inset-bottom,20px) env(safe-area-inset-left,20px)}
-                .container{width:100%;max-width:380px;padding:40px 28px;background:rgba(28,28,30,.75);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-radius:32px;box-shadow:0 12px 48px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.12)}
+                .container{width:100%;max-width:420px;padding:40px 32px;background:rgba(28,28,30,.75);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);border-radius:32px;box-shadow:0 12px 48px rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.12)}
                 h1{font-size:18px;font-weight:600;color:rgba(235,235,245,.65);text-align:center;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:40px}
-                .track-controls{display:flex;justify-content:center;align-items:center;gap:48px;margin-bottom:36px}
-                .navigation{display:flex;flex-direction:column;align-items:center;gap:16px;margin-bottom:36px}
-                .nav-row{display:flex;justify-content:center;align-items:center;gap:16px}
+                .navigation{display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:40px}
+                .media-row{display:flex;justify-content:center;align-items:center;gap:28px}
                 .volume{display:flex;flex-direction:column;gap:20px}
-                .volume-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.3);padding:18px 24px;border-radius:18px;gap:20px}
+                .volume-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.3);padding:20px 28px;border-radius:20px;gap:24px}
                 button{background:none;border:none;cursor:pointer;color:#fff;transition:all .15s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center;border-radius:50%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
                 button:active{transform:scale(.88);opacity:.75}
-                .play{width:88px;height:88px;background:#fff;color:#000;box-shadow:0 6px 24px rgba(255,255,255,.4)}
+                .play{width:110px;height:110px;background:#fff;color:#000;box-shadow:0 6px 24px rgba(255,255,255,.4)}
                 .play:active{background:rgba(255,255,255,.85)}
-                .track{width:64px;height:64px;background:rgba(255,255,255,.12)}
+                .track{width:80px;height:80px;background:rgba(255,255,255,.12)}
                 .track:active{background:rgba(255,255,255,.22)}
-                .arrow{width:64px;height:64px;background:rgba(255,255,255,.12)}
+                .arrow{width:80px;height:80px;background:rgba(255,255,255,.12)}
                 .arrow:active{background:rgba(255,255,255,.22)}
-                .volume-row button{width:60px;height:60px;background:rgba(255,255,255,.1)}
+                .volume-row button{width:70px;height:70px;background:rgba(255,255,255,.1)}
                 .volume-row button:active{background:rgba(255,255,255,.2)}
                 svg{fill:currentColor;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
                 .toast{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;padding:16px;text-align:center;font-size:14px;font-weight:500;background:rgba(10,132,255,.95);color:#fff;transform:translateY(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1000;backdrop-filter:blur(12px)}
@@ -237,13 +236,13 @@ class MediaHTTPServer: ObservableObject {
             <div id="toast" class="toast">已发送</div>
             <div class="container">
                 <h1>iDict Remote</h1>
-                <div class="track-controls">
-                    <button class="track" onclick="send('prev')" aria-label="上一曲"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-                    <button class="track" onclick="send('next')" aria-label="下一曲"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
-                </div>
                 <div class="navigation">
                     <button class="arrow" onclick="send('arrowup')" aria-label="向上"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg></button>
-                    <button class="play" onclick="send('playpause')" aria-label="播放/暂停"><svg width="40" height="40" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <div class="media-row">
+                        <button class="track" onclick="send('prev')" aria-label="上一曲"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+                        <button class="play" onclick="send('playpause')" aria-label="播放/暂停"><svg width="40" height="40" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        <button class="track" onclick="send('next')" aria-label="下一曲"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+                    </div>
                     <button class="arrow" onclick="send('arrowdown')" aria-label="向下"><svg width="28" height="28" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
                 </div>
                 <div class="volume">
