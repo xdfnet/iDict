@@ -24,6 +24,7 @@
 - 🚀 **一键翻译** - 使用 `Cmd + D` 热键快速翻译选中的英文文本
 - 🔄 **多翻译服务** - 支持 腾讯翻译、Google Translate、Microsoft Translator 和 DeepL 翻译，可在菜单栏中切换
 - 📊 **服务状态检测** - 自动检测翻译服务可用性，智能提示服务状态
+- 🎮 **媒体远程控制** - 内置 HTTP 服务器，通过手机浏览器远程控制 Mac 的媒体播放和音量
 
 ### 界面体验
 - 🎨 **无边框窗口** - 简洁美观的翻译结果显示界面
@@ -108,6 +109,11 @@ make push MSG="修复翻译bug"    # 完整发布流程
    - 按 ESC 或 Cmd+W 关闭窗口
    - 点击窗口恢复焦点
 
+4. **媒体远程控制**
+   - 点击菜单栏图标，选择"启动媒体服务器"
+   - 使用手机浏览器访问显示的 URL（如 `http://192.168.100.202:8888`）
+   - 在手机上控制 Mac 的媒体播放、音量和方向键
+
 ### 快捷键
 
 | 快捷键 | 功能 |
@@ -115,6 +121,21 @@ make push MSG="修复翻译bug"    # 完整发布流程
 | `Cmd + D` | 翻译选中文本 |
 | `ESC` | 关闭翻译窗口 |
 | `Cmd + W` | 关闭翻译窗口 |
+
+### 媒体控制功能
+
+远程控制界面提供以下功能：
+
+| 控制 | 功能 |
+|------|------|
+| ⏮️ 上一曲 | 切换到上一首歌曲 |
+| ⏭️ 下一曲 | 切换到下一首歌曲 |
+| ▶️ 播放/暂停 | 播放或暂停当前媒体 |
+| ⬆️ 向上 | 模拟键盘向上方向键 |
+| ⬇️ 向下 | 模拟键盘向下方向键 |
+| 🔉 音量减 | 降低系统音量 |
+| 🔇 静音 | 切换静音状态 |
+| 🔊 音量加 | 提高系统音量 |
 
 ## 🔧 翻译服务配置
 
@@ -247,6 +268,7 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 | `HotKeyManager.swift` | 全局热键注册和管理 |
 | `ClipboardManager.swift` | 剪贴板内容获取和文本验证 |
 | `translationservice.swift` | 翻译服务类型定义和四种翻译服务实现（腾讯、Google、Microsoft、DeepL） |
+| `MediaController.swift` | 媒体控制和 HTTP 服务器，支持远程控制媒体播放、音量和方向键 |
 | `BorderlessWindow.swift` | 无边框窗口实现 |
 | `ClickableContentView.swift` | 窗口交互处理和拖拽支持 |
 | `KeyboardSimulator.swift` | 键盘事件模拟器 |
@@ -273,6 +295,7 @@ iDict/
 │   ├── HotKeyManager.swift           # 全局热键管理
 │   ├── ClipboardManager.swift        # 剪贴板管理
 │   ├── translationservice.swift     # 翻译服务（Google、Microsoft、DeepL）
+│   ├── MediaController.swift         # 媒体控制和 HTTP 服务器
 │   ├── BorderlessWindow.swift        # 无边框窗口实现
 │   ├── ClickableContentView.swift    # 可点击内容视图
 │   ├── KeyboardSimulator.swift       # 键盘事件模拟
