@@ -20,6 +20,7 @@ final class MediaController {
         case playPause = 16, nextTrack = 17, prevTrack = 18
         case volumeUp = 0, volumeDown = 1, mute = 7
         case arrowUp = 126, arrowDown = 125
+        case lockScreen = 12  // Q键，配合Control+Command使用
     }
     
     static func playPause() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.playPause) }
@@ -30,6 +31,7 @@ final class MediaController {
     static func toggleMute() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.mute) }
     static func arrowUp() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowUp) }
     static func arrowDown() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowDown) }
+    static func lockScreen() async -> Result<Void, MediaControllerError> { await simulateLockScreen() }
     
     static func checkInputMonitoringPermission() -> Bool {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": false] as CFDictionary)
@@ -71,6 +73,27 @@ final class MediaController {
               let keyUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(key.rawValue), keyDown: false) else {
             return .failure(.eventCreationFailed)
         }
+        
+        keyDown.post(tap: .cghidEventTap)
+        keyUp.post(tap: .cghidEventTap)
+        return .success(())
+    }
+    
+    private static func simulateLockScreen() async -> Result<Void, MediaControllerError> {
+        guard checkInputMonitoringPermission() else {
+            logger.warning("无辅助功能权限")
+            return .failure(.permissionDenied)
+        }
+        
+        let source = CGEventSource(stateID: .hidSystemState)
+        guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(MediaKey.lockScreen.rawValue), keyDown: true),
+              let keyUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(MediaKey.lockScreen.rawValue), keyDown: false) else {
+            return .failure(.eventCreationFailed)
+        }
+        
+        // 设置 Control + Command 组合键
+        keyDown.flags = [.maskControl, .maskCommand]
+        keyUp.flags = [.maskControl, .maskCommand]
         
         keyDown.post(tap: .cghidEventTap)
         keyUp.post(tap: .cghidEventTap)
@@ -180,6 +203,7 @@ class MediaHTTPServer: ObservableObject {
             case "mute": _ = await MediaController.toggleMute()
             case "arrowup": _ = await MediaController.arrowUp()
             case "arrowdown": _ = await MediaController.arrowDown()
+            case "lock": _ = await MediaController.lockScreen()
             default: result = "unknown"; error = "未知操作"
             }
             
@@ -226,6 +250,8 @@ class MediaHTTPServer: ObservableObject {
                 .arrow:active{background:rgba(255,255,255,.22)}
                 .volume-row button{width:70px;height:70px;background:rgba(255,255,255,.1)}
                 .volume-row button:active{background:rgba(255,255,255,.2)}
+                .lock-btn{width:100%;height:60px;background:rgba(44,44,46,.8);border:1px solid rgba(255,255,255,.15);border-radius:20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:15px;font-weight:500;letter-spacing:.3px}
+                .lock-btn:active{background:rgba(68,68,70,.8)}
                 svg{fill:currentColor;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
                 .toast{position:fixed;top:env(safe-area-inset-top,0);left:0;right:0;padding:16px;text-align:center;font-size:14px;font-weight:500;background:rgba(10,132,255,.95);color:#fff;transform:translateY(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:1000;backdrop-filter:blur(12px)}
                 .toast.show{transform:translateY(0)}
@@ -251,6 +277,7 @@ class MediaHTTPServer: ObservableObject {
                         <button onclick="send('mute')" aria-label="静音"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
                         <button onclick="send('volumeup')" aria-label="增加音量"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
                     </div>
+                    <button class="lock-btn" onclick="send('lock')" aria-label="锁屏"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>锁定屏幕</button>
                 </div>
             </div>
             <script>

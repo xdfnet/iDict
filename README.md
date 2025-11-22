@@ -1,8 +1,8 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.50-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.51-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
-[![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
+[![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org/)
 
 一个轻量级的 macOS 菜单栏应用程序，提供快速文本翻译功能。通过全局热键 `Cmd + D` 即可快速翻译选中的英文文本为中文。
 
@@ -24,7 +24,7 @@
 - 🚀 **一键翻译** - 使用 `Cmd + D` 热键快速翻译选中的英文文本
 - 🔄 **多翻译服务** - 支持 腾讯翻译、Google Translate、Microsoft Translator 和 DeepL 翻译，可在菜单栏中切换
 - 📊 **服务状态检测** - 自动检测翻译服务可用性，智能提示服务状态
-- 🎮 **媒体远程控制** - 内置 HTTP 服务器，通过手机浏览器远程控制 Mac 的媒体播放和音量
+- 🎮 **媒体远程控制** - 内置 HTTP 服务器，通过手机浏览器远程控制 Mac 的媒体播放和音量。界面经过精心设计，提供美观易用的移动端体验。
 
 ### 界面体验
 - 🎨 **无边框窗口** - 简洁美观的翻译结果显示界面
@@ -136,6 +136,24 @@ make push MSG="修复翻译bug"    # 完整发布流程
 | 🔉 音量减 | 降低系统音量 |
 | 🔇 静音 | 切换静音状态 |
 | 🔊 音量加 | 提高系统音量 |
+| 🔒 锁屏 | 锁定屏幕（Control + Command + Q） |
+
+### 设置界面
+
+应用提供了图形化的设置界面，方便配置腾讯翻译API密钥：
+
+- **访问方式**：点击菜单栏图标 → 选择 "Settings"
+- **功能特性**：
+  - 安全的API密钥输入和存储
+  - 实时验证API密钥有效性
+  - 一键清除配置功能
+  - 直观的状态反馈
+
+- **配置步骤**：
+  1. 在设置界面输入腾讯云 SecretId 和 SecretKey
+  2. 点击"保存"按钮存储配置
+  3. 使用"验证"按钮测试API密钥是否有效
+  4. 如需重置，可点击"清除"按钮删除所有配置
 
 ## 🔧 翻译服务配置
 
@@ -249,12 +267,12 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 
 ### 技术栈
 
-- **语言**: Swift 6.2+
+- **语言**: Swift 5.9+
 - **系统要求**: macOS 13.0 (Ventura) 或更高版本
 - **UI框架**: SwiftUI + AppKit
 - **响应式编程**: Combine Framework
 - **系统集成**: Carbon Framework (全局热键) + ApplicationServices (键盘事件)
-- **网络**: URLSession
+- **网络**: URLSession + Network Framework (HTTP服务器)
 - **翻译API**: 腾讯翻译API + Google Translate API + Microsoft Translator API + DeepL API (通过MyMemory代理)
 - **构建工具**: Xcode + Makefile
 
@@ -269,6 +287,7 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 | `ClipboardManager.swift` | 剪贴板内容获取和文本验证 |
 | `translationservice.swift` | 翻译服务类型定义和四种翻译服务实现（腾讯、Google、Microsoft、DeepL） |
 | `MediaController.swift` | 媒体控制和 HTTP 服务器，支持远程控制媒体播放、音量和方向键 |
+| `SettingsView.swift` | SwiftUI 设置界面，提供API密钥配置和管理功能 |
 | `BorderlessWindow.swift` | 无边框窗口实现 |
 | `ClickableContentView.swift` | 窗口交互处理和拖拽支持 |
 | `KeyboardSimulator.swift` | 键盘事件模拟器 |
@@ -296,6 +315,7 @@ iDict/
 │   ├── ClipboardManager.swift        # 剪贴板管理
 │   ├── translationservice.swift     # 翻译服务（Google、Microsoft、DeepL）
 │   ├── MediaController.swift         # 媒体控制和 HTTP 服务器
+│   ├── SettingsView.swift            # SwiftUI 设置界面
 │   ├── BorderlessWindow.swift        # 无边框窗口实现
 │   ├── ClickableContentView.swift    # 可点击内容视图
 │   ├── KeyboardSimulator.swift       # 键盘事件模拟
