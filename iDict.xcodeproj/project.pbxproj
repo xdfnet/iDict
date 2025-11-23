@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DEADBEEF0000000200000001 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = DEADBEEF0000000100000001 /* index.html */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		DEADBEEF0000000100000001 /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = iDict/index.html; sourceTree = "<group>"; };
 		184B984C2E6FDCC50074A7CD /* iDict.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iDict.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -34,6 +39,7 @@
 			children = (
 				184B984E2E6FDCC50074A7CD /* iDict */,
 				184B984D2E6FDCC50074A7CD /* Products */,
+				DEADBEEF0000000100000001 /* index.html */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +115,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DEADBEEF0000000200000001 /* index.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,7 +263,7 @@
 				CODE_SIGN_ENTITLEMENTS = iDict/iDict.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20251123130135;
+				CURRENT_PROJECT_VERSION = 20251123145053;
 				DEVELOPMENT_TEAM = K9UF7A2D7Y;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -274,7 +281,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.52;
+				MARKETING_VERSION = 1.0.53;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDict;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -304,7 +311,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20251123130135;
+				CURRENT_PROJECT_VERSION = 20251123145053;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = K9UF7A2D7Y;
 				ENABLE_APP_SANDBOX = NO;
@@ -323,7 +330,7 @@
 					"@executable_path/../Frameworks",
 				);
 				                MACOSX_DEPLOYMENT_TARGET = 26.0;
-				                MARKETING_VERSION = 1.0.52;
+				                MARKETING_VERSION = 1.0.53;
 				                PRODUCT_BUNDLE_IDENTIFIER = David.iDict;
 				                PRODUCT_NAME = "$(TARGET_NAME)";
 				                PROVISIONING_PROFILE_SPECIFIER = "";				REGISTER_APP_GROUPS = YES;
