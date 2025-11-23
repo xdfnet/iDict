@@ -204,10 +204,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 检测屏幕方向（竖屏或横屏）
                 let isPortrait = screenFrame.height > screenFrame.width
                 
-                // 计算窗口位置，使其显示在鼠标上方，留出一些间距
-                let offsetFromMouse: CGFloat = 20  // 窗口与鼠标的间距
-                let windowX = adjustedMouseX - windowWidth / 2  // 水平居中于鼠标
-                let windowY = adjustedMouseY + offsetFromMouse  // 在鼠标上方
+                // 计算窗口位置，使窗口左下角在鼠标上方20像素
+                let offsetFromMouse: CGFloat = 20  // 窗口左下角与鼠标的间距
+                let windowX = adjustedMouseX  // 窗口左边缘对齐鼠标
+                let windowY = adjustedMouseY + offsetFromMouse  // 窗口下边缘在鼠标上方
                 
                 // 确保窗口不会超出屏幕边界
                 var finalX = max(0, min(windowX, visibleScreenFrame.width - windowWidth))
@@ -273,10 +273,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 检测屏幕方向（竖屏或横屏）
                 let isPortrait = screenFrame.height > screenFrame.width
                 
-                // 计算窗口位置，使其显示在鼠标上方，留出一些间距
-                let offsetFromMouse: CGFloat = 20  // 窗口与鼠标的间距
-                let windowX = adjustedMouseX - windowWidth / 2  // 水平居中于鼠标
-                let windowY = adjustedMouseY + offsetFromMouse  // 在鼠标上方
+                // 计算窗口位置，使窗口左下角在鼠标上方20像素
+                let offsetFromMouse: CGFloat = 20  // 窗口左下角与鼠标的间距
+                let windowX = adjustedMouseX  // 窗口左边缘对齐鼠标
+                let windowY = adjustedMouseY + offsetFromMouse  // 窗口下边缘在鼠标上方
                 
                 // 确保窗口不会超出屏幕边界
                 var finalX = max(0, min(windowX, visibleScreenFrame.width - windowWidth))
