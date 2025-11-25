@@ -48,8 +48,7 @@ make push MSG="提交信息"
 - **设置界面**: [`SettingsView.swift`](iDict/SettingsView.swift) - SwiftUI 设置界面
 
 #### 媒体控制
-- **HTTP 服务器**: [`iDictController.swift`](iDict/iDictController.swift) - 远程媒体控制服务器、应用管理和锁屏登录
-- **设置管理**: [`SettingsManager.swift`](iDict/SettingsManager.swift) - 统一管理用户配置、API密钥和自动登录设置
+- **HTTP 服务器**: [`iDictController.swift`](iDict/iDictController.swift) - 远程媒体控制服务器和应用管理
 
 ### 工作流程
 
@@ -82,15 +81,8 @@ make push MSG="提交信息"
 
 腾讯翻译服务需要配置API密钥：
 1. 在设置界面中配置 SecretId 和 SecretKey
-2. 密钥通过 `SettingsManager` 存储在 UserDefaults 中
+2. 密钥通过 UserDefaults 存储
 3. 其他翻译服务无需配置
-
-## 自动登录功能
-
-应用支持远程自动登录功能：
-1. 在设置界面中设置登录密码（4-20个字符）
-2. 启用“自动登录功能”开关
-3. 通过HTTP API调用 `/api/lock` 实现智能锁屏/登录
 
 ## 应用管理功能
 
@@ -106,5 +98,5 @@ make push MSG="提交信息"
 - 媒体控制服务器默认在端口 8888 运行
 - 所有翻译操作都在主线程中执行UI更新
 - 窗口复用机制避免重复创建翻译窗口
-- `SettingsManager` 统一管理所有配置，包括API密钥、登录密码和功能开关
 - 应用开关功能支持中英文应用名，自动识别并映射到正确的应用路径
+- 锁屏功能仅支持在未锁屏状态下执行，软件无法唤醒息屏

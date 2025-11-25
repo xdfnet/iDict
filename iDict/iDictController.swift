@@ -18,8 +18,6 @@ private enum Constants {
     /// 时间相关常量（纳秒）
     enum Timing {
         static let appTerminateWait: UInt64 = 500_000_000       // 0.5秒
-        static let keystrokeDelay: UInt64 = 80_000_000          // 80ms
-        static let enterKeyDelay: UInt64 = 100_000_000          // 100ms
         static let appLaunchWait: UInt64 = 5_000_000_000        // 5秒
         static let appLaunchCheckInterval: UInt64 = 500_000_000 // 0.5秒
     }
@@ -40,7 +38,6 @@ private enum Constants {
     /// 虚拟键码常量
     enum VirtualKeyCode {
         static let space: CGKeyCode = 49
-        static let enter: CGKeyCode = 36
     }
     
     /// 重试次数常量
@@ -63,11 +60,6 @@ final class MediaController {
         case space = 49  // 空格键
     }
 
-    // 登录密码 - 从设置管理器获取
-    private static var loginPassword: String {
-        return SettingsManager.getCurrentPassword()
-    }
-
     // 应用启动状态缓存
     private static var appStates: [String: Bool] = [:]
     
@@ -84,21 +76,12 @@ final class MediaController {
         logger.info("屏幕锁定状态: \(isLocked ? "已锁定" : "未锁定")")
 
         if isLocked {
-            // 如果已锁屏，检查是否启用了自动登录且已设置密码
-            guard SettingsManager.isAutoLoginEnabled() else {
-                logger.info("自动登录功能已禁用")
-                return .failure(.permissionDenied)
-            }
-
-            guard SettingsManager.hasPasswordSet() else {
-                logger.warning("未设置登录密码")
-                return .failure(.permissionDenied)
-            }
-
-            // 执行登录操作
-            return await performLogin()
+            // 已锁屏状态，不执行任何操作
+            logger.warning("屏幕已锁定，无法通过软件唤醒")
+            return .failure(.eventCreationFailed)
         } else {
-            // 如果未锁屏，执行锁屏操作
+            // 如果未锁屏，则执行锁屏操作
+            logger.info("系统未锁定，执行锁屏操作")
             return await simulateLockScreen()
         }
     }
@@ -161,138 +144,11 @@ final class MediaController {
         }
     }
 
-    // MARK: - 锁屏状态检测和自动登录功能
+    // MARK: - 锁屏状态检测
 
     /// 检测屏幕是否锁定
     static func isScreenLocked() -> Bool {
         return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == Constants.BundleID.loginWindow
-    }
-
-    /// 执行自动登录
-    private static func performLogin() async -> Result<Void, MediaControllerError> {
-        logger.info("开始执行自动登录...")
-
-        guard checkInputMonitoringPermission() else {
-            logger.warning("无辅助功能权限")
-            return .failure(.permissionDenied)
-        }
-
-        // 确认是否在锁屏状态
-        if isScreenLocked() {
-            logger.info("确认在锁屏状态，开始输入密码")
-            // 短暂延迟确保密码框准备好（200ms）
-            try? await Task.sleep(nanoseconds: 200_000_000)
-            return await typePassword(loginPassword)
-        } else {
-            logger.info("系统已解锁，无需输入密码")
-            return .success(())
-        }
-    }
-
-    /// 输入密码并回车
-    private static func typePassword(_ password: String) async -> Result<Void, MediaControllerError> {
-        guard checkInputMonitoringPermission() else {
-            logger.warning("无辅助功能权限")
-            return .failure(.permissionDenied)
-        }
-
-        let source = CGEventSource(stateID: .hidSystemState)
-        logger.info("开始输入密码，密码长度: \(password.count)")
-
-        // 输入密码的每个字符
-        for (index, character) in password.enumerated() {
-            guard let keyCode = getVirtualKeyCode(for: character) else {
-                logger.error("无法获取字符 '\(character)' 的虚拟键码")
-                return .failure(.eventCreationFailed)
-            }
-
-            logger.info("输入字符 \(index + 1)/\(password.count): '\(character)' (键码: \(keyCode))")
-
-            // 创建按键按下事件
-            guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(keyCode), keyDown: true) else {
-                logger.error("创建按键 '\(character)' 按下事件失败")
-                return .failure(.eventCreationFailed)
-            }
-
-            // 创建按键抬起事件
-            guard let keyUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(keyCode), keyDown: false) else {
-                logger.error("创建按键 '\(character)' 抬起事件失败")
-                return .failure(.eventCreationFailed)
-            }
-
-            // 设置按键标志（确保没有意外的修饰键）
-            keyDown.flags = []
-            keyUp.flags = []
-
-            // 发送按键事件
-            keyDown.post(tap: .cghidEventTap)
-
-            // 适当延迟以确保按键被正确识别
-            try? await Task.sleep(nanoseconds: Constants.Timing.keystrokeDelay)
-
-            keyUp.post(tap: .cghidEventTap)
-
-            // 字符间延迟
-            try? await Task.sleep(nanoseconds: Constants.Timing.keystrokeDelay)
-        }
-
-        logger.info("密码字符输入完成，准备发送回车键")
-
-        // 输入回车键确认
-        if let enterKeyDown = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.enter, keyDown: true),
-           let enterKeyUp = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.enter, keyDown: false) {
-
-            // 确保回车键没有修饰键
-            enterKeyDown.flags = []
-            enterKeyUp.flags = []
-
-            enterKeyDown.post(tap: .cghidEventTap)
-            try? await Task.sleep(nanoseconds: Constants.Timing.enterKeyDelay)
-            enterKeyUp.post(tap: .cghidEventTap)
-
-            logger.info("回车键发送完成")
-        } else {
-            logger.error("创建回车键事件失败")
-            return .failure(.eventCreationFailed)
-        }
-
-        logger.info("密码输入完成")
-        return .success(())
-    }
-
-    /// 获取字符对应的虚拟键码
-    private static func getVirtualKeyCode(for character: Character) -> Int32? {
-        switch character {
-        case "a", "A": return 0
-        case "b", "B": return 11
-        case "c", "C": return 8
-        case "d", "D": return 2
-        case "e", "E": return 14
-        case "f", "F": return 3
-        case "g", "G": return 5
-        case "h", "H": return 4
-        case "i", "I": return 34
-        case "j", "J": return 38
-        case "k", "K": return 40
-        case "l", "L": return 37
-        case "m", "M": return 46
-        case "n", "N": return 45
-        case "o", "O": return 31
-        case "p", "P": return 35
-        case "q", "Q": return 12
-        case "r", "R": return 15
-        case "s", "S": return 1
-        case "t", "T": return 17
-        case "u", "U": return 32
-        case "v", "V": return 9
-        case "w", "W": return 13
-        case "x", "X": return 7
-        case "y", "Y": return 16
-        case "z", "Z": return 6
-        default:
-            // 对于其他字符，使用Unicode映射
-            return nil
-        }
     }
 
     static func checkInputMonitoringPermission() -> Bool {
@@ -563,20 +419,19 @@ class MediaHTTPServer: ObservableObject {
             case "lock":
                 if MediaController.checkInputMonitoringPermission() {
                     let isLocked = MediaController.isScreenLocked()
-                    if isLocked && !SettingsManager.isAutoLoginEnabled() {
-                        result = "auto_login_disabled"
-                        error = "自动登录功能已禁用"
-                    } else if isLocked && !SettingsManager.hasPasswordSet() {
-                        result = "password_not_set"
-                        error = "未设置登录密码"
+                    
+                    if isLocked {
+                        // 已锁屏，无法通过软件操作
+                        result = "locked"
+                        error = "屏幕已锁定，无法通过软件唤醒"
                     } else {
-                        let loginResult = await MediaController.smartLockOrLogin()
-                        if case .success = loginResult {
-                            // 返回当前状态信息给前端
-                            result = isLocked ? "login_success" : "lock_success"
+                        // 执行锁屏
+                        let lockResult = await MediaController.smartLockOrLogin()
+                        if case .success = lockResult {
+                            result = "lock_success"
                         } else {
                             result = "failed"
-                            error = "操作失败"
+                            error = "锁屏失败"
                         }
                     }
                 }

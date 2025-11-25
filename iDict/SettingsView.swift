@@ -16,12 +16,6 @@ struct SettingsView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
-    @StateObject private var settings = SettingsManager.shared
-    @State private var showingPasswordAlert = false
-    @State private var showingResetAlert = false
-    @State private var newPassword = ""
-    @State private var confirmPassword = ""
-    @State private var passwordErrorMessage = ""
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -30,61 +24,6 @@ struct SettingsView: View {
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(.bottom, 5)
-
-            // 登录密码设置区域
-            VStack(alignment: .leading, spacing: 12) {
-                Text("登录密码设置")
-                    .font(.headline)
-
-                if !settings.hasPasswordSet() {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption)
-                        Text("未设置密码")
-                            .font(.subheadline)
-                            .foregroundColor(.orange)
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    SecureField(settings.hasPasswordSet() ? "输入新密码" : "设置登录密码", text: $settings.loginPassword)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(maxWidth: 280)
-
-                    Button(settings.hasPasswordSet() ? "更新" : "设置") {
-                        validateAndUpdatePassword()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                }
-
-                HStack {
-                    Toggle("启用自动登录功能", isOn: $settings.autoLoginEnabled)
-                        .font(.body)
-                        .disabled(!settings.hasPasswordSet())
-
-                    Spacer()
-                }
-
-                Text("用于锁屏后自动登录的密码，支持滑动解锁/登录功能")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                if !settings.hasPasswordSet() {
-                    HStack {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption)
-                        Text("请先设置密码再启用自动登录功能")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
-                }
-            }
-            .padding(.bottom, 10)
-
-            Divider()
 
             // API密钥配置区域
             VStack(alignment: .leading, spacing: 12) {
@@ -158,7 +97,7 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(24)
-        .frame(width: 550, height: 680)
+        .frame(width: 550, height: 450)
         .onAppear(perform: loadCurrentAPIKeys)
         .alert(isPresented: $showAlert) {
             Alert(
@@ -166,26 +105,6 @@ struct SettingsView: View {
                 message: Text(alertMessage),
                 dismissButton: .default(Text("确定"))
             )
-        }
-        .alert("更新密码", isPresented: $showingPasswordAlert) {
-            TextField("新密码", text: $newPassword)
-            TextField("确认密码", text: $confirmPassword)
-            Button("取消") {
-                clearPasswordFields()
-            }
-            Button("确认") {
-                updatePassword()
-            }
-        } message: {
-            Text(passwordErrorMessage.isEmpty ? "请输入新密码（4-20个字符）" : passwordErrorMessage)
-        }
-        .alert("重置设置", isPresented: $showingResetAlert) {
-            Button("取消", role: .cancel) { }
-            Button("确认重置", role: .destructive) {
-                settings.resetToDefaults()
-            }
-        } message: {
-            Text("确定要重置密码设置为默认值吗？")
         }
     }
     
@@ -244,45 +163,6 @@ struct SettingsView: View {
         alertTitle = title
         alertMessage = message
         showAlert = true
-    }
-
-    // MARK: - 密码管理方法
-
-    private func validateAndUpdatePassword() {
-        passwordErrorMessage = ""
-
-        guard settings.validatePassword(settings.loginPassword) else {
-            passwordErrorMessage = "密码长度必须在4-20个字符之间"
-            showingPasswordAlert = true
-            return
-        }
-
-        newPassword = settings.loginPassword
-        confirmPassword = settings.loginPassword
-        showingPasswordAlert = true
-    }
-
-    private func updatePassword() {
-        passwordErrorMessage = ""
-
-        guard newPassword == confirmPassword else {
-            passwordErrorMessage = "两次输入的密码不一致"
-            return
-        }
-
-        guard SettingsManager.updatePassword(newPassword) else {
-            passwordErrorMessage = "密码格式不正确（4-20个字符）"
-            return
-        }
-
-        showAlert(title: "成功", message: "登录密码已更新")
-        clearPasswordFields()
-    }
-
-    private func clearPasswordFields() {
-        newPassword = ""
-        confirmPassword = ""
-        passwordErrorMessage = ""
     }
 }
 

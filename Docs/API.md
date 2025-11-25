@@ -25,13 +25,10 @@
 | `success` | 操作成功 |
 | `failed` | 操作失败 |
 | `lock_success` | 锁屏成功 |
-| `login_success` | 登录成功 |
 | `locked` | 已锁定状态 |
 | `unlocked` | 未锁定状态 |
 | `opened` | 应用已打开 |
 | `closed` | 应用已关闭 |
-| `auto_login_disabled` | 自动登录功能已禁用 |
-| `password_not_set` | 未设置登录密码 |
 | `unknown` | 未知操作 |
 
 ## 媒体控制接口
@@ -76,23 +73,19 @@
 - **接口**: `GET /api/arrowdown`
 - **功能**: 模拟键盘向下箭头按键
 
-## 锁屏和登录接口
+## 锁屏接口
 
-### 智能锁屏/登录
+### 锁屏操作
 - **接口**: `GET /api/lock`
-- **功能**: 根据当前状态智能执行锁屏或登录操作
-- **逻辑**:
+- **功能**: 执行锁屏操作
+- **逺辑**:
   - 如果当前未锁屏：执行锁屏操作
-  - 如果当前已锁屏：执行自动登录（需要启用自动登录功能并设置密码）
+  - 如果当前已锁屏：返回错误（软件无法唤醒息屏）
 - **前置条件**:
   - 需要授予应用辅助功能权限
-  - 自动登录功能需要在设置中启用
-  - 需要设置登录密码
 - **响应**:
   - 锁屏成功: `{"status":"lock_success"}`
-  - 登录成功: `{"status":"login_success"}`
-  - 自动登录未启用: `{"status":"auto_login_disabled","error":"自动登录功能已禁用"}`
-  - 未设置密码: `{"status":"password_not_set","error":"未设置登录密码"}`
+  - 已锁屏: `{"status":"locked","error":"屏幕已锁定，无法通过软件唤醒"}`
 
 ### 查询锁屏状态
 - **接口**: `GET /api/lock_status`
@@ -144,18 +137,12 @@
 
 ## 配置要求
 
-### 登录密码设置
-要使用自动登录功能，需要：
+### 权限配置
 
-1. **设置密码**: 在应用设置中配置登录密码（4-20个字符）
-2. **启用自动登录**: 在设置中开启"启用自动登录功能"
-3. **授予权限**: 确保应用有辅助功能权限
+iDict 需要以下系统权限：
 
-### 密码验证规则
-- **长度**: 4-20个字符
-- **字符**: 支持字母和数字
-- **存储**: 使用 UserDefaults 安全存储
-- **验证**: 支持实时验证和更新
+1. **辅助功能权限**: 用于模拟键盘和媒体控制
+2. **授予权限**: 确保应用有辅助功能权限
 
 ## 使用示例
 
@@ -165,7 +152,7 @@
 # 播放/暂停
 curl http://localhost:8888/api/space
 
-# 智能锁屏/登录
+# 操锁屏
 curl http://localhost:8888/api/lock
 
 # 切换抖音应用
@@ -185,8 +172,8 @@ async function playPause() {
   console.log('播放/暂停:', data.status);
 }
 
-// 锁屏/登录
-async function smartLock() {
+// 锁屏
+async function lockScreen() {
   const response = await fetch('http://localhost:8888/api/lock');
   const data = await response.json();
 
@@ -194,14 +181,8 @@ async function smartLock() {
     case 'lock_success':
       console.log('锁屏成功');
       break;
-    case 'login_success':
-      console.log('登录成功');
-      break;
-    case 'auto_login_disabled':
-      console.error('自动登录功能已禁用');
-      break;
-    case 'password_not_set':
-      console.error('未设置登录密码');
+    case 'locked':
+      console.error('屏幕已锁定');
       break;
   }
 }
@@ -228,8 +209,8 @@ class iDictAPI:
         response = requests.get(f"{self.base_url}/api/space")
         return response.json()
 
-    def smart_lock(self):
-        """智能锁屏/登录"""
+    def lock_screen(self):
+        """锁屏"""
         response = requests.get(f"{self.base_url}/api/lock")
         return response.json()
 
@@ -251,12 +232,10 @@ if __name__ == "__main__":
     result = api.play_pause()
     print(f"播放控制: {result['status']}")
     
-    # 智能锁屏
-    lock_result = api.smart_lock()
+    # 锁屏
+    lock_result = api.lock_screen()
     if lock_result['status'] == 'lock_success':
         print("锁屏成功")
-    elif lock_result['status'] == 'login_success':
-        print("登录成功")
     else:
         print(f"操作失败: {lock_result.get('error', '未知错误')}")
 ```
@@ -268,16 +247,10 @@ if __name__ == "__main__":
 1. **`缺少辅助功能权限`**
    - 解决方案：在系统偏好设置 > 安全性与隐私 > 隐私 > 辅助功能中添加 iDict
 
-2. **`自动登录功能已禁用`**
-   - 解决方案：在应用设置中启用自动登录功能
-
-3. **`未设置登录密码`**
-   - 解决方案：在应用设置中配置登录密码
-
-4. **`未知操作`**
+2. **`未知操作`**
    - 解决方案：检查API接口路径是否正确
 
-5. **`操作失败`**
+3. **`操作失败`**
    - 解决方案：检查系统状态和应用权限，重试操作
 
 ---
