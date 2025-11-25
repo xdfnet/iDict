@@ -18,8 +18,6 @@ private enum Constants {
     /// 时间相关常量（纳秒）
     enum Timing {
         static let appTerminateWait: UInt64 = 500_000_000       // 0.5秒
-        static let screenWakeDelay: UInt64 = 100_000_000        // 100ms
-        static let loginScreenReadyWait: UInt64 = 1_000_000_000 // 1秒
         static let keystrokeDelay: UInt64 = 80_000_000          // 80ms
         static let enterKeyDelay: UInt64 = 100_000_000          // 100ms
         static let appLaunchWait: UInt64 = 5_000_000_000        // 5秒
@@ -43,7 +41,6 @@ private enum Constants {
     enum VirtualKeyCode {
         static let space: CGKeyCode = 49
         static let enter: CGKeyCode = 36
-        static let escape: CGKeyCode = 53
     }
     
     /// 重试次数常量
@@ -111,160 +108,55 @@ final class MediaController {
 
     // MARK: - 应用开关功能
 
-    /// 检查应用是否正在运行（支持Electron应用）
+    /// 检查应用是否正在运行
     static func isAppRunning(_ appName: String) -> Bool {
-        // 将英文应用名转换为中文应用名
-        let chineseAppName: String
-        switch appName {
-        case "douyin":
-            chineseAppName = "抖音"
-        case "qishui":
-            chineseAppName = "汽水音乐"
-        default:
-            chineseAppName = appName // 如果已经是中文，直接使用
-        }
-
-        let bundleIdentifier = getAppBundleIdentifier(chineseAppName)
-
-        // 方法1: 使用NSWorkspace检查
-        let runningApps = NSWorkspace.shared.runningApplications
-        let matchedApps = runningApps.filter { app in
-            app.bundleIdentifier == bundleIdentifier
-        }
-
-        if !matchedApps.isEmpty {
-            logger.info("通过NSWorkspace检测到应用运行: \(chineseAppName)")
-            return true
-        }
-
-        // 方法2: 使用AppleScript检查（更可靠的方法）
-        let appleScript = """
-        tell application "System Events"
-            set found to false
-            repeat with appProc in every application process
-                try
-                    set bundleID to bundle identifier of appProc
-                    if bundleID is "\(bundleIdentifier)" then
-                        set found to true
-                        exit repeat
-                    end if
-                end try
-            end repeat
-            return found
-        end tell
-        """
-
-        var error: NSDictionary?
-        let appleScriptObject = NSAppleScript(source: appleScript)
-        let result = appleScriptObject?.executeAndReturnError(&error)
-
-        if let error = error {
-            logger.warning("AppleScript检查应用状态失败: \(error.description)")
-            return false
-        }
-
-        // 检查AppleScript的返回值
-        if let result = result {
-            let isRunning = result.booleanValue
-            logger.info("AppleScript检测应用状态: \(chineseAppName) = \(isRunning)")
-            return isRunning
-        }
-
-        // 方法3: 备用方法 - 使用进程名检查
-        let processName = chineseAppName
-        let processScript = """
-        tell application "System Events"
-            set found to false
-            repeat with appProc in every application process
-                try
-                    set procName to name of appProc
-                    if procName contains "\(processName)" then
-                        set found to true
-                        exit repeat
-                    end if
-                end try
-            end repeat
-            return found
-        end tell
-        """
-
-        let processScriptObject = NSAppleScript(source: processScript)
-        let processResult = processScriptObject?.executeAndReturnError(&error)
-
-        if let processResult = processResult, processResult.booleanValue == true {
-            logger.info("进程名检测应用运行: \(chineseAppName)")
-            return true
-        }
-
-        logger.info("未检测到应用运行: \(chineseAppName)")
-        return false
+        let bundleId = getBundleId(appName)
+        let isRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == bundleId }
+        logger.info("应用状态: \(appName) = \(isRunning ? "运行" : "停止")")
+        return isRunning
     }
 
-    /// 获取应用的Bundle Identifier
-    private static func getAppBundleIdentifier(_ appName: String) -> String {
-        switch appName {
-        case "抖音":
-            return Constants.BundleID.douyin
-        case "汽水音乐":
-            return Constants.BundleID.qishui
-        default:
-            return "com.unknown.\(appName.lowercased())"
+    /// 获取应用的 Bundle ID
+    private static func getBundleId(_ name: String) -> String {
+        switch name {
+        case "douyin", "抖音": return Constants.BundleID.douyin
+        case "qishui", "汽水音乐": return Constants.BundleID.qishui
+        default: return "com.unknown.\(name.lowercased())"
         }
     }
 
     /// 切换应用开关状态
     static func toggleApp(_ appName: String) async -> Result<Void, MediaControllerError> {
-        let isRunning = isAppRunning(appName)
-        logger.info("应用 '\(appName)' 当前状态: \(isRunning ? "运行中" : "未运行")")
-
-        if isRunning {
-            logger.info("执行关闭应用操作: \(appName)")
-            return await closeApp(appName)
-        } else {
-            logger.info("执行打开应用操作: \(appName)")
-            return await openApp(appName)
-        }
+        return isAppRunning(appName) ? await closeApp(appName) : await openApp(appName)
     }
 
     /// 关闭应用
     private static func closeApp(_ appName: String) async -> Result<Void, MediaControllerError> {
-        logger.info("尝试关闭应用: \(appName)")
-
-        let bundleIdentifier = getAppBundleIdentifier(appName)
+        let bundleId = getBundleId(appName)
 
         do {
-            // 使用NSWorkspace终止应用
-            let runningApps = NSWorkspace.shared.runningApplications
-            if let app = runningApps.first(where: { $0.bundleIdentifier == bundleIdentifier }) {
-                app.terminate()
+            guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) else {
+                return .failure(.eventPostFailed)
+            }
+            
+            app.terminate()
 
-                // 等待应用完全退出
                 for _ in 0..<Constants.Retry.appTerminateAttempts {
                     try await Task.sleep(nanoseconds: Constants.Timing.appTerminateWait)
-                    if !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == bundleIdentifier }) {
-                        logger.info("成功关闭应用: \(appName)")
+                    if !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == bundleId }) {
                         appStates[appName] = false
                         return .success(())
                     }
                 }
 
-                // 如果正常关闭失败，强制关闭
-                logger.warning("应用正常关闭失败，尝试强制关闭: \(appName)")
-                let forceCloseApps = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier)
-                if let appToForceClose = forceCloseApps.first, appToForceClose.forceTerminate() {
-                    logger.info("强制关闭应用成功: \(appName)")
+                // 强制关闭
+                if let forceApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first,
+                   forceApp.forceTerminate() {
                     appStates[appName] = false
                     return .success(())
-                } else {
-                    logger.error("强制关闭应用失败: \(appName)")
-                    return .failure(.eventPostFailed)
                 }
-            } else {
-                logger.warning("应用未在运行: \(appName)")
                 return .failure(.eventPostFailed)
-            }
         } catch {
-            logger.error("关闭应用时发生错误: \(appName), 错误: \(error.localizedDescription)")
             return .failure(.eventPostFailed)
         }
     }
@@ -273,18 +165,7 @@ final class MediaController {
 
     /// 检测屏幕是否锁定
     static func isScreenLocked() -> Bool {
-        // 方法1: 检查登录窗口是否在前台（最可靠的方法）
-        let frontmostApp = NSWorkspace.shared.frontmostApplication
-        let loginWindowRunning = frontmostApp?.bundleIdentifier == Constants.BundleID.loginWindow
-
-        if loginWindowRunning {
-            return true
-        }
-
-        
-        // 综合判断：只有当登录窗口在前台时才认为是锁屏状态
-        // 这样避免了误判系统正常使用状态为锁屏
-        return loginWindowRunning
+        return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == Constants.BundleID.loginWindow
     }
 
     /// 执行自动登录
@@ -296,25 +177,11 @@ final class MediaController {
             return .failure(.permissionDenied)
         }
 
-        // 步骤1: 按ESC键唤醒屏幕（不会被误认为密码输入）
-        let source = CGEventSource(stateID: .hidSystemState)
-        guard let wakeEvent = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.escape, keyDown: true),
-              let wakeEventUp = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.escape, keyDown: false) else {
-            logger.error("创建唤醒事件失败")
-            return .failure(.eventCreationFailed)
-        }
-
-        // 发送唤醒按键（按下和抬起）
-        wakeEvent.post(tap: .cghidEventTap)
-        try? await Task.sleep(nanoseconds: Constants.Timing.screenWakeDelay)
-        wakeEventUp.post(tap: .cghidEventTap)
-
-        // 等待更长时间确保屏幕完全唤醒和登录界面准备好
-        try? await Task.sleep(nanoseconds: Constants.Timing.loginScreenReadyWait)
-
-        // 步骤2: 再次确认是否仍在锁屏状态，然后输入密码
+        // 确认是否在锁屏状态
         if isScreenLocked() {
-            logger.info("确认仍在锁屏状态，开始输入密码")
+            logger.info("确认在锁屏状态，开始输入密码")
+            // 短暂延迟确保密码框准备好（200ms）
+            try? await Task.sleep(nanoseconds: 200_000_000)
             return await typePassword(loginPassword)
         } else {
             logger.info("系统已解锁，无需输入密码")
@@ -600,7 +467,7 @@ class MediaHTTPServer: ObservableObject {
                     switch state {
                     case .ready:
                         self?.isRunning = true
-                        self?.serverURL = "http://192.168.100.202:\(self?.port ?? 8888)"
+                        self?.serverURL = "http://127.0.0.1:\(self?.port ?? 8888)"
                     case .failed(let error):
                         self?.isRunning = false
                         self?.serverURL = "启动失败: \(error.localizedDescription)"
