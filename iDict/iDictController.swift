@@ -43,6 +43,7 @@ private enum Constants {
     enum VirtualKeyCode {
         static let space: CGKeyCode = 49
         static let enter: CGKeyCode = 36
+        static let escape: CGKeyCode = 53
     }
     
     /// 重试次数常量
@@ -295,10 +296,10 @@ final class MediaController {
             return .failure(.permissionDenied)
         }
 
-        // 步骤1: 按任意键唤醒屏幕
+        // 步骤1: 按ESC键唤醒屏幕（不会被误认为密码输入）
         let source = CGEventSource(stateID: .hidSystemState)
-        guard let wakeEvent = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.space, keyDown: true),
-              let wakeEventUp = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.space, keyDown: false) else {
+        guard let wakeEvent = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.escape, keyDown: true),
+              let wakeEventUp = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.escape, keyDown: false) else {
             logger.error("创建唤醒事件失败")
             return .failure(.eventCreationFailed)
         }
