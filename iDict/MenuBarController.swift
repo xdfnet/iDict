@@ -135,13 +135,15 @@ class MenuBarController: NSObject {
         }
         
         let settingsWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 0),
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        
-        settingsWindow.title = "Settings"
+
+        settingsWindow.title = "Tencent Translation"
+        settingsWindow.titlebarAppearsTransparent = true
+        settingsWindow.titleVisibility = .visible
         settingsWindow.center()
         
         // 设置窗口为非模态窗口，不会阻止其他操作
@@ -154,6 +156,10 @@ class MenuBarController: NSObject {
         let settingsView = SettingsView()
         let hostingView = NSHostingView(rootView: settingsView)
         settingsWindow.contentView = hostingView
+
+        // 设置窗口自动调整大小
+        settingsWindow.isMovable = true
+        settingsWindow.minSize = NSSize(width: 480, height: 200)
         
         // 显示窗口
         settingsWindow.makeKeyAndOrderFront(nil)
