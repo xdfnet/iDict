@@ -10,6 +10,33 @@ import Cocoa
 // MARK: - 自定义UI组件导入
 // 窗口相关类已分离到独立文件以提高可维护性
 
+// MARK: - 常量定义
+
+private enum Constants {
+    /// 窗口相关常量
+    enum Window {
+        static let maxWidth: CGFloat = 600
+        static let minWidth: CGFloat = 200
+        static let padding: CGFloat = 40
+        static let offsetFromMouse: CGFloat = 20
+        static let cornerRadius: CGFloat = 10
+        static let backgroundAlpha: CGFloat = 0.95
+        static let fontSize: CGFloat = 14
+    }
+    
+    /// 时间相关常量
+    enum Timing {
+        static let copyDelay: UInt64 = 150_000_000 // 150ms
+    }
+    
+    /// 颜色相关常量
+    enum Color {
+        static let backgroundRed: CGFloat = 0.2
+        static let backgroundGreen: CGFloat = 0.2
+        static let backgroundBlue: CGFloat = 0.2
+    }
+}
+
 // MARK: - 应用主代理
 
 /// 应用的核心代理类，负责协调所有服务和UI组件。
@@ -131,7 +158,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let copyResult = await KeyboardSimulator.simulateCopyCommand()
         if case .success = copyResult {
             // 短暂等待，确保剪贴板有时间更新。
-            try? await Task.sleep(nanoseconds: 150_000_000) // 150ms
+            try? await Task.sleep(nanoseconds: Constants.Timing.copyDelay)
         }
         
         // 2. 从剪贴板获取文本。
@@ -156,10 +183,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 确保UI操作在主线程上执行。
         await MainActor.run {
             // --- 1. 计算窗口和内容的尺寸 ---
-            let font = NSFont.systemFont(ofSize: 14)
-            let maxWidth: CGFloat = 600  // 窗口最大宽度
-            let minWidth: CGFloat = 200  // 窗口最小宽度
-            let padding: CGFloat = 40    // 窗口内部左右边距之和
+            let font = NSFont.systemFont(ofSize: Constants.Window.fontSize)
+            let maxWidth = Constants.Window.maxWidth
+            let minWidth = Constants.Window.minWidth
+            let padding = Constants.Window.padding
             
             // 使用一个临时的文本字段来测量渲染消息所需的尺寸。
             let tempLabel = NSTextField(labelWithString: message)
@@ -204,8 +231,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 检测屏幕方向（竖屏或横屏）
                 let isPortrait = screenFrame.height > screenFrame.width
                 
-                // 计算窗口位置，使窗口左下角在鼠标上方20像素
-                let offsetFromMouse: CGFloat = 20  // 窗口左下角与鼠标的间距
+                // 计算窗口位置，使窗口左下角在鼠标上方指定距离
+                let offsetFromMouse = Constants.Window.offsetFromMouse
                 let windowX = adjustedMouseX  // 窗口左边缘对齐鼠标
                 let windowY = adjustedMouseY + offsetFromMouse  // 窗口下边缘在鼠标上方
                 
@@ -273,8 +300,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // 检测屏幕方向（竖屏或横屏）
                 let isPortrait = screenFrame.height > screenFrame.width
                 
-                // 计算窗口位置，使窗口左下角在鼠标上方20像素
-                let offsetFromMouse: CGFloat = 20  // 窗口左下角与鼠标的间距
+                // 计算窗口位置，使窗口左下角在鼠标上方指定距离
+                let offsetFromMouse = Constants.Window.offsetFromMouse
                 let windowX = adjustedMouseX  // 窗口左边缘对齐鼠标
                 let windowY = adjustedMouseY + offsetFromMouse  // 窗口下边缘在鼠标上方
                 
@@ -327,8 +354,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // --- 3. 创建和配置自定义内容视图 ---
             let contentView = ClickableContentView(frame: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight))
             contentView.wantsLayer = true
-            contentView.layer?.backgroundColor = NSColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.95).cgColor
-            contentView.layer?.cornerRadius = 10
+            contentView.layer?.backgroundColor = NSColor(
+                red: Constants.Color.backgroundRed,
+                green: Constants.Color.backgroundGreen,
+                blue: Constants.Color.backgroundBlue,
+                alpha: Constants.Window.backgroundAlpha
+            ).cgColor
+            contentView.layer?.cornerRadius = Constants.Window.cornerRadius
             contentView.targetWindow = window // 关联父窗口
             
             // --- 4. 创建并添加文本标签 ---

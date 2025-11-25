@@ -12,6 +12,46 @@ import OSLog
 import AppKit
 import IOKit
 
+// MARK: - 常量定义
+
+private enum Constants {
+    /// 时间相关常量（纳秒）
+    enum Timing {
+        static let appTerminateWait: UInt64 = 500_000_000       // 0.5秒
+        static let screenWakeDelay: UInt64 = 100_000_000        // 100ms
+        static let loginScreenReadyWait: UInt64 = 1_000_000_000 // 1秒
+        static let keystrokeDelay: UInt64 = 80_000_000          // 80ms
+        static let enterKeyDelay: UInt64 = 100_000_000          // 100ms
+        static let appLaunchWait: UInt64 = 5_000_000_000        // 5秒
+        static let appLaunchCheckInterval: UInt64 = 500_000_000 // 0.5秒
+    }
+    
+    /// 应用路径常量
+    enum AppPath {
+        static let douyin = "/Applications/抖音.app"
+        static let qishui = "/Applications/汽水音乐.app"
+    }
+    
+    /// Bundle Identifier 常量
+    enum BundleID {
+        static let douyin = "com.bytedance.douyin.desktop"
+        static let qishui = "com.soda.music"
+        static let loginWindow = "com.apple.loginwindow"
+    }
+    
+    /// 虚拟键码常量
+    enum VirtualKeyCode {
+        static let space: CGKeyCode = 49
+        static let enter: CGKeyCode = 36
+    }
+    
+    /// 重试次数常量
+    enum Retry {
+        static let appTerminateAttempts = 10
+        static let appLaunchAttempts = 10
+    }
+}
+
 // MARK: - 媒体控制器
 
 final class MediaController {
@@ -123,7 +163,7 @@ final class MediaController {
         }
 
         // 检查AppleScript的返回值
-        if let result = result, result.booleanValue != nil {
+        if let result = result {
             let isRunning = result.booleanValue
             logger.info("AppleScript检测应用状态: \(chineseAppName) = \(isRunning)")
             return isRunning
@@ -150,7 +190,7 @@ final class MediaController {
         let processScriptObject = NSAppleScript(source: processScript)
         let processResult = processScriptObject?.executeAndReturnError(&error)
 
-        if let processResult = processResult, processResult.booleanValue != nil, processResult.booleanValue == true {
+        if let processResult = processResult, processResult.booleanValue == true {
             logger.info("进程名检测应用运行: \(chineseAppName)")
             return true
         }
@@ -163,9 +203,9 @@ final class MediaController {
     private static func getAppBundleIdentifier(_ appName: String) -> String {
         switch appName {
         case "抖音":
-            return "com.bytedance.douyin.desktop"
+            return Constants.BundleID.douyin
         case "汽水音乐":
-            return "com.soda.music"
+            return Constants.BundleID.qishui
         default:
             return "com.unknown.\(appName.lowercased())"
         }
@@ -198,8 +238,8 @@ final class MediaController {
                 app.terminate()
 
                 // 等待应用完全退出
-                for _ in 0..<10 {
-                    try await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                for _ in 0..<Constants.Retry.appTerminateAttempts {
+                    try await Task.sleep(nanoseconds: Constants.Timing.appTerminateWait)
                     if !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == bundleIdentifier }) {
                         logger.info("成功关闭应用: \(appName)")
                         appStates[appName] = false
@@ -234,7 +274,7 @@ final class MediaController {
     static func isScreenLocked() -> Bool {
         // 方法1: 检查登录窗口是否在前台（最可靠的方法）
         let frontmostApp = NSWorkspace.shared.frontmostApplication
-        let loginWindowRunning = frontmostApp?.bundleIdentifier == "com.apple.loginwindow"
+        let loginWindowRunning = frontmostApp?.bundleIdentifier == Constants.BundleID.loginWindow
 
         if loginWindowRunning {
             return true
@@ -257,19 +297,19 @@ final class MediaController {
 
         // 步骤1: 按任意键唤醒屏幕
         let source = CGEventSource(stateID: .hidSystemState)
-        guard let wakeEvent = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(49), keyDown: true),
-              let wakeEventUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(49), keyDown: false) else {
+        guard let wakeEvent = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.space, keyDown: true),
+              let wakeEventUp = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.space, keyDown: false) else {
             logger.error("创建唤醒事件失败")
             return .failure(.eventCreationFailed)
         }
 
         // 发送唤醒按键（按下和抬起）
         wakeEvent.post(tap: .cghidEventTap)
-        try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+        try? await Task.sleep(nanoseconds: Constants.Timing.screenWakeDelay)
         wakeEventUp.post(tap: .cghidEventTap)
 
         // 等待更长时间确保屏幕完全唤醒和登录界面准备好
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1秒
+        try? await Task.sleep(nanoseconds: Constants.Timing.loginScreenReadyWait)
 
         // 步骤2: 再次确认是否仍在锁屏状态，然后输入密码
         if isScreenLocked() {
@@ -320,26 +360,26 @@ final class MediaController {
             keyDown.post(tap: .cghidEventTap)
 
             // 适当延迟以确保按键被正确识别
-            try? await Task.sleep(nanoseconds: 80_000_000) // 80ms
+            try? await Task.sleep(nanoseconds: Constants.Timing.keystrokeDelay)
 
             keyUp.post(tap: .cghidEventTap)
 
             // 字符间延迟
-            try? await Task.sleep(nanoseconds: 80_000_000) // 80ms
+            try? await Task.sleep(nanoseconds: Constants.Timing.keystrokeDelay)
         }
 
         logger.info("密码字符输入完成，准备发送回车键")
 
         // 输入回车键确认
-        if let enterKeyDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(36), keyDown: true),
-           let enterKeyUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(36), keyDown: false) {
+        if let enterKeyDown = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.enter, keyDown: true),
+           let enterKeyUp = CGEvent(keyboardEventSource: source, virtualKey: Constants.VirtualKeyCode.enter, keyDown: false) {
 
             // 确保回车键没有修饰键
             enterKeyDown.flags = []
             enterKeyUp.flags = []
 
             enterKeyDown.post(tap: .cghidEventTap)
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            try? await Task.sleep(nanoseconds: Constants.Timing.enterKeyDelay)
             enterKeyUp.post(tap: .cghidEventTap)
 
             logger.info("回车键发送完成")
@@ -462,10 +502,10 @@ final class MediaController {
 
         switch name {
         case "douyin", "抖音":
-            appPath = "/Applications/抖音.app"
+            appPath = Constants.AppPath.douyin
             displayName = "抖音"
         case "qishui", "汽水音乐":
-            appPath = "/Applications/汽水音乐.app"
+            appPath = Constants.AppPath.qishui
             displayName = "汽水音乐"
         default:
             logger.error("未知应用名称: \(name)")
@@ -498,7 +538,7 @@ final class MediaController {
 
                 // Electron应用需要更长的启动时间
                 logger.info("等待Electron应用启动: \(name)")
-                try await Task.sleep(nanoseconds: 5_000_000_000) // 5秒
+                try await Task.sleep(nanoseconds: Constants.Timing.appLaunchWait)
 
                 // 再次检查应用状态
                 let isNowRunning = isAppRunning(name)
@@ -508,7 +548,7 @@ final class MediaController {
                 } else {
                     // 尝试再次检测，因为Electron应用启动较慢
                     logger.info("再次检测Electron应用状态: \(name)")
-                    try await Task.sleep(nanoseconds: 3_000_000_000) // 再等3秒
+                    try await Task.sleep(nanoseconds: Constants.Timing.appLaunchWait - Constants.Timing.appLaunchCheckInterval)
 
                     let isStillRunning = isAppRunning(name)
                     if isStillRunning {

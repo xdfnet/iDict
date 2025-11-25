@@ -1,6 +1,6 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.56-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.57-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org/)
 
@@ -373,6 +373,16 @@ make push MSG="提交信息"
 **窗口无法移动**
 - 确保点击窗口内容区域进行拖拽
 - 检查窗口是否有焦点
+
+## 📚 API 文档
+
+详细的 HTTP API 接口文档请参阅：[Docs/API.md](Docs/API.md)
+
+主要接口包括：
+- 媒体控制（播放/暂停、上/下一曲、音量控制）
+- 锁屏和自动登录
+- 应用管理（抖音、汽水音乐开关）
+- 方向键控制
 
 ## 📄 许可证
 
