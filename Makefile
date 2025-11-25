@@ -53,12 +53,14 @@ help:
 
 debug:
 	@echo "$(BLUE)开始 Debug 构建和运行...$(NC)"
-	@echo "$(YELLOW)1. 清理构建文件...$(NC)"
+	@echo "$(YELLOW)1. 停止运行中的应用...$(NC)"
+	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
+	@echo "$(YELLOW)2. 清理构建文件...$(NC)"
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
 	@rm -rf $(ARCHIVE_DIR)
 	@echo "$(GREEN)✅ 清理完成$(NC)"
-	@echo "$(YELLOW)2. 构建 Debug 版本...$(NC)"
+	@echo "$(YELLOW)3. 构建 Debug 版本...$(NC)"
 	@xcodebuild \
 		-project $(PROJECT_NAME).xcodeproj \
 		-scheme $(SCHEME_NAME) \
@@ -67,8 +69,7 @@ debug:
 		-destination 'platform=macOS' \
 		build
 	@echo "$(GREEN)✅ Debug 构建完成$(NC)"
-	@echo "$(YELLOW)3. 停止运行中的应用...$(NC)"
-	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
+
 	@echo "$(YELLOW)4. 启动 Debug 应用...$(NC)"
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \
@@ -116,14 +117,19 @@ push:
 		echo "$(YELLOW)使用方法: make push MSG=\"你的提交信息\"$(NC)"; \
 		exit 1; \
 	fi
-	@echo "$(YELLOW)1. 清理构建文件...$(NC)"
+	@echo "$(YELLOW)1. 停止运行中的应用...$(NC)"
+	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
+	@echo "$(YELLOW)2. 卸载旧版本...$(NC)" 
+	@rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app" 2>/dev/null || true
+	@echo "$(GREEN)✅ 旧版本已卸载$(NC)"
+	@echo "$(YELLOW)3. 清理构建文件...$(NC)"
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
 	@rm -rf $(ARCHIVE_DIR)
 	@echo "$(GREEN)✅ 清理完成$(NC)"
-	@echo "$(YELLOW)2. 更新版本信息...$(NC)"
+	@echo "$(YELLOW)4. 更新版本信息...$(NC)"
 	@$(MAKE) _update_version
-	@echo "$(YELLOW)3. 构建 Release 版本...$(NC)"
+	@echo "$(YELLOW)5. 构建 Release 版本...$(NC)"
 	@xcodebuild \
 		-project $(PROJECT_NAME).xcodeproj \
 		-scheme $(SCHEME_NAME) \
@@ -132,11 +138,7 @@ push:
 		-destination 'platform=macOS' \
 		build
 	@echo "$(GREEN)✅ Release 构建完成$(NC)"
-	@echo "$(YELLOW)4. 停止运行中的应用...$(NC)"
-	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
-	@echo "$(YELLOW)5. 卸载旧版本...$(NC)" 
-	@rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app" 2>/dev/null || true
-	@echo "$(GREEN)✅ 旧版本已卸载$(NC)"
+
 	@echo "$(YELLOW)6. 安装新版本...$(NC)"
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \

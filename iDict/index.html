@@ -317,7 +317,7 @@
             <!-- Slide to Unlock -->
             <div class="slider-container" id="slider">
                 <div class="slider-track" id="track"></div>
-                <div class="slider-text shimmer" id="sliderText">滑动以锁定屏幕</div>
+                <div class="slider-text shimmer" id="sliderText">滑动锁定/登录</div>
                 <div class="slider-thumb" id="thumb">
                     <svg viewBox="0 0 24 24">
                         <path
@@ -343,8 +343,8 @@
         </div>
         <!-- 应用快捷方式 -->
         <div class="app-shortcuts">
-            <div class="app-icon" onclick="send('open_douyin')"><img src="assets/douyin.png" alt="抖音"></div>
-            <div class="app-icon" onclick="send('open_qishui')"><img src="assets/qishui.png" alt="汽水音乐"></div>
+            <div class="app-icon" onclick="send('toggle_douyin')"><img src="assets/douyin.png" alt="抖音"></div>
+            <div class="app-icon" onclick="send('toggle_qishui')"><img src="assets/qishui.png" alt="汽水音乐"></div>
         </div>
         <div class="navigation" style="margin-top: 40px; margin-bottom: 0;">
             <button class="arrow" onclick="send('arrowup')" aria-label="向上"><svg width="28" height="28"
@@ -417,11 +417,10 @@
 
             const max = maxSlide();
             if (currentX > max * 0.9) {
-                // Unlocked
+                // 执行锁屏或登录操作
                 send('lock');
                 thumb.style.left = (max + 6) + 'px';
                 track.style.width = (max + 6) + 'px';
-                text.textContent = '已锁定';
                 text.style.opacity = '1';
 
                 // Reset after delay
@@ -433,7 +432,7 @@
                     text.style.opacity = '0';
 
                     setTimeout(() => {
-                        text.textContent = '滑动以锁定屏幕';
+                        updateSliderText();
                         text.style.opacity = '1';
                         text.classList.add('shimmer');
                         thumb.style.transition = '';
@@ -465,6 +464,32 @@
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('touchend', endDrag);
 
+        // 检查锁屏状态并更新界面
+        async function updateSliderText() {
+            try {
+                const response = await fetch('/api/lock_status');
+                const data = await response.json();
+                const text = document.getElementById('sliderText');
+
+                if (data.status === 'locked') {
+                    text.textContent = '滑动登录';
+                } else {
+                    text.textContent = '滑动锁屏';
+                }
+            } catch (error) {
+                console.error('检查锁屏状态失败:', error);
+                // 使用默认文本
+                document.getElementById('sliderText').textContent = '滑动锁屏/登录';
+            }
+        }
+
+        // 页面加载时检查状态
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSliderText();
+            // 每30秒检查一次状态
+            setInterval(updateSliderText, 30000);
+        });
+
         let t;
         async function send(a) {
             if (navigator.vibrate) navigator.vibrate(10);
@@ -472,7 +497,35 @@
             try {
                 const r = await fetch('/api/' + a);
                 const d = await r.json();
-                show(d.status === 'success' ? '成功' : '失败', d.status !== 'success');
+
+                // 处理锁屏/登录和应用开关的特殊响应
+                let message = '成功';
+                if (d.status === 'lock_success') {
+                    message = '已锁屏';
+                } else if (d.status === 'login_success') {
+                    message = '登录成功';
+                } else if (d.status === 'locked') {
+                    message = '已锁定';
+                } else if (d.status === 'unlocked') {
+                    message = '未锁定';
+                } else if (d.status === 'opened') {
+                    message = '已打开';
+                } else if (d.status === 'closed') {
+                    message = '已关闭';
+                } else if (d.status === 'auto_login_disabled') {
+                    message = '自动登录已禁用';
+                } else if (d.status === 'password_not_set') {
+                    message = '未设置登录密码';
+                } else if (d.status !== 'success') {
+                    message = '失败';
+                }
+
+                show(message, d.status !== 'success' && d.status !== 'lock_success' && d.status !== 'login_success' && d.status !== 'locked' && d.status !== 'unlocked' && d.status !== 'opened' && d.status !== 'closed' && d.status !== 'auto_login_disabled' && d.status !== 'password_not_set');
+
+                // 如果是锁屏或登录操作，延迟更新界面文本
+                if (a === 'lock') {
+                    setTimeout(updateSliderText, 2000);
+                }
             } catch (e) { show('错误', true) }
         }
         function show(m, e) {

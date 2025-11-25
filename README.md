@@ -1,6 +1,6 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.55-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.56-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org/)
 
@@ -136,24 +136,33 @@ make push MSG="修复翻译bug"    # 完整发布流程
 | 🔉 音量减 | 降低系统音量 |
 | 🔇 静音 | 切换静音状态 |
 | 🔊 音量加 | 提高系统音量 |
-| 🔒 锁屏 | 锁定屏幕（Control + Command + Q） |
+| 🔒 锁屏/登录 | 智能切换锁屏或自动登录 |
+| 📱 抖音 | 打开/关闭抖音应用 |
+| 🎵 汽水音乐 | 打开/关闭汽水音乐应用 |
 
 ### 设置界面
 
-应用提供了图形化的设置界面，方便配置腾讯翻译API密钥：
+应用提供了图形化的设置界面，方便配置各项功能：
 
 - **访问方式**：点击菜单栏图标 → 选择 "Settings"
 - **功能特性**：
   - 安全的API密钥输入和存储
   - 实时验证API密钥有效性
+  - 登录密码配置和管理
+  - 自动登录功能开关
   - 一键清除配置功能
   - 直观的状态反馈
 
 - **配置步骤**：
-  1. 在设置界面输入腾讯云 SecretId 和 SecretKey
-  2. 点击"保存"按钮存储配置
-  3. 使用"验证"按钮测试API密钥是否有效
-  4. 如需重置，可点击"清除"按钮删除所有配置
+  1. **翻译服务配置**：
+     - 输入腾讯云 SecretId 和 SecretKey
+     - 点击"保存"按钮存储配置
+     - 使用"验证"按钮测试API密钥是否有效
+  2. **自动登录配置**：
+     - 设置登录密码（4-20个字符）
+     - 启用"自动登录功能"开关
+     - 保存后可通过远程控制实现自动登录
+  3. 如需重置，可点击"清除"按钮删除所有配置
 
 ## 🔧 翻译服务配置
 
@@ -286,8 +295,9 @@ https://api.mymemory.translated.net/get?q=hello&langpair=en|zh-CN&de=deepl@mymem
 | `HotKeyManager.swift` | 全局热键注册和管理 |
 | `ClipboardManager.swift` | 剪贴板内容获取和文本验证 |
 | `translationservice.swift` | 翻译服务类型定义和四种翻译服务实现（腾讯、Google、Microsoft、DeepL） |
-| `MediaController.swift` | 媒体控制和 HTTP 服务器，支持远程控制媒体播放、音量和方向键 |
-| `SettingsView.swift` | SwiftUI 设置界面，提供API密钥配置和管理功能 |
+| `iDictController.swift` | iDict主控制器，包含媒体控制、应用管理（抖音、汽水音乐）、锁屏登录和HTTP服务器 |
+| `SettingsManager.swift` | 设置管理器，统一管理用户配置、API密钥和自动登录设置 |
+| `SettingsView.swift` | SwiftUI 设置界面，提供API密钥配置、密码设置和自动登录管理功能 |
 | `BorderlessWindow.swift` | 无边框窗口实现 |
 | `ClickableContentView.swift` | 窗口交互处理和拖拽支持 |
 | `KeyboardSimulator.swift` | 键盘事件模拟器 |
@@ -313,13 +323,15 @@ iDict/
 │   ├── MenuBarController.swift       # 菜单栏控制器
 │   ├── HotKeyManager.swift           # 全局热键管理
 │   ├── ClipboardManager.swift        # 剪贴板管理
-│   ├── translationservice.swift     # 翻译服务（Google、Microsoft、DeepL）
-│   ├── MediaController.swift         # 媒体控制和 HTTP 服务器
+│   ├── translationservice.swift     # 翻译服务（腾讯、Google、Microsoft、DeepL）
+│   ├── iDictController.swift          # iDict主控制器（媒体控制、应用管理、锁屏登录、HTTP服务器）
+│   ├── SettingsManager.swift         # 设置管理器（统一配置管理）
 │   ├── SettingsView.swift            # SwiftUI 设置界面
 │   ├── BorderlessWindow.swift        # 无边框窗口实现
 │   ├── ClickableContentView.swift    # 可点击内容视图
 │   ├── KeyboardSimulator.swift       # 键盘事件模拟
 │   ├── Assets.xcassets/              # 应用图标和资源文件
+│   ├── index.html                    # 远程控制Web界面
 │   ├── Info.plist                    # 应用配置信息
 │   └── iDict.entitlements            # 应用权限配置文件
 ├── Makefile                          # 构建脚本
