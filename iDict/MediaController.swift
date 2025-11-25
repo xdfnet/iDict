@@ -21,6 +21,7 @@ final class MediaController {
         case volumeUp = 0, volumeDown = 1, mute = 7
         case arrowUp = 126, arrowDown = 125
         case lockScreen = 12  // Q键，配合Control+Command使用
+        case space = 49  // 空格键
     }
     
     static func playPause() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.playPause) }
@@ -32,6 +33,7 @@ final class MediaController {
     static func arrowUp() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowUp) }
     static func arrowDown() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowDown) }
     static func lockScreen() async -> Result<Void, MediaControllerError> { await simulateLockScreen() }
+    static func pressSpace() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.space) }
     
     static func checkInputMonitoringPermission() -> Bool {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": false] as CFDictionary)
@@ -98,6 +100,39 @@ final class MediaController {
         keyDown.post(tap: .cghidEventTap)
         keyUp.post(tap: .cghidEventTap)
         return .success(())
+    }
+
+    static func openApp(_ name: String) async -> Result<Void, MediaControllerError> {
+        logger.info("尝试打开应用: \(name)")
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        // 使用完整路径而不是 -a 参数，因为某些应用（如汽水音乐）用 -a 无法正常启动
+        let appPath = "/Applications/\(name).app"
+        process.arguments = [appPath]
+        
+        // 捕获错误输出
+        let errorPipe = Pipe()
+        process.standardError = errorPipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let exitCode = process.terminationStatus
+            if exitCode == 0 {
+                logger.info("成功打开应用: \(name), 路径: \(appPath), 退出码: \(exitCode)")
+                return .success(())
+            } else {
+                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                let errorOutput = String(data: errorData, encoding: .utf8) ?? "未知错误"
+                logger.error("打开应用失败: \(name), 退出码: \(exitCode), 错误: \(errorOutput)")
+                return .failure(.eventPostFailed)
+            }
+        } catch {
+            logger.error("执行open命令失败: \(name), 错误: \(error.localizedDescription)")
+            return .failure(.eventPostFailed)
+        }
     }
 }
 
@@ -172,11 +207,16 @@ class MediaHTTPServer: ObservableObject {
             return
         }
         
+        MediaController.logger.info("收到请求: \(path)")
+        
         if path == "/" || path == "/index.html" {
             sendHTML(connection, generateHTML())
         } else if path.hasPrefix("/api/") {
             handleAPI(path: path, connection: connection)
+        } else if path.hasPrefix("/assets/") {
+            serveAsset(path: path, connection: connection)
         } else {
+            MediaController.logger.warning("未找到路径: \(path)")
             send(connection, 404, "Not Found")
         }
     }
@@ -184,31 +224,96 @@ class MediaHTTPServer: ObservableObject {
     private func handleAPI(path: String, connection: NWConnection) {
         Task {
             let action = String(path.dropFirst(5))
+            MediaController.logger.info("处理API动作: \(action)")
             var result = "success"
             var error: String?
             
-            guard MediaController.checkInputMonitoringPermission() else {
-                result = "failed"
-                error = "缺少辅助功能权限"
-                sendJSON(connection, "{\"status\":\"\(result)\",\"error\":\"\(error!)\"}")
-                return
-            }
-            
             switch action {
-            case "playpause": _ = await MediaController.playPause()
-            case "next": _ = await MediaController.nextTrack()
-            case "prev": _ = await MediaController.previousTrack()
-            case "volumeup": _ = await MediaController.volumeUp()
-            case "volumedown": _ = await MediaController.volumeDown()
-            case "mute": _ = await MediaController.toggleMute()
-            case "arrowup": _ = await MediaController.arrowUp()
-            case "arrowdown": _ = await MediaController.arrowDown()
-            case "lock": _ = await MediaController.lockScreen()
-            default: result = "unknown"; error = "未知操作"
+            case "playpause": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.playPause() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "space": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.pressSpace() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "next": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.nextTrack() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "prev": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.previousTrack() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "volumeup": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.volumeUp() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "volumedown": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.volumeDown() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "mute": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.toggleMute() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "arrowup": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.arrowUp() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "arrowdown": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.arrowDown() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "lock": 
+                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.lockScreen() }
+                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "open_douyin": 
+                MediaController.logger.info("尝试打开抖音")
+                _ = await MediaController.openApp("抖音")
+            case "open_qishui": 
+                MediaController.logger.info("尝试打开汽水音乐")
+                _ = await MediaController.openApp("汽水音乐")
+            default: 
+                result = "unknown"
+                error = "未知操作: \(action)"
+                MediaController.logger.warning("未知API操作: \(action)")
             }
             
             let json = error != nil ? "{\"status\":\"\(result)\",\"error\":\"\(error!)\"}" : "{\"status\":\"\(result)\"}"
             sendJSON(connection, json)
+        }
+    }
+
+    private func serveAsset(path: String, connection: NWConnection) {
+        let filename = String(path.dropFirst(8)) // Remove /assets/
+        MediaController.logger.info("请求资源: \(filename)")
+        var fileURL: URL?
+        
+        // Try to find in assets subdirectory of bundle resources
+        if let resourcePath = Bundle.main.resourcePath {
+            let assetsPath = URL(fileURLWithPath: resourcePath).appendingPathComponent("assets")
+            let potentialFile = assetsPath.appendingPathComponent(filename)
+            if FileManager.default.fileExists(atPath: potentialFile.path) {
+                fileURL = potentialFile
+                MediaController.logger.info("在assets目录找到文件: \(potentialFile.path)")
+            }
+        }
+        
+        // Fallback: try finding it in main bundle directly
+        if fileURL == nil {
+             let name = (filename as NSString).deletingPathExtension
+             let ext = (filename as NSString).pathExtension
+             if let path = Bundle.main.path(forResource: name, ofType: ext) {
+                 fileURL = URL(fileURLWithPath: path)
+                 MediaController.logger.info("在Bundle根目录找到文件: \(path)")
+             }
+        }
+
+        if let url = fileURL, let data = try? Data(contentsOf: url) {
+            let ext = url.pathExtension.lowercased()
+            let contentType: String
+            switch ext {
+            case "png": contentType = "image/png"
+            case "jpg", "jpeg": contentType = "image/jpeg"
+            case "svg": contentType = "image/svg+xml"
+            default: contentType = "application/octet-stream"
+            }
+            sendData(connection, 200, data, type: contentType)
+        } else {
+            MediaController.logger.error("未找到资源文件: \(filename)")
+            send(connection, 404, "Asset Not Found")
         }
     }
     
@@ -216,6 +321,14 @@ class MediaHTTPServer: ObservableObject {
         let status = ["200": "OK", "400": "Bad Request", "404": "Not Found"]["\(code)"] ?? "Error"
         let response = "HTTP/1.1 \(code) \(status)\r\nContent-Type: \(type); charset=UTF-8\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
         conn.send(content: response.data(using: .utf8), completion: .contentProcessed { _ in conn.cancel() })
+    }
+
+    private func sendData(_ conn: NWConnection, _ code: Int, _ data: Data, type: String) {
+        let status = ["200": "OK", "400": "Bad Request", "404": "Not Found"]["\(code)"] ?? "Error"
+        let header = "HTTP/1.1 \(code) \(status)\r\nContent-Type: \(type)\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n"
+        var responseData = header.data(using: .utf8)!
+        responseData.append(data)
+        conn.send(content: responseData, completion: .contentProcessed { _ in conn.cancel() })
     }
     
     private func sendHTML(_ conn: NWConnection, _ html: String) { send(conn, 200, html, type: "text/html") }

@@ -149,6 +149,9 @@ class MenuBarController: NSObject {
         // 设置窗口为非模态窗口，不会阻止其他操作
         settingsWindow.isReleasedWhenClosed = false
         
+        // 设置窗口层级，确保窗口显示在顶层
+        settingsWindow.level = .floating
+        
         // 创建设置界面
         let settingsView = SettingsView()
         let hostingView = NSHostingView(rootView: settingsView)
