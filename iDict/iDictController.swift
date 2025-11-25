@@ -1,6 +1,6 @@
 //
 //  iDictController.swift
-//  iDict主控制器：媒体控制、应用管理、锁屏登录和HTTP服务器的核心实现
+//  媒体控制、应用管理、锁屏和 HTTP 服务器
 //
 
 import Foundation
@@ -10,7 +10,6 @@ import CoreGraphics
 import ApplicationServices
 import OSLog
 import AppKit
-import IOKit
 
 // MARK: - 常量定义
 
@@ -35,20 +34,15 @@ private enum Constants {
         static let loginWindow = "com.apple.loginwindow"
     }
     
-    /// 虚拟键码常量
-    enum VirtualKeyCode {
-        static let space: CGKeyCode = 49
-    }
-    
     /// 重试次数常量
     enum Retry {
         static let appTerminateAttempts = 10
-        static let appLaunchAttempts = 10
     }
 }
 
 // MARK: - 媒体控制器
 
+/// 媒体播放、应用管理、锁屏等系统控制功能
 final class MediaController {
     fileprivate static let logger = Logger(subsystem: "com.idict.media", category: "MediaController")
 
@@ -59,9 +53,6 @@ final class MediaController {
         case lockScreen = 12  // Q键，配合Control+Command使用
         case space = 49  // 空格键
     }
-
-    // 应用启动状态缓存
-    private static var appStates: [String: Bool] = [:]
     
     static func playPause() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.playPause) }
     static func nextTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.nextTrack) }
@@ -89,9 +80,9 @@ final class MediaController {
     static func lockScreen() async -> Result<Void, MediaControllerError> { await simulateLockScreen() }
     static func pressSpace() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.space) }
 
-    // MARK: - 应用开关功能
+    // MARK: - 应用管理
 
-    /// 检查应用是否正在运行
+    /// 检查应用是否运行
     static func isAppRunning(_ appName: String) -> Bool {
         let bundleId = getBundleId(appName)
         let isRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == bundleId }
@@ -99,7 +90,7 @@ final class MediaController {
         return isRunning
     }
 
-    /// 获取应用的 Bundle ID
+    /// 获取应用 Bundle ID
     private static func getBundleId(_ name: String) -> String {
         switch name {
         case "douyin", "抖音": return Constants.BundleID.douyin
@@ -108,12 +99,12 @@ final class MediaController {
         }
     }
 
-    /// 切换应用开关状态
+    /// 切换应用开关
     static func toggleApp(_ appName: String) async -> Result<Void, MediaControllerError> {
         return isAppRunning(appName) ? await closeApp(appName) : await openApp(appName)
     }
 
-    /// 关闭应用
+    /// 关闭应用（尝试正常终止，失败则强制关闭）
     private static func closeApp(_ appName: String) async -> Result<Void, MediaControllerError> {
         let bundleId = getBundleId(appName)
 
@@ -127,7 +118,6 @@ final class MediaController {
                 for _ in 0..<Constants.Retry.appTerminateAttempts {
                     try await Task.sleep(nanoseconds: Constants.Timing.appTerminateWait)
                     if !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == bundleId }) {
-                        appStates[appName] = false
                         return .success(())
                     }
                 }
@@ -135,7 +125,6 @@ final class MediaController {
                 // 强制关闭
                 if let forceApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first,
                    forceApp.forceTerminate() {
-                    appStates[appName] = false
                     return .success(())
                 }
                 return .failure(.eventPostFailed)
@@ -144,21 +133,24 @@ final class MediaController {
         }
     }
 
-    // MARK: - 锁屏状态检测
+    // MARK: - 锁屏控制
 
     /// 检测屏幕是否锁定
     static func isScreenLocked() -> Bool {
         return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == Constants.BundleID.loginWindow
     }
 
+    /// 检查辅助功能权限
     static func checkInputMonitoringPermission() -> Bool {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": false] as CFDictionary)
     }
     
+    /// 请求辅助功能权限
     static func requestInputMonitoringPermission() {
         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
     }
     
+    /// 模拟媒体按键
     private static func simulateMediaKey(_ key: MediaKey) async -> Result<Void, MediaControllerError> {
         guard checkInputMonitoringPermission() else {
             logger.warning("无辅助功能权限")
@@ -180,6 +172,7 @@ final class MediaController {
         return .success(())
     }
     
+    /// 模拟方向键
     private static func simulateArrowKey(_ key: MediaKey) async -> Result<Void, MediaControllerError> {
         guard checkInputMonitoringPermission() else {
             logger.warning("无辅助功能权限")
@@ -197,6 +190,7 @@ final class MediaController {
         return .success(())
     }
     
+    /// 模拟锁屏（Control+Command+Q）
     private static func simulateLockScreen() async -> Result<Void, MediaControllerError> {
         guard checkInputMonitoringPermission() else {
             logger.warning("无辅助功能权限")
@@ -218,6 +212,7 @@ final class MediaController {
         return .success(())
     }
 
+    /// 打开应用
     static func openApp(_ name: String) async -> Result<Void, MediaControllerError> {
         logger.info("尝试打开应用: \(name)")
 
@@ -258,7 +253,6 @@ final class MediaController {
             let exitCode = process.terminationStatus
             if exitCode == 0 {
                 logger.info("open命令执行成功: \(name), 退出码: \(exitCode)")
-                appStates[name] = true
 
                 // Electron应用需要更长的启动时间
                 logger.info("等待Electron应用启动: \(name)")
@@ -298,6 +292,7 @@ final class MediaController {
 
 // MARK: - HTTP服务器
 
+/// 媒体控制 HTTP 服务器
 @MainActor
 class MediaHTTPServer: ObservableObject {
     private var listener: NWListener?
@@ -307,6 +302,7 @@ class MediaHTTPServer: ObservableObject {
     
     init(port: UInt16 = 8888) { self.port = port }
     
+    /// 启动服务器
     func start() -> Result<Void, MediaHTTPServerError> {
         stop()
         do {
@@ -341,6 +337,7 @@ class MediaHTTPServer: ObservableObject {
         }
     }
     
+    /// 停止服务器
     func stop() {
         listener?.cancel()
         listener = nil
@@ -348,6 +345,7 @@ class MediaHTTPServer: ObservableObject {
         serverURL = nil
     }
     
+    /// 处理客户端连接
     private func handleConnection(_ connection: NWConnection) {
         connection.stateUpdateHandler = { if case .failed = $0 { connection.cancel() } }
         connection.start(queue: .global())
@@ -359,6 +357,7 @@ class MediaHTTPServer: ObservableObject {
         }
     }
     
+    /// 处理 HTTP 请求
     private func processRequest(data: Data, connection: NWConnection) {
         guard let request = String(data: data, encoding: .utf8),
               let line = request.components(separatedBy: "\r\n").first,
@@ -381,6 +380,7 @@ class MediaHTTPServer: ObservableObject {
         }
     }
     
+    /// 处理 API 请求
     private func handleAPI(path: String, connection: NWConnection) {
         Task {
             let action = String(path.dropFirst(5))
@@ -388,96 +388,83 @@ class MediaHTTPServer: ObservableObject {
             var result = "success"
             var error: String?
             
+            // 对需要权限的操作提前检查
+            let needsPermission = !["lock_status", "status_douyin", "status_qishui", "test_apps"].contains(action)
+            
+            if needsPermission && !MediaController.checkInputMonitoringPermission() {
+                result = "failed"
+                error = "缺少辅助功能权限"
+                let json = "{\"status\":\"\(result)\",\"error\":\"\(error!)\"}"
+                sendJSON(connection, json)
+                return
+            }
+            
             switch action {
-            case "playpause": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.playPause() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "space": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.pressSpace() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "next": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.nextTrack() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "prev": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.previousTrack() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "volumeup": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.volumeUp() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "volumedown": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.volumeDown() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "mute": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.toggleMute() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "arrowup": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.arrowUp() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
-            case "arrowdown": 
-                if MediaController.checkInputMonitoringPermission() { _ = await MediaController.arrowDown() }
-                else { result = "failed"; error = "缺少辅助功能权限" }
+            case "playpause": _ = await MediaController.playPause()
+            case "space": _ = await MediaController.pressSpace()
+            case "next": _ = await MediaController.nextTrack()
+            case "prev": _ = await MediaController.previousTrack()
+            case "volumeup": _ = await MediaController.volumeUp()
+            case "volumedown": _ = await MediaController.volumeDown()
+            case "mute": _ = await MediaController.toggleMute()
+            case "arrowup": _ = await MediaController.arrowUp()
+            case "arrowdown": _ = await MediaController.arrowDown()
+                
             case "lock":
-                if MediaController.checkInputMonitoringPermission() {
-                    let isLocked = MediaController.isScreenLocked()
-                    
-                    if isLocked {
-                        // 已锁屏，无法通过软件操作
-                        result = "locked"
-                        error = "屏幕已锁定，无法通过软件唤醒"
+                let isLocked = MediaController.isScreenLocked()
+                if isLocked {
+                    result = "locked"
+                    error = "屏幕已锁定，无法通过软件唤醒"
+                } else {
+                    let lockResult = await MediaController.smartLockOrLogin()
+                    if case .success = lockResult {
+                        result = "lock_success"
                     } else {
-                        // 执行锁屏
-                        let lockResult = await MediaController.smartLockOrLogin()
-                        if case .success = lockResult {
-                            result = "lock_success"
-                        } else {
-                            result = "failed"
-                            error = "锁屏失败"
-                        }
+                        result = "failed"
+                        error = "锁屏失败"
                     }
                 }
-                else { result = "failed"; error = "缺少辅助功能权限" }
+                
             case "lock_status":
-                // 新增API：获取锁屏状态
                 let isLocked = MediaController.isScreenLocked()
                 result = isLocked ? "locked" : "unlocked"
+                
             case "toggle_douyin":
-                // 先检查状态，然后执行相反操作
                 let wasRunning = MediaController.isAppRunning("douyin")
                 MediaController.logger.info("抖音切换前状态: \(wasRunning ? "运行中" : "未运行")")
-
                 let toggleResult = await MediaController.toggleApp("抖音")
                 if case .success = toggleResult {
-                    // 根据操作前的状态推断操作后的状态
                     result = wasRunning ? "closed" : "opened"
                     MediaController.logger.info("抖音切换操作完成，结果: \(result)")
                 } else {
                     result = "failed"
                     error = "操作失败"
                 }
+                
             case "toggle_qishui":
-                // 先检查状态，然后执行相反操作
                 let wasRunning = MediaController.isAppRunning("qishui")
                 MediaController.logger.info("汽水音乐切换前状态: \(wasRunning ? "运行中" : "未运行")")
-
                 let toggleResult = await MediaController.toggleApp("汽水音乐")
                 if case .success = toggleResult {
-                    // 根据操作前的状态推断操作后的状态
                     result = wasRunning ? "closed" : "opened"
                     MediaController.logger.info("汽水音乐切换操作完成，结果: \(result)")
                 } else {
                     result = "failed"
                     error = "操作失败"
                 }
+                
             case "status_douyin":
                 result = MediaController.isAppRunning("douyin") ? "running" : "stopped"
+                
             case "status_qishui":
                 result = MediaController.isAppRunning("qishui") ? "running" : "stopped"
+                
             case "test_apps":
-                // 测试应用状态检测
                 let douyinRunning = MediaController.isAppRunning("douyin")
                 let qishuiRunning = MediaController.isAppRunning("qishui")
                 result = "douyin:\(douyinRunning ? "running" : "stopped"),qishui:\(qishuiRunning ? "running" : "stopped")"
-            default: 
+                
+            default:
                 result = "unknown"
                 error = "未知操作: \(action)"
                 MediaController.logger.warning("未知API操作: \(action)")

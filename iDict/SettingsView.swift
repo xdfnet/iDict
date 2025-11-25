@@ -1,33 +1,29 @@
 //
 //  SettingsView.swift
-//  设置界面：提供API密钥配置功能
-//
-//  功能说明：
-//  - 允许用户配置腾讯翻译API密钥
-//  - 提供保存和验证功能
-//  - 显示当前配置状态
+//  API 密钥配置界面
 //
 
 import SwiftUI
 
+// MARK: - 设置视图
+
+/// 腾讯翻译 API 密钥的配置、验证和管理
 struct SettingsView: View {
+    // MARK: - 属性
+    
     @State private var secretId: String = ""
     @State private var secretKey: String = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
     
+    // MARK: - 视图主体
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            // 标题
-            Text("iDict 设置")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.bottom, 5)
-
-            // API密钥配置区域
+            // 腾讯翻译密钥配置区域
             VStack(alignment: .leading, spacing: 12) {
-                Text("API密钥配置")
+                Text("腾讯翻译密钥配置")
                     .font(.headline)
 
                 // SecretId输入框
@@ -97,7 +93,7 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(24)
-        .frame(width: 550, height: 450)
+        .frame(width: 550)
         .onAppear(perform: loadCurrentAPIKeys)
         .alert(isPresented: $showAlert) {
             Alert(
@@ -108,13 +104,15 @@ struct SettingsView: View {
         }
     }
     
-    // 加载当前API密钥
+    // MARK: - 方法
+        
+    /// 加载已保存的 API 密钥
     private func loadCurrentAPIKeys() {
         secretId = UserDefaults.standard.string(forKey: "TencentSecretId") ?? ""
         secretKey = UserDefaults.standard.string(forKey: "TencentSecretKey") ?? ""
     }
     
-    // 保存API密钥
+    /// 保存 API 密钥
     private func saveAPIKeys() {
         guard !secretId.isEmpty, !secretKey.isEmpty else {
             showAlert(title: "错误", message: "请输入完整的API密钥信息")
@@ -125,7 +123,7 @@ struct SettingsView: View {
         showAlert(title: "成功", message: "API密钥已保存")
     }
     
-    // 验证API密钥
+    /// 验证 API 密钥有效性
     private func validateAPIKeys() {
         guard !secretId.isEmpty, !secretKey.isEmpty else {
             showAlert(title: "错误", message: "请先输入API密钥")
@@ -149,7 +147,7 @@ struct SettingsView: View {
         }
     }
     
-    // 清除API密钥
+    /// 清除 API 密钥
     private func clearAPIKeys() {
         UserDefaults.standard.removeObject(forKey: "TencentSecretId")
         UserDefaults.standard.removeObject(forKey: "TencentSecretKey")
@@ -158,7 +156,7 @@ struct SettingsView: View {
         showAlert(title: "成功", message: "API密钥已清除")
     }
     
-    // 显示警告
+    /// 显示警告对话框
     private func showAlert(title: String, message: String) {
         alertTitle = title
         alertMessage = message

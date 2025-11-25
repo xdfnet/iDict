@@ -1,22 +1,20 @@
 //
 //  MenuBarController.swift
-//  菜单栏控制器：负责状态栏文本展示与菜单交互
+//  菜单栏控制器
 //
-//  功能说明：
-//  - 展示翻译状态和快捷信息
-//  - 构建并响应菜单项（翻译模式、语言选择、设置、关于、退出）
-//  - 协调翻译服务与用户界面交互
-//
+
 import Cocoa
 import SwiftUI
 import Foundation
 
 // MARK: - 菜单栏控制器
+
+/// 状态栏图标和菜单管理
 class MenuBarController: NSObject {
     
     // MARK: - 属性
     
-    /// UI 组件
+    /// 状态栏项
     private var statusBarItem: NSStatusItem?
     
     /// 翻译服务管理器
@@ -36,7 +34,7 @@ class MenuBarController: NSObject {
         setupStatusBar()
     }
     
-    // MARK: - 生命周期管理
+    // MARK: - 生命周期
     
     func cleanup() {
         statusBarItem = nil
@@ -44,7 +42,7 @@ class MenuBarController: NSObject {
     
     // MARK: - 私有方法
     
-    /// 初始化状态栏按钮
+    /// 初始化状态栏
     private func setupStatusBar() {
         statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
@@ -63,7 +61,7 @@ class MenuBarController: NSObject {
     
 
     
-    /// 点击状态栏按钮时动态创建菜单
+    /// 点击状态栏时创建菜单
     @objc private func statusBarButtonClicked() {
         statusBarItem?.menu = createMenu()
         statusBarItem?.button?.performClick(nil)
