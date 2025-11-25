@@ -38,16 +38,12 @@ final class KeyboardSimulator {
     
     /// 检查是否具有输入监视权限。
     static func checkInputMonitoringPermission() -> Bool {
-        // 当 prompt 参数为 false 时，此函数仅检查权限状态，不向用户显示授权提示。
-        let options: [String: Any] = ["AXTrustedCheckOptionPrompt": false]
-        return AXIsProcessTrustedWithOptions(options as CFDictionary)
+        return PermissionManager.checkInputMonitoringPermission()
     }
-    
+
     /// 请求输入监视权限。
     static func requestInputMonitoringPermission() {
-        // 当 prompt 参数为 true 时，如果应用没有权限，系统会显示一个授权对话框。
-        let options: [String: Any] = ["AXTrustedCheckOptionPrompt": true]
-        _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+        PermissionManager.requestInputMonitoringPermission()
     }
     
     // MARK: - 私有实现

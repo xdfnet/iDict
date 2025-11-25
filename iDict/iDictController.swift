@@ -20,20 +20,7 @@ private enum Constants {
         static let appLaunchWait: UInt64 = 5_000_000_000        // 5秒
         static let appLaunchCheckInterval: UInt64 = 500_000_000 // 0.5秒
     }
-    
-    /// 应用路径常量
-    enum AppPath {
-        static let douyin = "/Applications/抖音.app"
-        static let qishui = "/Applications/汽水音乐.app"
-    }
-    
-    /// Bundle Identifier 常量
-    enum BundleID {
-        static let douyin = "com.bytedance.douyin.desktop"
-        static let qishui = "com.soda.music"
-        static let loginWindow = "com.apple.loginwindow"
-    }
-    
+
     /// 重试次数常量
     enum Retry {
         static let appTerminateAttempts = 10
@@ -84,19 +71,10 @@ final class MediaController {
 
     /// 检查应用是否运行
     static func isAppRunning(_ appName: String) -> Bool {
-        let bundleId = getBundleId(appName)
+        let bundleId = AppConfig.getBundleId(for: appName)
         let isRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == bundleId }
         logger.info("应用状态: \(appName) = \(isRunning ? "运行" : "停止")")
         return isRunning
-    }
-
-    /// 获取应用 Bundle ID
-    private static func getBundleId(_ name: String) -> String {
-        switch name {
-        case "douyin", "抖音": return Constants.BundleID.douyin
-        case "qishui", "汽水音乐": return Constants.BundleID.qishui
-        default: return "com.unknown.\(name.lowercased())"
-        }
     }
 
     /// 切换应用开关
@@ -106,7 +84,7 @@ final class MediaController {
 
     /// 关闭应用（尝试正常终止，失败则强制关闭）
     private static func closeApp(_ appName: String) async -> Result<Void, MediaControllerError> {
-        let bundleId = getBundleId(appName)
+        let bundleId = AppConfig.getBundleId(for: appName)
 
         do {
             guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) else {
@@ -137,17 +115,17 @@ final class MediaController {
 
     /// 检测屏幕是否锁定
     static func isScreenLocked() -> Bool {
-        return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == Constants.BundleID.loginWindow
+        return NSWorkspace.shared.frontmostApplication?.bundleIdentifier == AppConfig.loginWindowBundleId
     }
 
     /// 检查辅助功能权限
     static func checkInputMonitoringPermission() -> Bool {
-        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": false] as CFDictionary)
+        return PermissionManager.checkAccessibilityPermission()
     }
-    
+
     /// 请求辅助功能权限
     static func requestInputMonitoringPermission() {
-        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        PermissionManager.requestAccessibilityPermission()
     }
     
     /// 模拟媒体按键
@@ -216,22 +194,12 @@ final class MediaController {
     static func openApp(_ name: String) async -> Result<Void, MediaControllerError> {
         logger.info("尝试打开应用: \(name)")
 
-        let appPath: String
-        let displayName: String
-
-        switch name {
-        case "douyin", "抖音":
-            appPath = Constants.AppPath.douyin
-            displayName = "抖音"
-        case "qishui", "汽水音乐":
-            appPath = Constants.AppPath.qishui
-            displayName = "汽水音乐"
-        default:
+        guard let appConfig = AppConfig.getAppConfig(for: name) else {
             logger.error("未知应用名称: \(name)")
             return .failure(.eventPostFailed)
         }
 
-        let appURL = URL(fileURLWithPath: appPath)
+        let appURL = URL(fileURLWithPath: appConfig.path)
 
         // 先检查应用是否存在
         guard FileManager.default.fileExists(atPath: appURL.path) else {
@@ -239,12 +207,12 @@ final class MediaController {
             return .failure(.eventPostFailed)
         }
 
-        logger.info("应用路径存在，使用open命令启动Electron应用: \(displayName)")
+        logger.info("应用路径存在，使用open命令启动Electron应用: \(appConfig.displayName)")
 
         // 使用与终端相同的命令方式
         let process = Process()
         process.launchPath = "/usr/bin/open"
-        process.arguments = [appPath]
+        process.arguments = [appConfig.path]
 
         do {
             try process.run()
@@ -362,21 +330,21 @@ class MediaHTTPServer: ObservableObject {
         guard let request = String(data: data, encoding: .utf8),
               let line = request.components(separatedBy: "\r\n").first,
               let path = line.components(separatedBy: " ").dropFirst().first else {
-            send(connection, 400, "Bad Request")
+            HTTPResponseHandler.sendBadRequest(connection, message: "Bad Request")
             return
         }
         
         MediaController.logger.info("收到请求: \(path)")
-        
+  
         if path == "/" || path == "/index.html" {
-            sendHTML(connection, generateHTML())
+            HTTPResponseHandler.sendHTML(connection, generateHTML())
         } else if path.hasPrefix("/api/") {
             handleAPI(path: path, connection: connection)
         } else if path.hasPrefix("/assets/") {
             serveAsset(path: path, connection: connection)
         } else {
             MediaController.logger.warning("未找到路径: \(path)")
-            send(connection, 404, "Not Found")
+            HTTPResponseHandler.sendNotFound(connection)
         }
     }
     
@@ -392,10 +360,8 @@ class MediaHTTPServer: ObservableObject {
             let needsPermission = !["lock_status", "status_douyin", "status_qishui", "test_apps"].contains(action)
             
             if needsPermission && !MediaController.checkInputMonitoringPermission() {
-                result = "failed"
-                error = "缺少辅助功能权限"
-                let json = "{\"status\":\"\(result)\",\"error\":\"\(error!)\"}"
-                sendJSON(connection, json)
+                let json = HTTPResponseHandler.buildJSONResponse(status: "failed", error: "缺少辅助功能权限")
+                HTTPResponseHandler.sendJSON(connection, json)
                 return
             }
             
@@ -413,7 +379,6 @@ class MediaHTTPServer: ObservableObject {
             case "lock":
                 let isLocked = MediaController.isScreenLocked()
                 if isLocked {
-                    result = "locked"
                     error = "屏幕已锁定，无法通过软件唤醒"
                 } else {
                     let lockResult = await MediaController.smartLockOrLogin()
@@ -470,8 +435,8 @@ class MediaHTTPServer: ObservableObject {
                 MediaController.logger.warning("未知API操作: \(action)")
             }
             
-            let json = error != nil ? "{\"status\":\"\(result)\",\"error\":\"\(error!)\"}" : "{\"status\":\"\(result)\"}"
-            sendJSON(connection, json)
+            let json = HTTPResponseHandler.buildJSONResponse(status: result, error: error)
+            HTTPResponseHandler.sendJSON(connection, json)
         }
     }
 
@@ -509,29 +474,12 @@ class MediaHTTPServer: ObservableObject {
             case "svg": contentType = "image/svg+xml"
             default: contentType = "application/octet-stream"
             }
-            sendData(connection, 200, data, type: contentType)
+            HTTPResponseHandler.sendDataResponse(connection, code: 200, data: data, contentType: contentType)
         } else {
             MediaController.logger.error("未找到资源文件: \(filename)")
-            send(connection, 404, "Asset Not Found")
+            HTTPResponseHandler.sendNotFound(connection, message: "Asset Not Found")
         }
     }
-    
-    private func send(_ conn: NWConnection, _ code: Int, _ body: String, type: String = "text/plain") {
-        let status = ["200": "OK", "400": "Bad Request", "404": "Not Found"]["\(code)"] ?? "Error"
-        let response = "HTTP/1.1 \(code) \(status)\r\nContent-Type: \(type); charset=UTF-8\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
-        conn.send(content: response.data(using: .utf8), completion: .contentProcessed { _ in conn.cancel() })
-    }
-
-    private func sendData(_ conn: NWConnection, _ code: Int, _ data: Data, type: String) {
-        let status = ["200": "OK", "400": "Bad Request", "404": "Not Found"]["\(code)"] ?? "Error"
-        let header = "HTTP/1.1 \(code) \(status)\r\nContent-Type: \(type)\r\nContent-Length: \(data.count)\r\nConnection: close\r\n\r\n"
-        var responseData = header.data(using: .utf8)!
-        responseData.append(data)
-        conn.send(content: responseData, completion: .contentProcessed { _ in conn.cancel() })
-    }
-    
-    private func sendHTML(_ conn: NWConnection, _ html: String) { send(conn, 200, html, type: "text/html") }
-    private func sendJSON(_ conn: NWConnection, _ json: String) { send(conn, 200, json, type: "application/json") }
     
     private func generateHTML() -> String {
         if let filepath = Bundle.main.path(forResource: "index", ofType: "html") {

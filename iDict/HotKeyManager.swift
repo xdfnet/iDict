@@ -126,9 +126,7 @@ class HotKeyManager {
     
     /// 检查应用是否具有辅助功能权限。
     private func checkAccessibilityPermission() -> Bool {
-        let options: [String: Any] = ["AXTrustedCheckOptionPrompt": true]
-        let accessEnabled = AXIsProcessTrustedWithOptions(options as CFDictionary)
-        return accessEnabled
+        return PermissionManager.checkAccessibilityPermission()
     }
     
     // MARK: - 清理资源
