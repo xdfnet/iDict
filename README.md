@@ -1,6 +1,6 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.65-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.66-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -186,8 +186,7 @@ iDict/
 │   └── ClickableContentView.swift  # 可拖拽视图
 │
 └── 工具类
-    ├── KeyboardSimulator.swift     # 键盘模拟
-    └── AppError.swift              # 统一错误处理
+    └── KeyboardSimulator.swift     # 键盘模拟
 ```
 
 ### 工作流程
