@@ -49,6 +49,11 @@ make push MSG="提交信息"
 
 #### 媒体控制
 - **HTTP 服务器**: [`iDictController.swift`](iDict/iDictController.swift) - 远程媒体控制服务器和应用管理
+- **常量配置**: 使用 `Constants` 枚举统一管理时间常量和重试次数
+  - `appTerminateWait`: 0.5秒 - 应用终止检测间隔
+  - `appLaunchWait`: 2秒 - 应用启动等待时间
+  - `appLaunchCheckInterval`: 0.3秒 - 应用启动二次检测间隔
+  - `appTerminateAttempts`: 10次 - 应用终止最大重试次数
 
 ### 工作流程
 
@@ -90,6 +95,19 @@ make push MSG="提交信息"
 - **抖音应用**: Bundle ID `com.bytedance.douyin.desktop`
 - **汽水音乐**: Bundle ID `com.soda.music`
 - 通过 `/api/toggle_douyin` 和 `/api/toggle_qishui` 控制
+
+### 应用管理流程
+
+**打开应用**：
+1. 执行 `open` 命令启动应用
+2. 等待 2秒检测应用是否运行
+3. 如果未启动，再等待 0.3秒进行二次检测
+4. 激活应用到前台
+
+**关闭应用**：
+1. 调用 `terminate()` 正常终止
+2. 每隔 0.5秒检测一次，最多 10次（总计5秒）
+3. 如果超时，调用 `forceTerminate()` 强制关闭
 
 ## 注意事项
 

@@ -1,6 +1,6 @@
 # iDict - macOS 快速翻译工具
 
-[![Version](https://img.shields.io/badge/version-v1.0.68-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.69-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -233,8 +233,13 @@ make help
 ### 代码规范
 
 - **错误处理**：统一使用 `Result<T, Error>` 和 `async/await`
-- **常量管理**：使用 `Constants` 枚举管理魔法数字
-- **日志记录**：使用 `OSLog` 框架
+- **常量管理**：使用 `Constants` 枚举管理时间配置和重试次数
+  - `appTerminateWait`: 0.5秒 - 应用终止检测间隔
+  - `appLaunchWait`: 2秒 - 应用启动等待时间
+  - `appLaunchCheckInterval`: 0.3秒 - 应用启动二次检测间隔
+  - `appTerminateAttempts`: 10次 - 应用终止最大重试次数
+- **代码复用**：提取通用方法避免重复代码（如 `executeProcess` 执行系统命令）
+- **日志记录**：使用 `OSLog` 框架，关键操作记录详细日志
 - **命名规范**：遵循 Swift API 设计指南
 - **注释规范**：使用 `///` 文档注释
 
