@@ -160,9 +160,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
-        // 3. 使用MenuBarController进行翻译
-        // MenuBarController会处理翻译逻辑和结果显示
-        menuBarController?.performQuickTranslation(text: text)
+        // 3. 过滤文本中的"│"字符
+        let filteredText = text.replacingOccurrences(of: "│", with: "")
+        
+        // 4. 使用MenuBarController进行翻译
+        menuBarController?.performQuickTranslation(text: filteredText)
     }
     
     /// 显示消息窗口
