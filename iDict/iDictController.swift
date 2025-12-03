@@ -92,19 +92,15 @@ final class MediaController {
         
         app.terminate()
         
-        do {
-            if await waitForAppTermination(bundleId: bundleId) {
-                return .success(())
-            }
-            
-            if let forceApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first,
-               forceApp.forceTerminate() {
-                return .success(())
-            }
-            return .failure(.eventPostFailed)
-        } catch {
-            return .failure(.eventPostFailed)
+        if await waitForAppTermination(bundleId: bundleId) {
+            return .success(())
         }
+        
+        if let forceApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleId).first,
+           forceApp.forceTerminate() {
+            return .success(())
+        }
+        return .failure(.eventPostFailed)
     }
     
     /// 等待应用终止
@@ -252,7 +248,11 @@ final class MediaController {
     /// 激活应用到前台
     private static func activateApp(_ bundleId: String) {
         if let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) {
-            app.activate(options: .activateIgnoringOtherApps)
+            if #available(macOS 14.0, *) {
+                app.activate()
+            } else {
+                app.activate(options: .activateIgnoringOtherApps)
+            }
             logger.info("应用已激活到前台: \(bundleId)")
         }
     }

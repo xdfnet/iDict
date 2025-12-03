@@ -14,12 +14,19 @@ import Cocoa
 private enum Constants {
     /// 窗口相关常量
     enum Window {
+        /// 窗口最大宽度（点）：防止窗口过宽影响用户体验
         static let maxWidth: CGFloat = 600
-        static let minWidth: CGFloat = 200
-        static let padding: CGFloat = 40
+        /// 窗口最小宽度（点）：确保窗口不会因为文本太短而变得过小，保持良好的可读性
+        static let minWidth: CGFloat = 50
+        /// 窗口内边距（点）：为文本提供舒适的视觉空间
+        static let padding: CGFloat = 20
+        /// 窗口距离鼠标的偏移量（点）：窗口显示位置相对于鼠标位置的偏移
         static let offsetFromMouse: CGFloat = 20
+        /// 窗口圆角半径（点）：窗口的圆角大小，提供现代化的视觉效果
         static let cornerRadius: CGFloat = 10
+        /// 窗口背景透明度：0.0（完全透明）到1.0（完全不透明）
         static let backgroundAlpha: CGFloat = 0.95
+        /// 文本字体大小（点）：翻译文本的字体大小
         static let fontSize: CGFloat = 14
     }
     
@@ -210,7 +217,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 window.isOpaque = false             // 窗口不透明
                 window.hasShadow = true             // 显示阴影
                 window.level = .floating            // 窗口置于顶层
-                window.hidesOnDeactivate = false    // 应用失活时不清空
+                window.hidesOnDeactivate = true     // 应用失活时隐藏窗口
+                window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary] // 允许在全屏应用中显示
 
                 // 保存窗口引用
                 currentTranslationWindow = window
