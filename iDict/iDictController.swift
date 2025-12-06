@@ -76,6 +76,11 @@ final class MediaController {
         logger.info("应用状态: \(appName) = \(isRunning ? "运行" : "停止")")
         return isRunning
     }
+    
+    /// 根据 bundleId 检查应用是否运行
+    private static func isAppRunning(bundleId: String) -> Bool {
+        NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == bundleId }
+    }
 
     /// 切换应用开关
     static func toggleApp(_ appName: String) async -> Result<Void, MediaControllerError> {
@@ -219,42 +224,38 @@ final class MediaController {
             return .failure(.eventPostFailed)
         }
 
-        // 等待应用启动并激活
-        await waitForAppLaunch(name)
-        activateApp(appConfig.bundleId)
-        logger.info("应用已成功启动并激活: \(appConfig.displayName)")
-        return .success(())
-    }
-    
-    /// 等待应用启动
-    private static func waitForAppLaunch(_ appName: String) async {
-        logger.info("等待应用启动: \(appName)")
-        try? await Task.sleep(nanoseconds: Constants.Timing.appLaunchWait)
-        
-        if isAppRunning(appName) {
-            logger.info("应用已成功启动: \(appName)")
-        } else {
-            logger.info("再次检测应用状态: \(appName)")
-            try? await Task.sleep(nanoseconds: Constants.Timing.appLaunchCheckInterval)
-            
-            if isAppRunning(appName) {
-                logger.info("应用延迟启动成功: \(appName)")
-            } else {
-                logger.warning("应用可能启动失败但命令已执行: \(appName)")
-            }
+        // 等待应用启动
+        let started = await waitForAppLaunch(bundleId: appConfig.bundleId)
+        guard started else {
+            logger.warning("应用启动未确认: \(appConfig.displayName)")
+            return .failure(.eventPostFailed)
         }
-    }
-    
-    /// 激活应用到前台
-    private static func activateApp(_ bundleId: String) {
-        if let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == bundleId }) {
+        
+        // 激活到前台
+        if let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == appConfig.bundleId }) {
             if #available(macOS 14.0, *) {
                 app.activate()
             } else {
                 app.activate(options: .activateIgnoringOtherApps)
             }
-            logger.info("应用已激活到前台: \(bundleId)")
+            logger.info("应用已激活到前台: \(appConfig.displayName)")
+        } else {
+            logger.info("应用已启动但未找到运行实例: \(appConfig.displayName)")
         }
+        
+        return .success(())
+    }
+    
+    /// 等待应用启动
+    private static func waitForAppLaunch(bundleId: String) async -> Bool {
+        logger.info("等待应用启动: \(bundleId)")
+        
+        try? await Task.sleep(nanoseconds: Constants.Timing.appLaunchWait)
+        if isAppRunning(bundleId: bundleId) { return true }
+        
+        logger.info("再次检测应用状态: \(bundleId)")
+        try? await Task.sleep(nanoseconds: Constants.Timing.appLaunchCheckInterval)
+        return isAppRunning(bundleId: bundleId)
     }
     
     /// 执行系统命令并返回退出码
@@ -442,7 +443,7 @@ class MediaHTTPServer: ObservableObject {
         let wasRunning = MediaController.isAppRunning(appName)
         MediaController.logger.info("\(displayName)切换前状态: \(wasRunning ? "运行中" : "未运行")")
         
-        let toggleResult = await MediaController.toggleApp(displayName)
+        let toggleResult = await MediaController.toggleApp(appName)
         if case .success = toggleResult {
             let result = wasRunning ? "closed" : "opened"
             MediaController.logger.info("\(displayName)切换操作完成，结果: \(result)")
