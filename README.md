@@ -24,7 +24,7 @@
 
 ### 🌐 快速翻译
 - **一键翻译** - `Cmd+D` 快速翻译选中的英文文本
-- **多引擎支持** - 腾讯翻译、Google、Microsoft、DeepL 四种翻译服务可选
+- **多引擎支持** - Google Translate、OpenAI 自定义翻译服务可选
 - **智能检测** - 自动检测服务状态，智能切换可用引擎
 - **无边框窗口** - 简洁美观的翻译结果展示，支持拖拽移动
 - **图形化配置** - 内置设置界面，一键配置 API 密钥
@@ -82,8 +82,8 @@ make debug
 
 2. **配置翻译服务**（可选）：
    - 点击菜单栏图标 → `Settings`
-   - 输入腾讯云 API 密钥（SecretId 和 SecretKey）
-   - 或使用其他免费翻译服务（Google、Microsoft、DeepL）
+   - 配置 OpenAI 自定义翻译服务（API URL、Model、API Key）
+   - 或使用 Google Translate（免费，无需配置）
 
 3. **启用远程控制**（可选）：
    - 点击菜单栏图标 → `启动媒体服务器`
@@ -101,20 +101,16 @@ make debug
 ### 切换翻译服务
 
 点击菜单栏图标，选择翻译服务：
-- ✅ **腾讯翻译**（需配置 API 密钥，翻译质量高）
 - ✅ **Google Translate**（免费，无需配置）
-- ✅ **Microsoft Translator**（免费，无需配置）
-- ✅ **DeepL 翻译**（免费，无需配置）
+- ✅ **OpenAI 自定义**（需配置 API URL 和 Model）
 
 ### 配置翻译服务
 
 点击菜单栏 → `Settings`：
 
-1. 输入腾讯云 SecretId 和 SecretKey（[获取地址](https://console.cloud.tencent.com/)）
-2. 点击 `验证` 测试密钥有效性
+1. 选择翻译服务后配置对应参数
+2. 点击 `验证` 测试配置有效性
 3. 点击 `保存` 存储配置
-
-> 💡 其他翻译服务无需配置，开箱即用
 
 ### 快捷键
 
