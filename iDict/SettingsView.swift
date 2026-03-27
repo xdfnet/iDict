@@ -7,176 +7,135 @@ import SwiftUI
 
 // MARK: - Settings View
 
-/// Tencent Translation API key configuration, validation and management
 struct SettingsView: View {
-    // MARK: - Properties
-
-    @State private var secretId: String = ""
-    @State private var secretKey: String = ""
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    @State private var alertTitle = ""
-    @State private var isValidating = false
-
-    // MARK: - Body
+    @State private var apiURL: String = ""
+    @State private var model: String = ""
+    @State private var apiKey: String = ""
+    @State private var isValidating: Bool = false
+    @State private var alertMessage: String = ""
+    @State private var showAlert: Bool = false
 
     var body: some View {
-        contentView
-            .frame(width: 480)
-            .fixedSize(horizontal: true, vertical: true)
-            .onAppear(perform: loadCurrentAPIKeys)
-            .alert(isPresented: $showAlert) {
-                Alert(
-                    title: Text(alertTitle),
-                    message: Text(alertMessage),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
-    }
-
-    
-    // MARK: - Content View
-
-    private var contentView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // SecretId Field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Secret ID")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                SecureField("Enter Tencent Cloud SecretId", text: $secretId)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(.system(.body, design: .monospaced))
-            }
-
-            // SecretKey Field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Secret Key")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                SecureField("Enter Tencent Cloud SecretKey", text: $secretKey)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(.system(.body, design: .monospaced))
-            }
-
-            // Help Text
-            HStack(spacing: 6) {
-                Image(systemName: "info.circle")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-
-                Text("Get API keys from:")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-
-                Link("Tencent Cloud TMT", destination: URL(string: "https://cloud.tencent.com/product/tmt?Is=sdk-topnav")!)
-                    .font(.caption2)
-                    .foregroundColor(.blue)
-            }
-
-            // Action Buttons
-            HStack(spacing: 8) {
-                // Save Button
-                Button("Save") {
-                    saveAPIKeys()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(secretId.isEmpty || secretKey.isEmpty)
-
-                // Validate Button
-                Button("Validate") {
-                    validateAPIKeys()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(secretId.isEmpty || secretKey.isEmpty || isValidating)
-
-                Spacer()
-
-                // Clear Button
-                Button("Clear") {
-                    clearAPIKeys()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .foregroundColor(.red)
-            }
+        VStack(alignment: .leading, spacing: 20) {
+            header
+            formFields
+            actionButtons
         }
-        .padding(16)
-        .background(Color(NSColor.textBackgroundColor))
+        .padding(20)
+        .frame(width: 480)
+        .onAppear { loadSettings() }
+        .alert("Message", isPresented: $showAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(alertMessage)
+        }
     }
 
-    // MARK: - Methods
+    // MARK: - Header
 
-    /// Load saved API keys
-    private func loadCurrentAPIKeys() {
-        secretId = UserDefaults.standard.string(forKey: "TencentSecretId") ?? ""
-        secretKey = UserDefaults.standard.string(forKey: "TencentSecretKey") ?? ""
+    private var header: some View {
+        Text("OpenAI Configuration")
+            .font(.headline)
     }
 
-    /// Save API keys
-    private func saveAPIKeys() {
-        guard !secretId.isEmpty && !secretKey.isEmpty else {
-            showAlert(title: "Error", message: "Please enter complete API key information")
+    // MARK: - Form Fields
+
+    private var formFields: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            FormField(label: "API URL", placeholder: "https://api.openai.com/v1/chat/completions", text: $apiURL)
+            FormField(label: "Model", placeholder: "gpt-3.5-turbo", text: $model)
+            FormField(label: "API Key (Optional)", placeholder: "sk-...", text: $apiKey)
+        }
+    }
+
+    // MARK: - Action Buttons
+
+    private var actionButtons: some View {
+        HStack(spacing: 12) {
+            Button("Save") {
+                save()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            Button("Validate") {
+                validate()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .disabled(isValidating)
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Actions
+
+    private func loadSettings() {
+        apiURL = UserDefaults.standard.string(forKey: "OpenAIAPIIURL") ?? ""
+        model = UserDefaults.standard.string(forKey: "OpenAIModel") ?? ""
+        apiKey = UserDefaults.standard.string(forKey: "OpenAIAPIKey") ?? ""
+    }
+
+    private func save() {
+        guard !apiURL.isEmpty, !model.isEmpty else {
+            alertMessage = "API URL and Model are required"
+            showAlert = true
             return
         }
 
-        TencentTranslationService.setAPIKeys(secretId: secretId, secretKey: secretKey)
-        showAlert(title: "Success", message: "API keys saved successfully")
+        OpenAITranslationService.setAPIConfig(apiURL: apiURL, model: model, apiKey: apiKey)
+        DispatchQueue.main.async {
+            NSApp.keyWindow?.close()
+        }
     }
 
-    /// Validate API keys
-    private func validateAPIKeys() {
-        guard !secretId.isEmpty && !secretKey.isEmpty else {
-            showAlert(title: "Error", message: "Please enter API keys first")
+    private func validate() {
+        guard !apiURL.isEmpty, !model.isEmpty else {
+            alertMessage = "API URL and Model are required"
+            showAlert = true
             return
         }
 
         isValidating = true
+        OpenAITranslationService.setAPIConfig(apiURL: apiURL, model: model, apiKey: apiKey)
 
-        // Temporarily set API keys for testing
-        TencentTranslationService.setAPIKeys(secretId: secretId, secretKey: secretKey)
-
-        // Perform test translation
         Task {
-            let testResult = await TencentTranslationService.translate("Hello")
-
+            let result = await OpenAITranslationService.translate("Hello")
             await MainActor.run {
                 isValidating = false
-                if testResult != "腾讯翻译API密钥未配置" && testResult != "Hello" {
-                    showAlert(title: "Validation Successful", message: "API keys are valid. Test result: \(testResult)")
-                } else {
-                    showAlert(title: "Validation Failed", message: "API keys are invalid or network error occurred")
-                }
+                alertMessage = result == "Hello"
+                    ? "Validation Failed: Translation returned original text"
+                    : "Validation Successful\nResult: \(result)"
+                showAlert = true
             }
         }
     }
+}
 
-    /// Clear API keys
-    private func clearAPIKeys() {
-        UserDefaults.standard.removeObject(forKey: "TencentSecretId")
-        UserDefaults.standard.removeObject(forKey: "TencentSecretKey")
-        secretId = ""
-        secretKey = ""
-        showAlert(title: "Success", message: "API keys cleared")
-    }
+// MARK: - Form Field Component
 
-    /// Show alert dialog
-    private func showAlert(title: String, message: String) {
-        alertTitle = title
-        alertMessage = message
-        showAlert = true
+struct FormField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+        }
     }
 }
 
 // MARK: - Preview
 
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
-            .frame(width: 480)
-    }
+#Preview {
+    SettingsView()
+        .frame(width: 480)
 }

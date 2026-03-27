@@ -128,40 +128,52 @@ class MenuBarController: NSObject {
     
     /// 显示设置窗口
     @objc private func showSettings() {
+        let windowTitle = "Settings"
+
         // 检查是否已有设置窗口存在
-        if let existingWindow = NSApp.windows.first(where: { $0.title == "Settings" }) {
+        if let existingWindow = NSApp.windows.first(where: { $0.title == windowTitle }) {
             existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
             return
         }
-        
+
+        // 创建设置界面
+        let settingsView = SettingsView()
+        let hostingView = NSHostingView(rootView: settingsView)
+
+        // 计算窗口大小
+        hostingView.frame = NSRect(x: 0, y: 0, width: 480, height: 280)
+        let windowWidth = hostingView.frame.width
+        let windowHeight = hostingView.frame.height
+
         let settingsWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 0),
+            contentRect: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
 
-        settingsWindow.title = "Tencent Translation"
+        settingsWindow.title = windowTitle
         settingsWindow.titlebarAppearsTransparent = true
         settingsWindow.titleVisibility = .visible
-        settingsWindow.center()
-        
+
         // 设置窗口为非模态窗口，不会阻止其他操作
         settingsWindow.isReleasedWhenClosed = false
-        
+
         // 设置窗口层级，确保窗口显示在顶层
         settingsWindow.level = .floating
-        
-        // 创建设置界面
-        let settingsView = SettingsView()
-        let hostingView = NSHostingView(rootView: settingsView)
+
         settingsWindow.contentView = hostingView
 
         // 设置窗口自动调整大小
         settingsWindow.isMovable = true
-        settingsWindow.minSize = NSSize(width: 480, height: 200)
-        
-        // 显示窗口
+        settingsWindow.minSize = NSSize(width: 480, height: 280)
+
+        // 居中显示
+        settingsWindow.center()
+
+        // 激活应用并显示窗口
+        NSApp.activate(ignoringOtherApps: true)
         settingsWindow.makeKeyAndOrderFront(nil)
     }
     
