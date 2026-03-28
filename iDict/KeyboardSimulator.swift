@@ -10,13 +10,19 @@ import ApplicationServices
 
 /// 键盘事件模拟器，用于自动化复制操作。
 final class KeyboardSimulator {
-    
+
     // MARK: - 内部类型
-    
+
     /// 定义了需要用到的虚拟键码。
     private enum KeyCode: CGKeyCode {
         case c = 0x08
         case command = 0x37
+    }
+
+    /// 时间常量
+    private enum Constants {
+        /// 按键间隔时间（纳秒）
+        static let keyPressInterval: UInt64 = 2_000_000 // 2ms
     }
     
     // MARK: - 公共静态方法
@@ -76,7 +82,7 @@ final class KeyboardSimulator {
             
             // 在每个事件之间插入微小的延迟，以模拟真实用户的按键间隔，确保系统能正确处理。
             if index < eventSequence.count - 1 {
-                try await Task.sleep(nanoseconds: 2_000_000) // 2ms
+                try await Task.sleep(nanoseconds: Constants.keyPressInterval)
             }
         }
     }

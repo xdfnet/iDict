@@ -291,7 +291,10 @@ class MediaHTTPServer: ObservableObject {
             listener = try NWListener(using: parameters, on: NWEndpoint.Port(rawValue: port)!)
             
             listener?.newConnectionHandler = { [weak self] connection in
-                Task { @MainActor in self?.handleConnection(connection) }
+                Task { @MainActor in
+                    guard let self = self else { return }
+                    self.handleConnection(connection)
+                }
             }
             
             listener?.stateUpdateHandler = { [weak self] state in
@@ -382,15 +385,15 @@ class MediaHTTPServer: ObservableObject {
     /// 处理具体的 API 动作
     private func handleAPIAction(_ action: String) async -> (result: String, error: String?) {
         switch action {
-        case "space": _ = await MediaController.playPause()
-        case "next": _ = await MediaController.nextTrack()
-        case "prev": _ = await MediaController.previousTrack()
-        case "volumeup": _ = await MediaController.volumeUp()
-        case "volumedown": _ = await MediaController.volumeDown()
-        case "mute": _ = await MediaController.toggleMute()
-        case "arrowup": _ = await MediaController.arrowUp()
-        case "arrowdown": _ = await MediaController.arrowDown()
-            
+        case "space": _ = await MediaController.playPause(); return ("success", nil)
+        case "next": _ = await MediaController.nextTrack(); return ("success", nil)
+        case "prev": _ = await MediaController.previousTrack(); return ("success", nil)
+        case "volumeup": _ = await MediaController.volumeUp(); return ("success", nil)
+        case "volumedown": _ = await MediaController.volumeDown(); return ("success", nil)
+        case "mute": _ = await MediaController.toggleMute(); return ("success", nil)
+        case "arrowup": _ = await MediaController.arrowUp(); return ("success", nil)
+        case "arrowdown": _ = await MediaController.arrowDown(); return ("success", nil)
+
         case "lock":
             return await handleLockAction()
             
@@ -419,8 +422,6 @@ class MediaHTTPServer: ObservableObject {
             MediaController.logger.warning("未知API操作: \(action)")
             return ("unknown", "未知操作: \(action)")
         }
-        
-        return ("success", nil)
     }
     
     /// 处理锁屏动作

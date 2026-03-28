@@ -11,18 +11,21 @@ import Foundation
 
 /// 状态栏图标和菜单管理
 class MenuBarController: NSObject {
-    
+
     // MARK: - 属性
-    
+
     /// 状态栏项
     private var statusBarItem: NSStatusItem?
-    
+
+    /// 设置窗口（持有引用防止提前释放）
+    private var settingsWindow: NSWindow?
+
     /// 翻译服务管理器
     private let translationServiceManager: TranslationServiceManager
-    
+
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
-    
+
     /// 显示消息的回调
     var showMessage: ((String) -> Void)?
     
@@ -72,19 +75,19 @@ class MenuBarController: NSObject {
     private func createMenu() -> NSMenu {
         let menu = NSMenu()
         
-        // Translation Service Selection
+        // 翻译服务选择
         menu.addItem(createServiceSelectionMenu())
         menu.addItem(NSMenuItem.separator())
-        
-        // Settings
+
+        // 设置
         menu.addItem(createSettingsMenu())
         menu.addItem(NSMenuItem.separator())
-        
-        // About
+
+        // 关于
         menu.addItem(createAboutMenu())
         menu.addItem(NSMenuItem.separator())
-        
-        // Exit
+
+        // 退出
         menu.addItem(createQuitMenu())
         
         return menu
@@ -146,35 +149,35 @@ class MenuBarController: NSObject {
         let windowWidth = hostingView.frame.width
         let windowHeight = hostingView.frame.height
 
-        let settingsWindow = NSWindow(
+        settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
 
-        settingsWindow.title = windowTitle
-        settingsWindow.titlebarAppearsTransparent = true
-        settingsWindow.titleVisibility = .visible
+        settingsWindow?.title = windowTitle
+        settingsWindow?.titlebarAppearsTransparent = true
+        settingsWindow?.titleVisibility = .visible
 
         // 设置窗口为非模态窗口，不会阻止其他操作
-        settingsWindow.isReleasedWhenClosed = false
+        settingsWindow?.isReleasedWhenClosed = false
 
         // 设置窗口层级，确保窗口显示在顶层
-        settingsWindow.level = .floating
+        settingsWindow?.level = .floating
 
-        settingsWindow.contentView = hostingView
+        settingsWindow?.contentView = hostingView
 
         // 设置窗口自动调整大小
-        settingsWindow.isMovable = true
-        settingsWindow.minSize = NSSize(width: 480, height: 280)
+        settingsWindow?.isMovable = true
+        settingsWindow?.minSize = NSSize(width: 480, height: 280)
 
         // 居中显示
-        settingsWindow.center()
+        settingsWindow?.center()
 
         // 激活应用并显示窗口
         NSApp.activate(ignoringOtherApps: true)
-        settingsWindow.makeKeyAndOrderFront(nil)
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
     
     /// 选择翻译服务
@@ -269,10 +272,7 @@ class MenuBarController: NSObject {
     private func performTranslation(text: String) {
         Task {
             let result = await translationServiceManager.translateText(text)
-            
-            DispatchQueue.main.async {
-                self.showTranslationWindow?(result)
-            }
+            self.showTranslationWindow?(result)
         }
     }
 }

@@ -46,7 +46,7 @@ struct GoogleTranslationService {
 // MARK: - OpenAI 自定义翻译服务
 struct OpenAITranslationService {
     private static var apiURL: String {
-        return UserDefaults.standard.string(forKey: "OpenAIAPIIURL") ?? ""
+        return UserDefaults.standard.string(forKey: "OpenAIAPIURL") ?? ""
     }
 
     private static var model: String {
@@ -58,7 +58,7 @@ struct OpenAITranslationService {
     }
 
     static func setAPIConfig(apiURL: String, model: String, apiKey: String) {
-        UserDefaults.standard.set(apiURL, forKey: "OpenAIAPIIURL")
+        UserDefaults.standard.set(apiURL, forKey: "OpenAIAPIURL")
         UserDefaults.standard.set(model, forKey: "OpenAIModel")
         UserDefaults.standard.set(apiKey, forKey: "OpenAIAPIKey")
     }

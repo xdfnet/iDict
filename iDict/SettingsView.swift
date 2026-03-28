@@ -1,11 +1,11 @@
 //
 //  SettingsView.swift
-//  API Configuration Interface
+//  API 配置界面
 //
 
 import SwiftUI
 
-// MARK: - Settings View
+// MARK: - 设置视图
 
 struct SettingsView: View {
     @State private var apiURL: String = ""
@@ -31,14 +31,14 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - 标题
 
     private var header: some View {
         Text("OpenAI Configuration")
             .font(.headline)
     }
 
-    // MARK: - Form Fields
+    // MARK: - 表单字段
 
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -48,7 +48,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Action Buttons
+    // MARK: - 操作按钮
 
     private var actionButtons: some View {
         HStack(spacing: 12) {
@@ -69,7 +69,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Actions
+    // MARK: - 操作
 
     private func loadSettings() {
         apiURL = UserDefaults.standard.string(forKey: "OpenAIAPIIURL") ?? ""
@@ -113,7 +113,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Form Field Component
+// MARK: - 表单字段组件
 
 struct FormField: View {
     let label: String
@@ -133,7 +133,7 @@ struct FormField: View {
     }
 }
 
-// MARK: - Preview
+// MARK: - 预览
 
 #Preview {
     SettingsView()
