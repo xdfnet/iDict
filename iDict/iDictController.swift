@@ -449,10 +449,10 @@ class MediaHTTPServer: ObservableObject {
             let result = wasRunning ? "closed" : "opened"
             MediaController.logger.info("\(displayName)切换操作完成，结果: \(result)")
 
-            // 汽水音乐打开后等待8秒播放
+            // 汽水音乐打开后等待5秒播放
             if !wasRunning && appName == "qishui" {
-                MediaController.logger.info("等待 8 秒后执行播放...")
-                try? await Task.sleep(nanoseconds: 8_000_000_000)
+                MediaController.logger.info("等待 5 秒后执行播放...")
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
 
                 // 确保应用在前台
                 if let appConfig = AppConfig.getAppConfig(for: appName),
