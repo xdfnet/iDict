@@ -446,7 +446,7 @@ class MediaHTTPServer: ObservableObject {
 
         let toggleResult = await MediaController.toggleApp(appName)
         try? await Task.sleep(nanoseconds: 5_000_000_000)
-        MediaController.playPause()
+        _ = await MediaController.playPause()
         if case .success = toggleResult {
             let result = wasRunning ? "closed" : "opened"
             MediaController.logger.info("\(displayName)切换操作完成，结果: \(result)")
