@@ -453,6 +453,13 @@ class MediaHTTPServer: ObservableObject {
             if !wasRunning && appName == "qishui" {
                 MediaController.logger.info("等待 5 秒后执行播放...")
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
+
+                // 激活应用确保获得焦点后再发送空格键
+                if let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == "com.soda.music" }) {
+                    app.activate()
+                    try? await Task.sleep(nanoseconds: 200_000_000) // 再等0.2秒
+                }
+
                 _ = await MediaController.playPause()
                 MediaController.logger.info("\(displayName) 已开始播放")
                 return ("opened_and_playing", nil)
