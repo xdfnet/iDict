@@ -453,17 +453,6 @@ class MediaHTTPServer: ObservableObject {
             if !wasRunning && appName == "qishui" {
                 MediaController.logger.info("等待 5 秒后执行播放...")
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
-
-                // 确保应用在前台
-                if let appConfig = AppConfig.getAppConfig(for: appName),
-                   let app = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == appConfig.bundleId }) {
-                    if #available(macOS 14.0, *) {
-                        app.activate()
-                    } else {
-                        app.activate(options: .activateIgnoringOtherApps)
-                    }
-                }
-
                 _ = await MediaController.playPause()
                 MediaController.logger.info("\(displayName) 已开始播放")
                 return ("opened_and_playing", nil)
