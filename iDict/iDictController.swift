@@ -450,7 +450,7 @@ class MediaHTTPServer: ObservableObject {
             MediaController.logger.info("\(displayName)切换操作完成，结果: \(result)")
 
             // 汽水音乐打开后等待5秒播放
-            if !wasRunning && appName == "qishui" {
+            if !wasRunning {
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 _ = await MediaController.playPause()
             }
