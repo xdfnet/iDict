@@ -443,18 +443,11 @@ class MediaHTTPServer: ObservableObject {
     private func handleAppToggle(_ appName: String, displayName: String) async -> (result: String, error: String?) {
         let wasRunning = MediaController.isAppRunning(appName)
         MediaController.logger.info("\(displayName)切换前状态: \(wasRunning ? "运行中" : "未运行")")
-
+        
         let toggleResult = await MediaController.toggleApp(appName)
         if case .success = toggleResult {
             let result = wasRunning ? "closed" : "opened"
             MediaController.logger.info("\(displayName)切换操作完成，结果: \(result)")
-
-            // 汽水音乐打开后等待5秒播放
-            if !wasRunning {
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
-                _ = await MediaController.playPause()
-            }
-
             return (result, nil)
         } else {
             return ("failed", "操作失败")
