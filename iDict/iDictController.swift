@@ -445,7 +445,7 @@ class MediaHTTPServer: ObservableObject {
         MediaController.logger.info("\(displayName)切换前状态: \(wasRunning ? "运行中" : "未运行")")
 
         let toggleResult = await MediaController.toggleApp(appName)
-        try? await Task.sleep(nanoseconds: 5_000_000_000)
+        try? await Task.sleep(nanoseconds: 10_000_000_000)
         MediaController.logger.info("准备执行播放...")
         _ = await MediaController.playPause()
         MediaController.logger.info("播放命令已执行") 
