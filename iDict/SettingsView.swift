@@ -47,7 +47,7 @@ struct SettingsView: View {
 
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 16) {
-            FormField(label: "openAI_BASE_URL", placeholder: "https://api.openai.com/v1/chat/completions", text: $apiURL)
+            FormField(label: "openAI_BASE_URL", placeholder: "https://api.openai.com/v1 (可省略 /chat/completions)", text: $apiURL)
             FormField(label: "openAI_MODEL", placeholder: "gpt-3.5-turbo", text: $model)
             FormField(label: "openAI_API_KEY", placeholder: "sk-...", text: $apiKey)
         }

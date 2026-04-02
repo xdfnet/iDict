@@ -68,7 +68,21 @@ struct OpenAITranslationService {
     }
 
     static func translate(_ text: String) async -> String {
-        guard let url = URL(string: openAI_BASE_URL), !openAI_BASE_URL.isEmpty else {
+        guard !openAI_BASE_URL.isEmpty else {
+            return text
+        }
+
+        // 补全 URL 路径
+        var baseURL = openAI_BASE_URL
+        if !baseURL.hasSuffix("/chat/completions") {
+            if baseURL.hasSuffix("/") {
+                baseURL += "chat/completions"
+            } else {
+                baseURL += "/chat/completions"
+            }
+        }
+
+        guard let url = URL(string: baseURL) else {
             return text
         }
 
