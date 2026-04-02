@@ -5,6 +5,11 @@
 
 import SwiftUI
 
+// MARK: - 设置保存通知
+extension Notification.Name {
+    static let settingsDidSave = Notification.Name("settingsDidSave")
+}
+
 // MARK: - 设置视图
 
 struct SettingsView: View {
@@ -42,9 +47,9 @@ struct SettingsView: View {
 
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 16) {
-            FormField(label: "API URL", placeholder: "https://api.openai.com/v1/chat/completions", text: $apiURL)
-            FormField(label: "Model", placeholder: "gpt-3.5-turbo", text: $model)
-            FormField(label: "API Key (Optional)", placeholder: "sk-...", text: $apiKey)
+            FormField(label: "openAI_BASE_URL", placeholder: "https://api.openai.com/v1/chat/completions", text: $apiURL)
+            FormField(label: "openAI_MODEL", placeholder: "gpt-3.5-turbo", text: $model)
+            FormField(label: "openAI_API_KEY", placeholder: "sk-...", text: $apiKey)
         }
     }
 
@@ -55,7 +60,7 @@ struct SettingsView: View {
             Button("Save") {
                 save()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(AlwaysVisibleButtonStyle())
             .controlSize(.large)
 
             Button("Validate") {
@@ -72,9 +77,9 @@ struct SettingsView: View {
     // MARK: - 操作
 
     private func loadSettings() {
-        apiURL = UserDefaults.standard.string(forKey: "OpenAIAPIIURL") ?? ""
-        model = UserDefaults.standard.string(forKey: "OpenAIModel") ?? ""
-        apiKey = UserDefaults.standard.string(forKey: "OpenAIAPIKey") ?? ""
+        apiURL = UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
+        model = UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
+        apiKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
     }
 
     private func save() {
@@ -84,10 +89,12 @@ struct SettingsView: View {
             return
         }
 
-        OpenAITranslationService.setAPIConfig(apiURL: apiURL, model: model, apiKey: apiKey)
-        DispatchQueue.main.async {
-            NSApp.keyWindow?.close()
-        }
+        OpenAITranslationService.setAPIConfig(openAI_BASE_URL: apiURL, openAI_MODEL: model, openAI_API_KEY: apiKey)
+        alertMessage = "Settings saved successfully"
+        showAlert = true
+
+        // 发送通知让 MenuBarController 关闭设置窗口
+        NotificationCenter.default.post(name: .settingsDidSave, object: nil)
     }
 
     private func validate() {
@@ -98,7 +105,7 @@ struct SettingsView: View {
         }
 
         isValidating = true
-        OpenAITranslationService.setAPIConfig(apiURL: apiURL, model: model, apiKey: apiKey)
+        OpenAITranslationService.setAPIConfig(openAI_BASE_URL: apiURL, openAI_MODEL: model, openAI_API_KEY: apiKey)
 
         Task {
             let result = await OpenAITranslationService.translate("Hello")
@@ -110,6 +117,20 @@ struct SettingsView: View {
                 showAlert = true
             }
         }
+    }
+}
+
+// MARK: - 自定义按钮样式
+
+struct AlwaysVisibleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(Color.accentColor)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }
 

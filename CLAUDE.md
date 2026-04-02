@@ -34,8 +34,7 @@ make push MSG="提交信息"
 
 #### 翻译服务
 - **翻译服务管理器**: [`translationservice.swift`](iDict/translationservice.swift) - 统一的翻译服务接口
-- 支持四种翻译服务：Tencent、Google、Microsoft、DeepL
-- Tencent 需要配置 API 密钥，其他服务使用公开接口
+- 支持两种翻译服务：Google Translate（免费）和 OpenAI（可配置自定义 API 兼容接口）
 
 #### 系统集成
 - **全局热键**: [`HotKeyManager.swift`](iDict/HotKeyManager.swift) - Cmd+D 热键注册和处理
@@ -84,10 +83,10 @@ make push MSG="提交信息"
 
 ## API 密钥配置
 
-腾讯翻译服务需要配置API密钥：
-1. 在设置界面中配置 SecretId 和 SecretKey
-2. 密钥通过 UserDefaults 存储
-3. 其他翻译服务无需配置
+OpenAI 翻译服务可通过设置界面配置：
+1. API URL：OpenAI 兼容接口地址
+2. Model：模型名称（如 gpt-3.5-turbo）
+3. API Key（可选）：如接口需要认证
 
 ## 应用管理功能
 

@@ -45,30 +45,30 @@ struct GoogleTranslationService {
 
 // MARK: - OpenAI 自定义翻译服务
 struct OpenAITranslationService {
-    private static var apiURL: String {
-        return UserDefaults.standard.string(forKey: "OpenAIAPIURL") ?? ""
+    private static var openAI_BASE_URL: String {
+        return UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
     }
 
-    private static var model: String {
-        return UserDefaults.standard.string(forKey: "OpenAIModel") ?? ""
+    private static var openAI_MODEL: String {
+        return UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
     }
 
-    private static var apiKey: String {
-        return UserDefaults.standard.string(forKey: "OpenAIAPIKey") ?? ""
+    private static var openAI_API_KEY: String {
+        return UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
     }
 
-    static func setAPIConfig(apiURL: String, model: String, apiKey: String) {
-        UserDefaults.standard.set(apiURL, forKey: "OpenAIAPIURL")
-        UserDefaults.standard.set(model, forKey: "OpenAIModel")
-        UserDefaults.standard.set(apiKey, forKey: "OpenAIAPIKey")
+    static func setAPIConfig(openAI_BASE_URL: String, openAI_MODEL: String, openAI_API_KEY: String) {
+        UserDefaults.standard.set(openAI_BASE_URL, forKey: "OPENAI_BASE_URL")
+        UserDefaults.standard.set(openAI_MODEL, forKey: "OPENAI_MODEL")
+        UserDefaults.standard.set(openAI_API_KEY, forKey: "OPENAI_API_KEY")
     }
 
     static func isAPIConfigured() -> Bool {
-        return !apiURL.isEmpty
+        return !openAI_BASE_URL.isEmpty
     }
 
     static func translate(_ text: String) async -> String {
-        guard let url = URL(string: apiURL), !apiURL.isEmpty else {
+        guard let url = URL(string: openAI_BASE_URL), !openAI_BASE_URL.isEmpty else {
             return text
         }
 
@@ -77,14 +77,14 @@ struct OpenAITranslationService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         // 如果设置了 API Key，添加 Authorization header
-        if !apiKey.isEmpty {
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if !openAI_API_KEY.isEmpty {
+            request.setValue("Bearer \(openAI_API_KEY)", forHTTPHeaderField: "Authorization")
         }
 
         // 构建请求体，OpenAI 兼容格式
         let prompt = "将下面的文本翻译为中文(简体)：\n\(text)"
         let requestBody: [String: Any] = [
-            "model": model,
+            "model": openAI_MODEL,
             "messages": [
                 ["role": "user", "content": prompt]
             ],

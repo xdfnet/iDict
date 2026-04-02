@@ -35,6 +35,23 @@ class MenuBarController: NSObject {
         self.translationServiceManager = translationServiceManager
         super.init()
         setupStatusBar()
+        setupNotifications()
+    }
+
+    // MARK: - 通知处理
+
+    private func setupNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleSettingsDidSave),
+            name: .settingsDidSave,
+            object: nil
+        )
+    }
+
+    @objc private func handleSettingsDidSave() {
+        settingsWindow?.close()
+        settingsWindow = nil
     }
     
     // MARK: - 生命周期
@@ -134,7 +151,7 @@ class MenuBarController: NSObject {
         let windowTitle = "Settings"
 
         // 检查是否已有设置窗口存在
-        if let existingWindow = NSApp.windows.first(where: { $0.title == windowTitle }) {
+        if let existingWindow = settingsWindow {
             existingWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
