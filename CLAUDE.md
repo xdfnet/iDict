@@ -84,9 +84,14 @@ make push MSG="提交信息"
 ## API 密钥配置
 
 OpenAI 翻译服务可通过设置界面配置：
-1. API URL：OpenAI 兼容接口地址
-2. Model：模型名称（如 gpt-3.5-turbo）
-3. API Key（可选）：如接口需要认证
+1. `openAI_BASE_URL`：OpenAI 兼容接口地址（支持仅输入基础 URL，自动补全 `/chat/completions` 路径）
+2. `openAI_MODEL`：模型名称（如 `gpt-3.5-turbo`）
+3. `openAI_API_KEY`（可选）：如接口需要认证
+
+**UserDefaults 存储 Key：**
+- `OPENAI_BASE_URL`
+- `OPENAI_MODEL`
+- `OPENAI_API_KEY`
 
 ## 应用管理功能
 
