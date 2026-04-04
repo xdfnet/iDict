@@ -13,6 +13,7 @@ extension Notification.Name {
 // MARK: - 设置视图
 
 struct SettingsView: View {
+    @State private var selectedService: TranslationServiceType = .google
     @State private var openAIURL: String = ""
     @State private var openAIModel: String = ""
     @State private var openAIKey: String = ""
@@ -26,8 +27,8 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                openAISection
-                ollamaSection
+                serviceSummary
+                currentServiceSection
             }
             .padding(20)
         }
@@ -45,6 +46,16 @@ struct SettingsView: View {
     private var header: some View {
         Text("Translation Configuration")
             .font(.headline)
+    }
+
+    private var serviceSummary: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Current Service")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Text(selectedService.displayName)
+                .font(.title3.weight(.medium))
+        }
     }
 
     // MARK: - 配置区域
@@ -72,6 +83,25 @@ struct SettingsView: View {
         }
     }
 
+    private var googleSection: some View {
+        ConfigSection(title: "Google Translate") {
+            Text("Google Translate 无需额外配置，直接选择后即可使用。")
+                .foregroundColor(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var currentServiceSection: some View {
+        switch selectedService {
+        case .google:
+            googleSection
+        case .openai:
+            openAISection
+        case .ollama:
+            ollamaSection
+        }
+    }
+
     @ViewBuilder
     private func sectionActions(saveAction: @escaping () -> Void, validateAction: @escaping () -> Void) -> some View {
         HStack(spacing: 12) {
@@ -91,6 +121,10 @@ struct SettingsView: View {
     // MARK: - 操作
 
     private func loadSettings() {
+        if let rawValue = UserDefaults.standard.string(forKey: "selectedTranslationService"),
+           let service = TranslationServiceType(rawValue: rawValue) {
+            selectedService = service
+        }
         openAIURL = UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
         openAIModel = UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
         openAIKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
