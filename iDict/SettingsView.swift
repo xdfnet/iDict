@@ -13,21 +13,25 @@ extension Notification.Name {
 // MARK: - 设置视图
 
 struct SettingsView: View {
-    @State private var apiURL: String = ""
-    @State private var model: String = ""
-    @State private var apiKey: String = ""
+    @State private var openAIURL: String = ""
+    @State private var openAIModel: String = ""
+    @State private var openAIKey: String = ""
+    @State private var ollamaURL: String = ""
+    @State private var ollamaModel: String = ""
     @State private var isValidating: Bool = false
     @State private var alertMessage: String = ""
     @State private var showAlert: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            header
-            formFields
-            actionButtons
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                header
+                openAISection
+                ollamaSection
+            }
+            .padding(20)
         }
-        .padding(20)
-        .frame(width: 480)
+        .frame(width: 520, height: 420)
         .onAppear { loadSettings() }
         .alert("Message", isPresented: $showAlert) {
             Button("OK", role: .cancel) {}
@@ -39,36 +43,46 @@ struct SettingsView: View {
     // MARK: - 标题
 
     private var header: some View {
-        Text("OpenAI Configuration")
+        Text("Translation Configuration")
             .font(.headline)
     }
 
-    // MARK: - 表单字段
+    // MARK: - 配置区域
 
-    private var formFields: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            FormField(label: "openAI_BASE_URL", placeholder: "https://api.openai.com/v1 (可省略 /chat/completions)", text: $apiURL)
-            FormField(label: "openAI_MODEL", placeholder: "gpt-3.5-turbo", text: $model)
-            FormField(label: "openAI_API_KEY", placeholder: "sk-...", text: $apiKey)
+    private var openAISection: some View {
+        ConfigSection(title: "OpenAI") {
+            FormField(label: "OPENAI_BASE_URL", placeholder: "https://api.openai.com/v1 (可省略 /chat/completions)", text: $openAIURL)
+            FormField(label: "OPENAI_MODEL", placeholder: "gpt-4o-mini", text: $openAIModel)
+            FormField(label: "OPENAI_API_KEY", placeholder: "sk-...", text: $openAIKey)
+            sectionActions(
+                saveAction: saveOpenAI,
+                validateAction: validateOpenAI
+            )
         }
     }
 
-    // MARK: - 操作按钮
+    private var ollamaSection: some View {
+        ConfigSection(title: "Ollama") {
+            FormField(label: "OLLAMA_BASE_URL", placeholder: "http://127.0.0.1:11434", text: $ollamaURL)
+            FormField(label: "OLLAMA_MODEL", placeholder: "qwen2.5:7b / llama3.1:8b", text: $ollamaModel)
+            sectionActions(
+                saveAction: saveOllama,
+                validateAction: validateOllama
+            )
+        }
+    }
 
-    private var actionButtons: some View {
+    @ViewBuilder
+    private func sectionActions(saveAction: @escaping () -> Void, validateAction: @escaping () -> Void) -> some View {
         HStack(spacing: 12) {
-            Button("Save") {
-                save()
-            }
-            .buttonStyle(AlwaysVisibleButtonStyle())
-            .controlSize(.large)
+            Button("Save", action: saveAction)
+                .buttonStyle(AlwaysVisibleButtonStyle())
+                .controlSize(.large)
 
-            Button("Validate") {
-                validate()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .disabled(isValidating)
+            Button("Validate", action: validateAction)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(isValidating)
 
             Spacer()
         }
@@ -77,38 +91,79 @@ struct SettingsView: View {
     // MARK: - 操作
 
     private func loadSettings() {
-        apiURL = UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
-        model = UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
-        apiKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
+        openAIURL = UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
+        openAIModel = UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
+        openAIKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
+        ollamaURL = UserDefaults.standard.string(forKey: "OLLAMA_BASE_URL") ?? "http://127.0.0.1:11434"
+        ollamaModel = UserDefaults.standard.string(forKey: "OLLAMA_MODEL") ?? ""
     }
 
-    private func save() {
-        guard !apiURL.isEmpty, !model.isEmpty else {
+    private func saveOpenAI() {
+        guard !openAIURL.isEmpty, !openAIModel.isEmpty else {
             alertMessage = "API URL and Model are required"
             showAlert = true
             return
         }
 
-        OpenAITranslationService.setAPIConfig(openAI_BASE_URL: apiURL, openAI_MODEL: model, openAI_API_KEY: apiKey)
-        alertMessage = "Settings saved successfully"
+        OpenAITranslationService.setAPIConfig(
+            openAI_BASE_URL: openAIURL,
+            openAI_MODEL: openAIModel,
+            openAI_API_KEY: openAIKey
+        )
+        alertMessage = "OpenAI settings saved successfully"
         showAlert = true
-
-        // 发送通知让 MenuBarController 关闭设置窗口
-        NotificationCenter.default.post(name: .settingsDidSave, object: nil)
     }
 
-    private func validate() {
-        guard !apiURL.isEmpty, !model.isEmpty else {
+    private func validateOpenAI() {
+        guard !openAIURL.isEmpty, !openAIModel.isEmpty else {
             alertMessage = "API URL and Model are required"
             showAlert = true
             return
         }
 
         isValidating = true
-        OpenAITranslationService.setAPIConfig(openAI_BASE_URL: apiURL, openAI_MODEL: model, openAI_API_KEY: apiKey)
+        OpenAITranslationService.setAPIConfig(
+            openAI_BASE_URL: openAIURL,
+            openAI_MODEL: openAIModel,
+            openAI_API_KEY: openAIKey
+        )
 
         Task {
             let result = await OpenAITranslationService.translate("Hello")
+            await MainActor.run {
+                isValidating = false
+                alertMessage = result == "Hello"
+                    ? "Validation Failed: Translation returned original text"
+                    : "Validation Successful\nResult: \(result)"
+                showAlert = true
+            }
+        }
+    }
+
+    private func saveOllama() {
+        guard !ollamaURL.isEmpty, !ollamaModel.isEmpty else {
+            alertMessage = "Ollama URL and Model are required"
+            showAlert = true
+            return
+        }
+
+        OllamaTranslationService.setAPIConfig(baseURL: ollamaURL, model: ollamaModel)
+        alertMessage = "Ollama settings saved successfully"
+        showAlert = true
+    }
+
+    private func validateOllama() {
+        guard !ollamaURL.isEmpty, !ollamaModel.isEmpty else {
+            alertMessage = "Ollama URL and Model are required"
+            showAlert = true
+            return
+        }
+
+        isValidating = true
+        OllamaTranslationService.setAPIConfig(baseURL: ollamaURL, model: ollamaModel)
+
+        Task {
+            let result = await OllamaTranslationService.translate("Hello")
             await MainActor.run {
                 isValidating = false
                 alertMessage = result == "Hello"
@@ -154,9 +209,25 @@ struct FormField: View {
     }
 }
 
+struct ConfigSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(title)
+                .font(.headline)
+            content
+        }
+        .padding(16)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(12)
+    }
+}
+
 // MARK: - 预览
 
 #Preview {
     SettingsView()
-        .frame(width: 480)
+        .frame(width: 520, height: 420)
 }

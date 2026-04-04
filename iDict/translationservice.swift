@@ -10,11 +10,13 @@ import Foundation
 enum TranslationServiceType: String, CaseIterable {
     case google = "Google"
     case openai = "OpenAI"
+    case ollama = "Ollama"
 
     var displayName: String {
         switch self {
         case .google: return "Google Translate"
         case .openai: return "OpenAI Translate"
+        case .ollama: return "Ollama Translate"
         }
     }
 }
@@ -129,6 +131,78 @@ struct OpenAITranslationService {
     }
 }
 
+// MARK: - Ollama 翻译服务
+struct OllamaTranslationService {
+    private static var ollamaBaseURL: String {
+        UserDefaults.standard.string(forKey: "OLLAMA_BASE_URL") ?? ""
+    }
+
+    private static var ollamaModel: String {
+        UserDefaults.standard.string(forKey: "OLLAMA_MODEL") ?? ""
+    }
+
+    static func setAPIConfig(baseURL: String, model: String) {
+        UserDefaults.standard.set(baseURL, forKey: "OLLAMA_BASE_URL")
+        UserDefaults.standard.set(model, forKey: "OLLAMA_MODEL")
+    }
+
+    static func isAPIConfigured() -> Bool {
+        !ollamaBaseURL.isEmpty && !ollamaModel.isEmpty
+    }
+
+    static func translate(_ text: String) async -> String {
+        guard isAPIConfigured() else {
+            return text
+        }
+
+        var baseURL = ollamaBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        if baseURL.hasSuffix("/") {
+            baseURL.removeLast()
+        }
+        if baseURL.hasSuffix("/api/generate") {
+            baseURL = String(baseURL.dropLast("/api/generate".count))
+        }
+
+        guard let url = URL(string: "\(baseURL)/api/generate") else {
+            return text
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let prompt = """
+        请将下面的英文翻译成简体中文，只返回译文，不要解释：
+        \(text)
+        """
+        let requestBody: [String: Any] = [
+            "model": ollamaModel,
+            "prompt": prompt,
+            "stream": false
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                return text
+            }
+
+            if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let translatedText = jsonObject["response"] as? String {
+                let trimmed = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? text : trimmed
+            }
+        } catch {
+            print("Ollama翻译错误: \(error.localizedDescription)")
+        }
+
+        return text
+    }
+}
+
 // MARK: - 翻译服务管理器
 @MainActor
 final class TranslationServiceManager {
@@ -148,6 +222,8 @@ final class TranslationServiceManager {
             return await GoogleTranslationService.translate(text)
         case .openai:
             return await OpenAITranslationService.translate(text)
+        case .ollama:
+            return await OllamaTranslationService.translate(text)
         }
     }
     
