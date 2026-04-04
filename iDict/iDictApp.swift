@@ -34,6 +34,5 @@ private extension iDictApp {
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .defaultSize(width: 0, height: 0)
-        .commandsRemoved()
     }
 }
