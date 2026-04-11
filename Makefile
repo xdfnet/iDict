@@ -1,161 +1,149 @@
 # iDict Makefile
-# 用于构建 macOS 应用程序
-# 作者: David
-# 版本: 2.0
 
-.PHONY: debug push help _update_version
-
-# =============================================================================
-# 项目配置
-# =============================================================================
+.PHONY: help clean debug release install package push _update_version _require_msg _verify_release
 
 PROJECT_NAME = iDict
 SCHEME_NAME = iDict
-BUILD_DIR = build
-DERIVED_DATA_DIR = ~/Library/Developer/Xcode/DerivedData
+PROJECT_FILE = $(PROJECT_NAME).xcodeproj
+BUILD_ROOT = $(CURDIR)/build
+DERIVED_DATA_DIR = $(BUILD_ROOT)/DerivedData
+PRODUCTS_DIR = $(DERIVED_DATA_DIR)/Build/Products
+DEBUG_APP = $(PRODUCTS_DIR)/Debug/$(PROJECT_NAME).app
+RELEASE_APP = $(PRODUCTS_DIR)/Release/$(PROJECT_NAME).app
 INSTALL_DIR = /Applications
-ARCHIVE_DIR = archive
+INSTALL_APP = $(INSTALL_DIR)/$(PROJECT_NAME).app
+PACKAGE_DIR = $(BUILD_ROOT)/packages
 
-# 颜色定义
 RED = \033[0;31m
 GREEN = \033[0;32m
 YELLOW = \033[0;33m
 BLUE = \033[0;34m
 CYAN = \033[0;36m
-NC = \033[0m # No Color
-
-# =============================================================================
-# 默认目标
-# =============================================================================
+NC = \033[0m
 
 .DEFAULT_GOAL := help
 
-
-
-# =============================================================================
-# 帮助信息
-# =============================================================================
-
 help:
-	@echo "$(CYAN)iDict 构建系统$(NC) "
-	@echo "$(CYAN)================$(NC) "
+	@echo "$(CYAN)iDict build commands$(NC)"
+	@echo "$(CYAN)===================$(NC)"
 	@echo ""
-	@echo "$(GREEN)核心命令:$(NC)"
-	@echo "  $(YELLOW)debug$(NC)       - 构建并运行 Debug 版本"
-	@echo "  $(YELLOW)push$(NC)        - 构建、安装、更新版本并推送到Git (需要 MSG=\"提交信息\")"
+	@echo "$(GREEN)Core$(NC)"
+	@echo "  $(YELLOW)make debug$(NC)                 Build and launch Debug"
+	@echo "  $(YELLOW)make release$(NC)               Clean build Release and verify signing"
+	@echo "  $(YELLOW)make install$(NC)               Install Release to /Applications with backup"
+	@echo "  $(YELLOW)make package$(NC)               Create a zip from the Release app"
 	@echo ""
-	@echo "$(GREEN)其他:$(NC)"
-	@echo "  $(YELLOW)help$(NC)        - 显示此帮助信息"
+	@echo "$(GREEN)Publish$(NC)"
+	@echo "  $(YELLOW)make push MSG=\"message\"$(NC)    Bump version, install, package, commit and push"
 	@echo ""
-	@echo "$(GREEN)使用示例:$(NC)"
-	@echo "  $(CYAN)make debug$(NC)                    - 开发调试"
-	@echo "  $(CYAN)make push MSG=\"修复bug\"$(NC)       - 完整发布流程"
+	@echo "$(GREEN)Cleanup$(NC)"
+	@echo "  $(YELLOW)make clean$(NC)                 Remove local build artifacts"
+
+clean:
+	@echo "$(YELLOW)Cleaning local build artifacts...$(NC)"
+	@rm -rf "$(BUILD_ROOT)"
+	@echo "$(GREEN)Done$(NC)"
 
 debug:
-	@echo "$(BLUE)开始 Debug 构建和运行...$(NC)"
-	@echo "$(YELLOW)1. 停止运行中的应用...$(NC)"
-	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
-	@echo "$(YELLOW)2. 清理构建文件...$(NC)"
-	@rm -rf $(BUILD_DIR)
-	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
-	@rm -rf $(ARCHIVE_DIR)
-	@echo "$(GREEN)✅ 清理完成$(NC)"
-	@echo "$(YELLOW)3. 构建 Debug 版本...$(NC)"
+	@echo "$(BLUE)Building Debug...$(NC)"
+	@pkill -x "$(PROJECT_NAME)" 2>/dev/null || true
 	@xcodebuild \
-		-project $(PROJECT_NAME).xcodeproj \
-		-scheme $(SCHEME_NAME) \
+		-project "$(PROJECT_FILE)" \
+		-scheme "$(SCHEME_NAME)" \
 		-configuration Debug \
-		-derivedDataPath $(BUILD_DIR) \
+		-derivedDataPath "$(DERIVED_DATA_DIR)" \
 		-destination 'platform=macOS' \
 		build
-	@echo "$(GREEN)✅ Debug 构建完成$(NC)"
-
-	@echo "$(YELLOW)4. 启动 Debug 应用...$(NC)"
-	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
-	if [ -n "$$APP_PATH" ]; then \
-		open "$$APP_PATH"; \
-		echo "$(GREEN)✅ 应用已启动$(NC)"; \
-	else \
-		echo "$(RED)❌ 找不到构建的应用程序$(NC)"; \
+	@if [ ! -d "$(DEBUG_APP)" ]; then \
+		echo "$(RED)Debug app not found: $(DEBUG_APP)$(NC)"; \
 		exit 1; \
 	fi
+	@open "$(DEBUG_APP)"
+	@echo "$(GREEN)Debug app launched$(NC)"
+
+release: clean
+	@echo "$(BLUE)Building Release...$(NC)"
+	@xcodebuild \
+		-project "$(PROJECT_FILE)" \
+		-scheme "$(SCHEME_NAME)" \
+		-configuration Release \
+		-derivedDataPath "$(DERIVED_DATA_DIR)" \
+		-destination 'platform=macOS' \
+		build
+	@$(MAKE) _verify_release
+
+_verify_release:
+	@if [ ! -d "$(RELEASE_APP)" ]; then \
+		echo "$(RED)Release app not found: $(RELEASE_APP)$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Verifying code signature...$(NC)"
+	@codesign -dv --verbose=2 "$(RELEASE_APP)" >/dev/null
+	@spctl --assess --verbose=2 "$(RELEASE_APP)"
+	@echo "$(GREEN)Release app passed signing checks$(NC)"
+
+install: release
+	@echo "$(BLUE)Installing Release to $(INSTALL_DIR)...$(NC)"
+	@pkill -x "$(PROJECT_NAME)" 2>/dev/null || true
+	@ts=$$(date +%Y%m%d-%H%M%S); \
+	if [ -d "$(INSTALL_APP)" ]; then \
+		backup="$(INSTALL_DIR)/$(PROJECT_NAME).backup-$$ts.app"; \
+		mv "$(INSTALL_APP)" "$$backup"; \
+		echo "$(CYAN)Backed up previous app to $$backup$(NC)"; \
+	fi; \
+	ditto "$(RELEASE_APP)" "$(INSTALL_APP)"
+	@xattr -dr com.apple.quarantine "$(INSTALL_APP)" 2>/dev/null || true
+	@open "$(INSTALL_APP)"
+	@echo "$(GREEN)Installed $(INSTALL_APP)$(NC)"
+
+package: release
+	@echo "$(BLUE)Packaging Release zip...$(NC)"
+	@mkdir -p "$(PACKAGE_DIR)"
+	@version=$$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$(RELEASE_APP)/Contents/Info.plist"); \
+	build=$$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$(RELEASE_APP)/Contents/Info.plist"); \
+	zip_path="$(PACKAGE_DIR)/$(PROJECT_NAME)-$$version-$$build.zip"; \
+	rm -f "$$zip_path"; \
+	ditto -c -k --keepParent "$(RELEASE_APP)" "$$zip_path"; \
+	echo "$(GREEN)Created $$zip_path$(NC)"
 
 _update_version:
-	@echo "$(YELLOW)更新版本信息...$(NC)"
-	@INFO_PLIST="$(PROJECT_NAME)/Info.plist"; \
-	PROJECT_FILE="$(PROJECT_NAME).xcodeproj/project.pbxproj"; \
-	if [ -f "$$INFO_PLIST" ] && [ -f "$$PROJECT_FILE" ]; then \
-		CURRENT_VERSION=$$(xcodebuild -project $(PROJECT_NAME).xcodeproj -showBuildSettings | grep "MARKETING_VERSION" | head -1 | awk '{print $$3}' || echo "1.0.0"); \
-		echo "$(CYAN)当前版本: $$CURRENT_VERSION$(NC)"; \
-		MAJOR=$$(echo $$CURRENT_VERSION | cut -d. -f1); \
-		MINOR=$$(echo $$CURRENT_VERSION | cut -d. -f2); \
-		PATCH=$$(echo $$CURRENT_VERSION | cut -d. -f3 2>/dev/null || echo "0"); \
-		NEW_PATCH=$$((PATCH + 1)); \
-		NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
-		BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
-		echo "$(CYAN)新版本: $$NEW_VERSION$(NC)"; \
-		echo "$(CYAN)构建号: $$BUILD_NUMBER$(NC)"; \
-		plutil -replace CFBundleShortVersionString -string "$$NEW_VERSION" "$$INFO_PLIST"; \
-		plutil -replace CFBundleVersion -string "$$BUILD_NUMBER" "$$INFO_PLIST"; \
-		sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = $$NEW_VERSION/g" "$$PROJECT_FILE"; \
-		sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = $$BUILD_NUMBER/g" "$$PROJECT_FILE"; \
-		if [ -f "README.md" ]; then \
-			echo "$(CYAN)更新 README.md 版本徽章...$(NC)"; \
-			sed -i '' "s/version-v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/version-v$$NEW_VERSION/g" "README.md"; \
-			echo "$(GREEN)README.md 版本徽章已更新$(NC)"; \
-		fi; \
-		echo "$(GREEN)版本信息已更新$(NC)"; \
-	else \
-		echo "$(RED)错误: 找不到 Info.plist 或项目文件$(NC)"; \
-		exit 1; \
-	fi
-
-push:
-	@echo "$(BLUE)开始完整构建安装和推送流程...$(NC)"
-	@if [ -z "$(MSG)" ]; then \
-		echo "$(RED)错误: 请提供提交信息$(NC)"; \
-		echo "$(YELLOW)使用方法: make push MSG=\"你的提交信息\"$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)1. 停止运行中的应用...$(NC)"
-	@pkill -f "$(PROJECT_NAME)" 2>/dev/null || true
-	@echo "$(YELLOW)2. 卸载旧版本...$(NC)" 
-	@rm -rf "$(INSTALL_DIR)/$(PROJECT_NAME).app" 2>/dev/null || true
-	@echo "$(GREEN)✅ 旧版本已卸载$(NC)"
-	@echo "$(YELLOW)3. 清理构建文件...$(NC)"
-	@rm -rf $(BUILD_DIR)
-	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
-	@rm -rf $(ARCHIVE_DIR)
-	@echo "$(GREEN)✅ 清理完成$(NC)"
-	@echo "$(YELLOW)4. 更新版本信息...$(NC)"
-	@$(MAKE) _update_version
-	@echo "$(YELLOW)5. 构建 Release 版本...$(NC)"
-	@xcodebuild \
-		-project $(PROJECT_NAME).xcodeproj \
-		-scheme $(SCHEME_NAME) \
-		-configuration Release \
-		-derivedDataPath $(BUILD_DIR) \
-		-destination 'platform=macOS' \
-		build
-	@echo "$(GREEN)✅ Release 构建完成$(NC)"
-
-	@echo "$(YELLOW)6. 安装新版本...$(NC)"
-	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
-	if [ -n "$$APP_PATH" ]; then \
-		cp -R "$$APP_PATH" $(INSTALL_DIR)/; \
-		echo "$(GREEN)✅ 安装完成: $(INSTALL_DIR)/$(PROJECT_NAME).app$(NC)"; \
-	else \
-		echo "$(RED)❌ 错误: 找不到构建的应用程序$(NC)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)7. 提交并推送到GitHub...$(NC)"
-	@CURRENT_BRANCH=$$(git branch --show-current); \
-	if [ -z "$$CURRENT_BRANCH" ]; then \
-		echo "$(RED)错误: 无法获取当前分支$(NC)"; \
+	@echo "$(YELLOW)Updating version metadata...$(NC)"
+	@PROJECT_PBXPROJ="$(PROJECT_FILE)/project.pbxproj"; \
+	README_FILE="README.md"; \
+	CURRENT_VERSION=$$(xcodebuild -project "$(PROJECT_FILE)" -scheme "$(SCHEME_NAME)" -configuration Release -showBuildSettings | awk '/MARKETING_VERSION/ { print $$3; exit }'); \
+	if [ -z "$$CURRENT_VERSION" ]; then \
+		echo "$(RED)Could not determine current version$(NC)"; \
 		exit 1; \
 	fi; \
-	echo "$(CYAN)当前分支: $$CURRENT_BRANCH$(NC)"; \
+	MAJOR=$$(echo "$$CURRENT_VERSION" | cut -d. -f1); \
+	MINOR=$$(echo "$$CURRENT_VERSION" | cut -d. -f2); \
+	PATCH=$$(echo "$$CURRENT_VERSION" | cut -d. -f3); \
+	NEW_VERSION="$$MAJOR.$$MINOR.$$((PATCH + 1))"; \
+	BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
+	echo "$(CYAN)Version $$CURRENT_VERSION -> $$NEW_VERSION$(NC)"; \
+	echo "$(CYAN)Build $$BUILD_NUMBER$(NC)"; \
+	sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = $$NEW_VERSION/g" "$$PROJECT_PBXPROJ"; \
+	sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = $$BUILD_NUMBER/g" "$$PROJECT_PBXPROJ"; \
+	if [ -f "$$README_FILE" ]; then \
+		sed -i '' "s/version-v[0-9][0-9]*\\.[0-9][0-9]*\\.[0-9][0-9]*/version-v$$NEW_VERSION/g" "$$README_FILE"; \
+	fi; \
+	echo "$(GREEN)Version metadata updated$(NC)"
+
+_require_msg:
+	@if [ -z "$(MSG)" ]; then \
+		echo "$(RED)Missing commit message$(NC)"; \
+		echo "$(YELLOW)Usage: make push MSG=\"your message\"$(NC)"; \
+		exit 1; \
+	fi
+
+push: _require_msg _update_version install package
+	@echo "$(BLUE)Committing and pushing...$(NC)"
+	@branch=$$(git branch --show-current); \
+	if [ -z "$$branch" ]; then \
+		echo "$(RED)Could not determine current branch$(NC)"; \
+		exit 1; \
+	fi; \
 	git add .; \
 	git commit -m "$(MSG)"; \
-	git push origin "$$CURRENT_BRANCH"; \
-	echo "$(GREEN)✅ 提交并推送完成: $(MSG)$(NC)"
+	git push origin "$$branch"; \
+	echo "$(GREEN)Pushed to $$branch$(NC)"
