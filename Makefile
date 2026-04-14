@@ -30,7 +30,7 @@ help:
 	@echo "$(GREEN)Core$(NC)"
 	@echo "  $(YELLOW)make debug$(NC)                 Build and launch Debug"
 	@echo "  $(YELLOW)make release$(NC)               Clean build Release and verify signing"
-	@echo "  $(YELLOW)make install$(NC)               Install Release to /Applications with backup"
+	@echo "  $(YELLOW)make install$(NC)               Install Release to /Applications"
 	@echo "  $(YELLOW)make package$(NC)               Create a zip from the Release app"
 	@echo ""
 	@echo "$(GREEN)Publish$(NC)"
@@ -85,12 +85,9 @@ _verify_release:
 install: release
 	@echo "$(BLUE)Installing Release to $(INSTALL_DIR)...$(NC)"
 	@pkill -x "$(PROJECT_NAME)" 2>/dev/null || true
-	@ts=$$(date +%Y%m%d-%H%M%S); \
-	if [ -d "$(INSTALL_APP)" ]; then \
-		backup="$(INSTALL_DIR)/$(PROJECT_NAME).backup-$$ts.app"; \
-		mv "$(INSTALL_APP)" "$$backup"; \
-		echo "$(CYAN)Backed up previous app to $$backup$(NC)"; \
-	fi; \
+	@rm -rf "$(INSTALL_APP)"
+	@echo "$(YELLOW)Removed existing app at $(INSTALL_APP)$(NC)"
+	@\
 	ditto "$(RELEASE_APP)" "$(INSTALL_APP)"
 	@xattr -dr com.apple.quarantine "$(INSTALL_APP)" 2>/dev/null || true
 	@open "$(INSTALL_APP)"
