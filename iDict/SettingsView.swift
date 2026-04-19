@@ -17,8 +17,6 @@ struct SettingsView: View {
     @State private var openAIURL: String = ""
     @State private var openAIModel: String = ""
     @State private var openAIKey: String = ""
-    @State private var ollamaURL: String = ""
-    @State private var ollamaModel: String = ""
     @State private var isValidating: Bool = false
     @State private var alertMessage: String = ""
     @State private var showAlert: Bool = false
@@ -72,17 +70,6 @@ struct SettingsView: View {
         }
     }
 
-    private var ollamaSection: some View {
-        ConfigSection(title: "Ollama") {
-            FormField(label: "OLLAMA_BASE_URL", placeholder: "http://127.0.0.1:11434", text: $ollamaURL)
-            FormField(label: "OLLAMA_MODEL", placeholder: "qwen2.5:7b / llama3.1:8b", text: $ollamaModel)
-            sectionActions(
-                saveAction: saveOllama,
-                validateAction: validateOllama
-            )
-        }
-    }
-
     private var googleSection: some View {
         ConfigSection(title: "Google Translate") {
             Text("Google Translate 无需额外配置，直接选择后即可使用。")
@@ -97,8 +84,6 @@ struct SettingsView: View {
             googleSection
         case .openai:
             openAISection
-        case .ollama:
-            ollamaSection
         }
     }
 
@@ -127,9 +112,7 @@ struct SettingsView: View {
         }
         openAIURL = UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
         openAIModel = UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
-        openAIKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
-        ollamaURL = UserDefaults.standard.string(forKey: "OLLAMA_BASE_URL") ?? "http://127.0.0.1:11434"
-        ollamaModel = UserDefaults.standard.string(forKey: "OLLAMA_MODEL") ?? ""
+       openAIKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
     }
 
     private func saveOpenAI() {
@@ -166,43 +149,18 @@ struct SettingsView: View {
             let result = await OpenAITranslationService.translate("Hello")
             await MainActor.run {
                 isValidating = false
-                alertMessage = result == "Hello"
-                    ? "Validation Failed: Translation returned original text"
-                    : "Validation Successful\nResult: \(result)"
-                showAlert = true
-            }
-        }
-    }
-
-    private func saveOllama() {
-        guard !ollamaURL.isEmpty, !ollamaModel.isEmpty else {
-            alertMessage = "Ollama URL and Model are required"
-            showAlert = true
-            return
-        }
-
-        OllamaTranslationService.setAPIConfig(baseURL: ollamaURL, model: ollamaModel)
-        alertMessage = "Ollama settings saved successfully"
-        showAlert = true
-    }
-
-    private func validateOllama() {
-        guard !ollamaURL.isEmpty, !ollamaModel.isEmpty else {
-            alertMessage = "Ollama URL and Model are required"
-            showAlert = true
-            return
-        }
-
-        isValidating = true
-        OllamaTranslationService.setAPIConfig(baseURL: ollamaURL, model: ollamaModel)
-
-        Task {
-            let result = await OllamaTranslationService.translate("Hello")
-            await MainActor.run {
-                isValidating = false
-                alertMessage = result == "Hello"
-                    ? "Validation Failed: Translation returned original text"
-                    : "Validation Successful\nResult: \(result)"
+                switch result {
+                case .success(let translated):
+                    if translated == "Hello" || translated.lowercased().contains("hello") {
+                        alertMessage = translated == "Hello"
+                            ? "Validation Failed: Translation returned original text"
+                            : "Validation Successful\nResult: \(translated)"
+                    } else {
+                        alertMessage = "Validation Successful\nResult: \(translated)"
+                    }
+                case .failed(_, let error):
+                    alertMessage = "Validation Failed: \(error)"
+                }
                 showAlert = true
             }
         }

@@ -2,7 +2,7 @@
 
 macOS 菜单栏翻译工具，通过 `Cmd+D` 快速翻译选中的英文文本。
 
-[![Version](https://img.shields.io/badge/version-v1.0.23-blue.svg)](https://github.com/xdfnet/iDict/releases)
+[![Version](https://img.shields.io/badge/version-v1.0.24-blue.svg)](https://github.com/xdfnet/iDict/releases)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-green.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-6.2+-orange.svg)](https://swift.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)

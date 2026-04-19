@@ -9,39 +9,7 @@ import Cocoa
 // MARK: - 自定义UI组件导入
 // 窗口相关类已分离到独立文件以提高可维护性
 
-// MARK: - 常量定义
 
-private enum Constants {
-    /// 窗口相关常量
-    enum Window {
-        /// 窗口最大宽度（点）：防止窗口过宽影响用户体验
-        static let maxWidth: CGFloat = 600
-        /// 窗口最小宽度（点）：确保窗口不会因为文本太短而变得过小，保持良好的可读性
-        static let minWidth: CGFloat = 50
-        /// 窗口内边距（点）：为文本提供舒适的视觉空间
-        static let padding: CGFloat = 20
-        /// 窗口距离鼠标的偏移量（点）：窗口显示位置相对于鼠标位置的偏移
-        static let offsetFromMouse: CGFloat = 20
-        /// 窗口圆角半径（点）：窗口的圆角大小，提供现代化的视觉效果
-        static let cornerRadius: CGFloat = 10
-        /// 窗口背景透明度：0.0（完全透明）到1.0（完全不透明）
-        static let backgroundAlpha: CGFloat = 0.95
-        /// 文本字体大小（点）：翻译文本的字体大小
-        static let fontSize: CGFloat = 14
-    }
-    
-    /// 时间相关常量
-    enum Timing {
-        static let copyDelay: UInt64 = 150_000_000 // 150ms
-    }
-    
-    /// 颜色相关常量
-    enum Color {
-        static let backgroundRed: CGFloat = 0.2
-        static let backgroundGreen: CGFloat = 0.2
-        static let backgroundBlue: CGFloat = 0.2
-    }
-}
 
 // MARK: - 应用代理
 
@@ -84,7 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 设置翻译窗口显示回调
         menuBarController?.showTranslationWindow = { [weak self] message in
             Task { @MainActor in
-                await self?.showMessage(message)
+                await self?.showTranslationResult(message)
             }
         }
         
@@ -150,7 +118,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let copyResult = await KeyboardSimulator.simulateCopyCommand()
         if case .success = copyResult {
             // 短暂等待，确保剪贴板有时间更新。
-            try? await Task.sleep(nanoseconds: Constants.Timing.copyDelay)
+            try? await Task.sleep(nanoseconds: AppConfig.Timing.copyDelay)
         }
         
         // 2. 从剪贴板获取文本。
@@ -160,22 +128,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
-        // 3. 过滤文本中的"│"字符
-        let filteredText = text.replacingOccurrences(of: "│", with: "")
-        
-        // 4. 使用MenuBarController进行翻译
-        menuBarController?.performQuickTranslation(text: filteredText)
+        // 3. 使用MenuBarController进行翻译（剪贴板文本已清理）
+        menuBarController?.performQuickTranslation(text: text)
+    }
+    
+    /// 显示翻译结果窗口
+    private func showTranslationResult(_ message: String) async {
+        await showMessage(message, reuseExistingWindow: true)
     }
     
     /// 显示消息窗口
-    private func showMessage(_ message: String) async {
+    private func showMessage(_ message: String, reuseExistingWindow: Bool = false) async {
         // 确保UI操作在主线程上执行。
         await MainActor.run {
             // --- 1. 计算窗口和内容的尺寸 ---
-            let font = NSFont.systemFont(ofSize: Constants.Window.fontSize)
-            let maxWidth = Constants.Window.maxWidth
-            let minWidth = Constants.Window.minWidth
-            let padding = Constants.Window.padding
+            let font = NSFont.systemFont(ofSize: AppConfig.Window.fontSize)
+            let maxWidth = AppConfig.Window.maxWidth
+            let minWidth = AppConfig.Window.minWidth
+            let padding = AppConfig.Window.padding
             
             // 使用一个临时的文本字段来测量渲染消息所需的尺寸。
             let tempLabel = NSTextField(labelWithString: message)
@@ -197,11 +167,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let windowFrame = WindowPositionCalculator.calculateWindowPosition(
                 windowWidth: windowWidth,
                 windowHeight: windowHeight,
-                offsetFromMouse: Constants.Window.offsetFromMouse
+                offsetFromMouse: AppConfig.Window.offsetFromMouse
             )
 
-            if let existingWindow = currentTranslationWindow as? BorderlessWindow {
-                // 复用现有窗口
+            if reuseExistingWindow, let existingWindow = currentTranslationWindow as? BorderlessWindow {
+                // 复用现有窗口（用于翻译结果）
+                window = existingWindow
+                window.setFrame(windowFrame, display: true, animate: true)
+            } else if let existingWindow = currentTranslationWindow as? BorderlessWindow {
+                // 创建新窗口（用于普通消息）
                 window = existingWindow
                 window.setFrame(windowFrame, display: true, animate: true)
             } else {
@@ -230,12 +204,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let contentView = ClickableContentView(frame: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight))
             contentView.wantsLayer = true
             contentView.layer?.backgroundColor = NSColor(
-                red: Constants.Color.backgroundRed,
-                green: Constants.Color.backgroundGreen,
-                blue: Constants.Color.backgroundBlue,
-                alpha: Constants.Window.backgroundAlpha
+                red: AppConfig.Color.backgroundRed,
+                green: AppConfig.Color.backgroundGreen,
+                blue: AppConfig.Color.backgroundBlue,
+                alpha: AppConfig.Window.backgroundAlpha
             ).cgColor
-            contentView.layer?.cornerRadius = Constants.Window.cornerRadius
+            contentView.layer?.cornerRadius = AppConfig.Window.cornerRadius
             contentView.targetWindow = window // 关联父窗口
             
             // --- 4. 创建并添加文本标签 ---

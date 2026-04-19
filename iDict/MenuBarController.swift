@@ -288,7 +288,7 @@ class MenuBarController: NSObject {
     /// 执行翻译
     private func performTranslation(text: String) {
         Task {
-            let result = await translationServiceManager.translateText(text)
+            let result = await translationServiceManager.translateTextWithFallback(text)
             self.showTranslationWindow?(result)
         }
     }

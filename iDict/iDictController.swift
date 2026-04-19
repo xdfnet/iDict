@@ -11,24 +11,6 @@ import ApplicationServices
 import OSLog
 import AppKit
 
-// MARK: - 常量定义
-
-private enum Constants {
-    enum Timing {
-        static let appTerminateWait: UInt64 = 500_000_000
-        static let appLaunchWait: UInt64 = 2_000_000_000
-        static let appLaunchCheckInterval: UInt64 = 300_000_000
-    }
-
-    enum Retry {
-        static let appTerminateAttempts = 10
-    }
-    
-    enum APIAction {
-        static let noPermissionRequired = Set(["lock_status", "status_douyin", "status_qishui", "test_apps"])
-    }
-}
-
 // MARK: - 媒体控制器
 
 final class MediaController {
@@ -110,8 +92,8 @@ final class MediaController {
     
     /// 等待应用终止
     private static func waitForAppTermination(bundleId: String) async -> Bool {
-        for _ in 0..<Constants.Retry.appTerminateAttempts {
-            try? await Task.sleep(nanoseconds: Constants.Timing.appTerminateWait)
+        for _ in 0..<AppConfig.Retry.appTerminateAttempts {
+            try? await Task.sleep(nanoseconds: AppConfig.Timing.appTerminateWait)
             if !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == bundleId }) {
                 return true
             }
@@ -250,11 +232,11 @@ final class MediaController {
     private static func waitForAppLaunch(bundleId: String) async -> Bool {
         logger.info("等待应用启动: \(bundleId)")
         
-        try? await Task.sleep(nanoseconds: Constants.Timing.appLaunchWait)
+        try? await Task.sleep(nanoseconds: AppConfig.Timing.appLaunchWait)
         if isAppRunning(bundleId: bundleId) { return true }
         
         logger.info("再次检测应用状态: \(bundleId)")
-        try? await Task.sleep(nanoseconds: Constants.Timing.appLaunchCheckInterval)
+        try? await Task.sleep(nanoseconds: AppConfig.Timing.appLaunchCheckInterval)
         return isAppRunning(bundleId: bundleId)
     }
     
@@ -280,7 +262,7 @@ class MediaHTTPServer: ObservableObject {
     @Published var isRunning = false
     @Published var serverURL: String?
     
-    init(port: UInt16 = 8888) { self.port = port }
+    init(port: UInt16 = AppConfig.HTTPServer.defaultPort) { self.port = port }
     
     /// 启动服务器
     func start() -> Result<Void, MediaHTTPServerError> {
@@ -332,7 +314,7 @@ class MediaHTTPServer: ObservableObject {
     private func handleConnection(_ connection: NWConnection) {
         connection.stateUpdateHandler = { if case .failed = $0 { connection.cancel() } }
         connection.start(queue: .global())
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, _ in
+        connection.receive(minimumIncompleteLength: 1, maximumLength: AppConfig.HTTPServer.maxRequestLength) { [weak self] data, _, isComplete, _ in
             if let data = data, !data.isEmpty {
                 Task { @MainActor in self?.processRequest(data: data, connection: connection) }
             }
@@ -369,7 +351,7 @@ class MediaHTTPServer: ObservableObject {
             let action = String(path.dropFirst(5))
             MediaController.logger.info("处理API动作: \(action)")
             
-            if !Constants.APIAction.noPermissionRequired.contains(action) && 
+            if !AppConfig.APIAction.noPermissionRequired.contains(action) && 
                !MediaController.checkInputMonitoringPermission() {
                 let json = HTTPResponseHandler.buildJSONResponse(status: "failed", error: "缺少辅助功能权限")
                 HTTPResponseHandler.sendJSON(connection, json)

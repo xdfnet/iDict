@@ -22,7 +22,7 @@ final class KeyboardSimulator {
     /// 时间常量
     private enum Constants {
         /// 按键间隔时间（纳秒）
-        static let keyPressInterval: UInt64 = 2_000_000 // 2ms
+        static let keyPressInterval: UInt64 = AppConfig.Timing.keyPressInterval
     }
     
     // MARK: - 公共静态方法

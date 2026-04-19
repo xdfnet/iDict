@@ -8,15 +8,14 @@ import AppKit
 
 /// 一个工具类，用于与系统剪贴板（`NSPasteboard`）交互。
 /// 
-/// 此类负责从系统剪贴板安全地读取和验证文本内容，包括长度检查和语言检测。
-/// 主要用于获取用户选中的文本进行翻译处理。
+/// 此类负责从系统剪贴板安全地读取和验证文本内容，包括长度检查、
+/// 文本清理和过滤。主要用于获取用户选中的文本进行翻译处理。
 @MainActor
 class ClipboardManager {
     
     // MARK: - 属性
     
-    /// 使用翻译服务基类中定义的最大文本长度，避免重复定义。
-    private let maxTextLength: Int = 5000
+    private let maxTextLength: Int = AppConfig.Clipboard.maxTextLength
     
     // MARK: - 公共方法
     
@@ -24,7 +23,8 @@ class ClipboardManager {
     ///
     /// 执行以下验证步骤：
     /// 1. 检查剪贴板中是否存在有效文本内容
-    /// 2. 验证文本长度限制
+    /// 2. 清理文本（去除首尾空白、连续空格、管道字符）
+    /// 3. 验证文本长度限制
     ///
     /// - Returns: 成功时返回处理后的文本，失败时返回对应的错误信息
     func getClipboardText() async -> Result<String, ClipboardError> {
@@ -35,22 +35,29 @@ class ClipboardManager {
             return .failure(.emptyOrNonText)
         }
 
-        // 步骤2：清理和规范化文本内容（去除首尾空白、清理连续空格）
-        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let components = trimmedText.components(separatedBy: .whitespaces)
-        let normalizedText = components.filter { !$0.isEmpty }.joined(separator: " ")
-
+        // 步骤2：清理和规范化文本内容
+        let cleanedText = cleanClipboardText(text)
+        
         // 步骤3：检查清理后的文本是否为空
-        guard !normalizedText.isEmpty else {
+        guard !cleanedText.isEmpty else {
             return .failure(.emptyOrNonText)
         }
 
         // 步骤4：检查文本长度是否超出限制
-        guard normalizedText.count <= self.maxTextLength else {
+        guard cleanedText.count <= self.maxTextLength else {
             return .failure(.textTooLong)
         }
 
-        return .success(normalizedText)
+        return .success(cleanedText)
+    }
+    
+    /// 清理剪贴板文本：去除空白、管道字符等
+    private func cleanClipboardText(_ text: String) -> String {
+        var cleaned = text
+        cleaned = cleaned.replacingOccurrences(of: "│", with: "")
+        cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+        let components = cleaned.components(separatedBy: .whitespaces)
+        return components.filter { !$0.isEmpty }.joined(separator: " ")
     }
 }
 

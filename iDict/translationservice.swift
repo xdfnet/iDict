@@ -6,27 +6,58 @@
 
 import Foundation
 
+// MARK: - 翻译结果类型
+
+enum TranslationResult {
+    case success(String)
+    case failed(String, error: String)
+
+    var isEmpty: Bool {
+        switch self {
+        case .success(let text): return text.isEmpty
+        case .failed: return true
+        }
+    }
+
+    var isFailure: Bool {
+        if case .failed = self { return true }
+        return false
+    }
+
+    var text: String? {
+        switch self {
+        case .success(let text): return text
+        case .failed(_, _): return nil
+        }
+    }
+
+    var errorMessage: String? {
+        switch self {
+        case .failed(_, let error): return error
+        case .success: return nil
+        }
+    }
+}
+
 // MARK: - 翻译服务类型
 enum TranslationServiceType: String, CaseIterable {
     case google = "Google"
     case openai = "OpenAI"
-    case ollama = "Ollama"
 
     var displayName: String {
         switch self {
         case .google: return "Google Translate"
         case .openai: return "OpenAI Translate"
-        case .ollama: return "Ollama Translate"
         }
     }
 }
 
 // MARK: - Google翻译服务
 struct GoogleTranslationService {
-    static func translate(_ text: String) async -> String {
+    static func translate(_ text: String) async -> TranslationResult {
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=\(encodedText)") else {
-            return text
+            return .failed(text, error: "无效的翻译请求 URL")
         }
 
         do {
@@ -35,13 +66,13 @@ struct GoogleTranslationService {
                let sentences = jsonObject.first as? [[Any]] {
                 let translatedText = sentences.compactMap { $0.first as? String }.joined()
                 if !translatedText.isEmpty {
-                    return translatedText
+                    return .success(translatedText)
                 }
             }
         } catch {
-            // 网络错误时返回原文
+            return .failed(text, error: "Google 翻译请求失败: \(error.localizedDescription)")
         }
-        return text
+        return .failed(text, error: "Google 翻译返回空结果")
     }
 }
 
@@ -69,9 +100,9 @@ struct OpenAITranslationService {
         return !openAI_BASE_URL.isEmpty
     }
 
-    static func translate(_ text: String) async -> String {
+   static func translate(_ text: String) async -> TranslationResult {
         guard !openAI_BASE_URL.isEmpty else {
-            return text
+            return .failed(text, error: "OpenAI API 未配置")
         }
 
         // 补全 URL 路径
@@ -85,7 +116,7 @@ struct OpenAITranslationService {
         }
 
         guard let url = URL(string: baseURL) else {
-            return text
+            return .failed(text, error: "无效的 OpenAI API URL")
         }
 
         var request = URLRequest(url: url)
@@ -120,86 +151,15 @@ struct OpenAITranslationService {
                    let message = firstChoice["message"] as? [String: Any],
                    let translatedText = message["content"] as? String,
                    !translatedText.isEmpty {
-                    return translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
+                     return .success(translatedText.trimmingCharacters(in: .whitespacesAndNewlines))
                 }
             }
         } catch {
             print("OpenAI翻译错误: \(error.localizedDescription)")
+            return .failed(text, error: "OpenAI 翻译请求失败: \(error.localizedDescription)")
         }
 
-        return text
-    }
-}
-
-// MARK: - Ollama 翻译服务
-struct OllamaTranslationService {
-    private static var ollamaBaseURL: String {
-        UserDefaults.standard.string(forKey: "OLLAMA_BASE_URL") ?? ""
-    }
-
-    private static var ollamaModel: String {
-        UserDefaults.standard.string(forKey: "OLLAMA_MODEL") ?? ""
-    }
-
-    static func setAPIConfig(baseURL: String, model: String) {
-        UserDefaults.standard.set(baseURL, forKey: "OLLAMA_BASE_URL")
-        UserDefaults.standard.set(model, forKey: "OLLAMA_MODEL")
-    }
-
-    static func isAPIConfigured() -> Bool {
-        !ollamaBaseURL.isEmpty && !ollamaModel.isEmpty
-    }
-
-    static func translate(_ text: String) async -> String {
-        guard isAPIConfigured() else {
-            return text
-        }
-
-        var baseURL = ollamaBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        if baseURL.hasSuffix("/") {
-            baseURL.removeLast()
-        }
-        if baseURL.hasSuffix("/api/generate") {
-            baseURL = String(baseURL.dropLast("/api/generate".count))
-        }
-
-        guard let url = URL(string: "\(baseURL)/api/generate") else {
-            return text
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let prompt = """
-        请将下面的英文翻译成简体中文，只返回译文，不要解释：
-        \(text)
-        """
-        let requestBody: [String: Any] = [
-            "model": ollamaModel,
-            "prompt": prompt,
-            "stream": false
-        ]
-
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                return text
-            }
-
-            if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let translatedText = jsonObject["response"] as? String {
-                let trimmed = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
-                return trimmed.isEmpty ? text : trimmed
-            }
-        } catch {
-            print("Ollama翻译错误: \(error.localizedDescription)")
-        }
-
-        return text
+        return .failed(text, error: "OpenAI 翻译返回空结果")
     }
 }
 
@@ -216,14 +176,24 @@ final class TranslationServiceManager {
         }
     }
     
-    func translateText(_ text: String) async -> String {
+    func translateText(_ text: String) async -> TranslationResult {
         switch currentServiceType {
         case .google:
             return await GoogleTranslationService.translate(text)
         case .openai:
             return await OpenAITranslationService.translate(text)
-        case .ollama:
-            return await OllamaTranslationService.translate(text)
+        }
+    }
+    
+    func translateTextWithFallback(_ text: String) async -> String {
+        let result = await translateText(text)
+        switch result {
+        case .success(let text):
+            return text
+        case .failed(let original, let error):
+            print("翻译失败 [\(currentServiceType.displayName)]: \(error)")
+            print("原始文本: \(original)")
+            return "[翻译失败] \(error)\n原文: \(original)"
         }
     }
     
