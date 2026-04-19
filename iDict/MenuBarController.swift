@@ -4,7 +4,6 @@
 //
 
 import Cocoa
-import SwiftUI
 import Foundation
 
 // MARK: - 菜单栏控制器
@@ -17,11 +16,9 @@ class MenuBarController: NSObject {
     /// 状态栏项
     private var statusBarItem: NSStatusItem?
 
-    /// 设置窗口（持有引用防止提前释放）
-    private var settingsWindow: NSWindow?
 
     /// 翻译服务管理器
-    private let translationServiceManager: TranslationServiceManager
+    private let translationServiceManager: TranslationServiceManager = TranslationServiceManager()
 
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
@@ -31,29 +28,11 @@ class MenuBarController: NSObject {
     
     // MARK: - 初始化
     
-    init(translationServiceManager: TranslationServiceManager) {
-        self.translationServiceManager = translationServiceManager
+    override init() {
         super.init()
         setupStatusBar()
-        setupNotifications()
     }
 
-    // MARK: - 通知处理
-
-    private func setupNotifications() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleSettingsDidSave),
-            name: .settingsDidSave,
-            object: nil
-        )
-    }
-
-    @objc private func handleSettingsDidSave() {
-        settingsWindow?.close()
-        settingsWindow = nil
-    }
-    
     // MARK: - 生命周期
     
     func cleanup() {
@@ -91,14 +70,7 @@ class MenuBarController: NSObject {
     /// 构建主菜单
     private func createMenu() -> NSMenu {
         let menu = NSMenu()
-        
-        // 翻译服务选择
-        menu.addItem(createServiceSelectionMenu())
-        menu.addItem(NSMenuItem.separator())
 
-        // 设置
-        menu.addItem(createSettingsMenu())
-        menu.addItem(NSMenuItem.separator())
 
         // 关于
         menu.addItem(createAboutMenu())
@@ -110,110 +82,11 @@ class MenuBarController: NSObject {
         return menu
     }
     
-    /// 创建翻译服务选择菜单
-    private func createServiceSelectionMenu() -> NSMenuItem {
-        let serviceMenuItem = NSMenuItem(title: "Translation Service", action: nil, keyEquivalent: "")
-        let serviceSubmenu = NSMenu()
-        
-        let currentService = translationServiceManager.getCurrentServiceType()
-        
-        for serviceType in TranslationServiceType.allCases {
-            let menuItem = NSMenuItem(
-                title: serviceType.displayName,
-                action: #selector(selectTranslationService(_:)),
-                keyEquivalent: ""
-            )
-            menuItem.target = self
-            menuItem.representedObject = serviceType
-            
-            // 设置当前选中的服务
-            if serviceType == currentService {
-                menuItem.state = .on
-            }
-            
-            serviceSubmenu.addItem(menuItem)
-        }
-        
-        serviceMenuItem.submenu = serviceSubmenu
-        return serviceMenuItem
-    }
+  
     
     
-    /// 创建设置菜单
-    private func createSettingsMenu() -> NSMenuItem {
-        let settingsItem = NSMenuItem(title: "Settings", action: #selector(showSettings), keyEquivalent: ",")
-        settingsItem.target = self
-        return settingsItem
-    }
     
-    /// 显示设置窗口
-    @objc private func showSettings() {
-        let windowTitle = "Settings"
-
-        // 检查是否已有设置窗口存在
-        if let existingWindow = settingsWindow {
-            existingWindow.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
-
-        // 创建设置界面
-        let settingsView = SettingsView()
-        let hostingView = NSHostingView(rootView: settingsView)
-
-        // 计算窗口大小
-        hostingView.frame = NSRect(x: 0, y: 0, width: 480, height: 280)
-        let windowWidth = hostingView.frame.width
-        let windowHeight = hostingView.frame.height
-
-        settingsWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight),
-            styleMask: [.titled, .closable, .miniaturizable],
-            backing: .buffered,
-            defer: false
-        )
-
-        settingsWindow?.title = windowTitle
-        settingsWindow?.titlebarAppearsTransparent = true
-        settingsWindow?.titleVisibility = .visible
-
-        // 设置窗口为非模态窗口，不会阻止其他操作
-        settingsWindow?.isReleasedWhenClosed = false
-
-        // 设置窗口层级，确保窗口显示在顶层
-        settingsWindow?.level = .floating
-
-        settingsWindow?.contentView = hostingView
-
-        // 设置窗口自动调整大小
-        settingsWindow?.isMovable = true
-        settingsWindow?.minSize = NSSize(width: 480, height: 280)
-
-        // 居中显示
-        settingsWindow?.center()
-
-        // 激活应用并显示窗口
-        NSApp.activate(ignoringOtherApps: true)
-        settingsWindow?.makeKeyAndOrderFront(nil)
-    }
-    
-    /// 选择翻译服务
-    @objc private func selectTranslationService(_ sender: NSMenuItem) {
-        guard let serviceType = sender.representedObject as? TranslationServiceType else { 
-            print("❌ 无法获取服务类型")
-            return 
-        }
-        
-        // 确保在主线程执行服务切换
-        Task { @MainActor in
-            // 执行服务切换
-            translationServiceManager.switchService(to: serviceType)
-            print("✅ 已切换到: \(serviceType.displayName)")
-            
-            // 切换服务后重新创建菜单以更新选中状态
-            statusBarItem?.menu = createMenu()
-        }
-    }
+ 
     
 
 
