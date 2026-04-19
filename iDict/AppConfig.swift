@@ -4,9 +4,65 @@
 //
 
 import Foundation
+import Cocoa
 
-/// 应用配置管理类，统一管理支持的应用配置信息
+/// 应用配置管理类，统一管理支持的应用配置信息和全局常量
 struct AppConfig {
+
+    // MARK: - 窗口常量
+
+    enum Window {
+        static let maxWidth: CGFloat = 600
+        static let minWidth: CGFloat = 50
+        static let padding: CGFloat = 20
+        static let offsetFromMouse: CGFloat = 20
+        static let cornerRadius: CGFloat = 10
+        static let backgroundAlpha: CGFloat = 0.95
+        static let fontSize: CGFloat = 14
+    }
+
+    // MARK: - 颜色常量
+
+    enum Color {
+        static let backgroundRed: CGFloat = 0.2
+        static let backgroundGreen: CGFloat = 0.2
+        static let backgroundBlue: CGFloat = 0.2
+    }
+
+    // MARK: - 时间常量
+
+    enum Timing {
+        static let copyDelay: UInt64 = 150_000_000 // 150ms
+        static let appTerminateWait: UInt64 = 500_000_000
+        static let appLaunchWait: UInt64 = 2_000_000_000
+        static let appLaunchCheckInterval: UInt64 = 300_000_000
+        static let keyPressInterval: UInt64 = 2_000_000 // 2ms
+    }
+
+    // MARK: - 重试常量
+
+    enum Retry {
+        static let appTerminateAttempts = 10
+    }
+
+    // MARK: - HTTP 服务器常量
+
+    enum HTTPServer {
+        static let defaultPort: UInt16 = 8888
+        static let maxRequestLength = 65536
+    }
+
+    // MARK: - API 常量
+
+    enum APIAction {
+        static let noPermissionRequired = Set(["lock_status", "status_douyin", "status_qishui", "test_apps"])
+    }
+
+    // MARK: - 剪贴板常量
+
+    enum Clipboard {
+        static let maxTextLength = 5000
+    }
 
     // MARK: - 应用配置结构
 
