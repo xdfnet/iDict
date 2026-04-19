@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  API 配置界面
+//  快捷设置界面
 //
 
 import SwiftUI
@@ -13,157 +13,147 @@ extension Notification.Name {
 // MARK: - 设置视图
 
 struct SettingsView: View {
-    @State private var selectedService: TranslationServiceType = .google
-    @State private var openAIURL: String = ""
-    @State private var openAIModel: String = ""
-    @State private var openAIKey: String = ""
-    @State private var isValidating: Bool = false
+    @AppStorage("autoCopyEnabled") private var autoCopyEnabled: Bool = true
+    @AppStorage("translationDelay") private var translationDelay: Double = 150
+    
     @State private var alertMessage: String = ""
     @State private var showAlert: Bool = false
-
+    
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-                serviceSummary
-                currentServiceSection
+        VStack(spacing: 20) {
+            header
+            
+            ScrollView {
+                VStack(spacing: 16) {
+                    hotKeySection
+                    autoCopySection
+                    delaySection
+                }
+                .padding(.horizontal, 4)
             }
-            .padding(20)
         }
-        .frame(width: 520, height: 420)
-        .onAppear { loadSettings() }
+        .frame(width: 480, height: 380)
         .alert("Message", isPresented: $showAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(alertMessage)
         }
     }
-
+    
     // MARK: - 标题
-
+    
     private var header: some View {
-        Text("Translation Configuration")
+        Text("Quick Settings")
             .font(.headline)
     }
-
-    private var serviceSummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Current Service")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            Text(selectedService.displayName)
-                .font(.title3.weight(.medium))
-        }
-    }
-
-    // MARK: - 配置区域
-
-    private var openAISection: some View {
-        ConfigSection(title: "OpenAI") {
-            FormField(label: "OPENAI_BASE_URL", placeholder: "https://api.openai.com/v1 (可省略 /chat/completions)", text: $openAIURL)
-            FormField(label: "OPENAI_MODEL", placeholder: "gpt-4o-mini", text: $openAIModel)
-            FormField(label: "OPENAI_API_KEY", placeholder: "sk-...", text: $openAIKey)
-            sectionActions(
-                saveAction: saveOpenAI,
-                validateAction: validateOpenAI
-            )
-        }
-    }
-
-    private var googleSection: some View {
-        ConfigSection(title: "Google Translate") {
-            Text("Google Translate 无需额外配置，直接选择后即可使用。")
-                .foregroundColor(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private var currentServiceSection: some View {
-        switch selectedService {
-        case .google:
-            googleSection
-        case .openai:
-            openAISection
-        }
-    }
-
-    @ViewBuilder
-    private func sectionActions(saveAction: @escaping () -> Void, validateAction: @escaping () -> Void) -> some View {
-        HStack(spacing: 12) {
-            Button("Save", action: saveAction)
-                .buttonStyle(AlwaysVisibleButtonStyle())
-                .controlSize(.large)
-
-            Button("Validate", action: validateAction)
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(isValidating)
-
-            Spacer()
-        }
-    }
-
-    // MARK: - 操作
-
-    private func loadSettings() {
-        if let rawValue = UserDefaults.standard.string(forKey: "selectedTranslationService"),
-           let service = TranslationServiceType(rawValue: rawValue) {
-            selectedService = service
-        }
-        openAIURL = UserDefaults.standard.string(forKey: "OPENAI_BASE_URL") ?? ""
-        openAIModel = UserDefaults.standard.string(forKey: "OPENAI_MODEL") ?? ""
-       openAIKey = UserDefaults.standard.string(forKey: "OPENAI_API_KEY") ?? ""
-    }
-
-    private func saveOpenAI() {
-        guard !openAIURL.isEmpty, !openAIModel.isEmpty else {
-            alertMessage = "API URL and Model are required"
-            showAlert = true
-            return
-        }
-
-        OpenAITranslationService.setAPIConfig(
-            openAI_BASE_URL: openAIURL,
-            openAI_MODEL: openAIModel,
-            openAI_API_KEY: openAIKey
-        )
-        alertMessage = "OpenAI settings saved successfully"
-        showAlert = true
-    }
-
-    private func validateOpenAI() {
-        guard !openAIURL.isEmpty, !openAIModel.isEmpty else {
-            alertMessage = "API URL and Model are required"
-            showAlert = true
-            return
-        }
-
-        isValidating = true
-        OpenAITranslationService.setAPIConfig(
-            openAI_BASE_URL: openAIURL,
-            openAI_MODEL: openAIModel,
-            openAI_API_KEY: openAIKey
-        )
-
-        Task {
-            let result = await OpenAITranslationService.translate("Hello")
-            await MainActor.run {
-                isValidating = false
-                switch result {
-                case .success(let translated):
-                    if translated == "Hello" || translated.lowercased().contains("hello") {
-                        alertMessage = translated == "Hello"
-                            ? "Validation Failed: Translation returned original text"
-                            : "Validation Successful\nResult: \(translated)"
-                    } else {
-                        alertMessage = "Validation Successful\nResult: \(translated)"
-                    }
-                case .failed(_, let error):
-                    alertMessage = "Validation Failed: \(error)"
+    
+    // MARK: - 热键设置
+    
+    private var hotKeySection: some View {
+        ConfigSection(title: "Translation Hotkey") {
+            HStack {
+                Text("Current:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(formatHotKey())
+                    .font(.system(.body, design: .monospaced))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.accentColor.opacity(0.1))
+                    .cornerRadius(4)
+                
+                Spacer()
+                
+                Button("Change") {
+                    alertMessage = "Hotkey can be changed in System Settings > Keyboard > Shortcuts"
+                    showAlert = true
                 }
-                showAlert = true
+                .buttonStyle(.bordered)
             }
         }
+    }
+    
+    // MARK: - 自动复制设置
+    
+    private var autoCopySection: some View {
+        ConfigSection(title: "Options") {
+            Toggle("Auto-copy selected text on hotkey", isOn: $autoCopyEnabled)
+        }
+    }
+    
+    // MARK: - 延迟设置
+    
+    private var delaySection: some View {
+        ConfigSection(title: "Copy Delay (ms)") {
+            HStack {
+                Slider(value: $translationDelay, in: 50...500, step: 50)
+                
+                Text("\(Int(translationDelay))ms")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .frame(width: 50, alignment: .trailing)
+            }
+        }
+    }
+    
+    // MARK: - 辅助方法
+    
+    private func formatHotKey() -> String {
+        let keyCode = UserDefaults.standard.integer(forKey: "hotKeyKeyCode")
+        let modifierFlags = UserDefaults.standard.string(forKey: "hotKeyModifierFlags") ?? ""
+        
+        let modifiers = formatModifiers(modifierFlags)
+        let key = formatKeyCode(keyCode)
+        
+        if modifiers.isEmpty {
+            return key
+        }
+        return "\(modifiers) + \(key)"
+    }
+    
+    private func formatModifiers(_ flags: String) -> String {
+        guard let modifierValue = UInt64(flags) else { return "" }
+        
+        var modifierList: [String] = []
+        if modifierValue & UInt64(NSEvent.ModifierFlags.command.rawValue) != 0 {
+            modifierList.append("⌘")
+        }
+        if modifierValue & UInt64(NSEvent.ModifierFlags.shift.rawValue) != 0 {
+            modifierList.append("⇧")
+        }
+        if modifierValue & UInt64(NSEvent.ModifierFlags.option.rawValue) != 0 {
+            modifierList.append("⌥")
+        }
+        if modifierValue & UInt64(NSEvent.ModifierFlags.control.rawValue) != 0 {
+            modifierList.append("⌃")
+        }
+        
+        return modifierList.joined(separator: " + ")
+    }
+    
+    private func formatKeyCode(_ code: Int) -> String {
+        if code == 0 { return "Not set" }
+        let key = keyCodeToString(UInt16(code))
+        return key.isEmpty ? "Key \(code)" : key
+    }
+    
+    private func keyCodeToString(_ keyCode: UInt16) -> String {
+        let keyMap: [UInt16: String] = [
+            0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G",
+            6: "Z", 7: "X", 8: "C", 9: "V", 11: "B", 12: "Q",
+            13: "W", 14: "E", 15: "R", 16: "Y", 17: "T",
+            18: "1", 19: "2", 20: "3", 21: "4", 22: "6",
+            23: "5", 24: "=", 26: "9", 27: "7", 28: "-",
+            29: "=", 30: "0", 31: "]", 32: "[", 33: "\\",
+            34: ":", 35: "\"", 37: "<", 38: ",", 39: "/",
+            40: "T", 41: "O", 42: "I", 43: "P", 45: "L",
+            46: "J", 47: "'", 48: ";", 49: "K", 51: "N",
+            52: "M", 53: ".", 54: "/", 57: " ", 59: "Tab",
+            60: "Return", 51: "Enter",
+            53: "Space", 55: "Delete", 57: "Escape"
+        ]
+        return keyMap[keyCode] ?? "Key\(keyCode)"
     }
 }
 
@@ -187,13 +177,13 @@ struct FormField: View {
     let label: String
     let placeholder: String
     @Binding var text: String
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
-
+            
             TextField(placeholder, text: $text)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
@@ -204,7 +194,7 @@ struct FormField: View {
 struct ConfigSection<Content: View>: View {
     let title: String
     @ViewBuilder let content: Content
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
@@ -221,5 +211,5 @@ struct ConfigSection<Content: View>: View {
 
 #Preview {
     SettingsView()
-        .frame(width: 520, height: 420)
+        .frame(width: 480, height: 380)
 }

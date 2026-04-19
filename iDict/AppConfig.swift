@@ -32,7 +32,7 @@ struct AppConfig {
     // MARK: - 时间常量
 
     enum Timing {
-        static let copyDelay: UInt64 = 150_000_000 // 150ms
+        static let copyDelay: UInt64 = 50_000_000 // 50ms
         static let appTerminateWait: UInt64 = 500_000_000
         static let appLaunchWait: UInt64 = 2_000_000_000
         static let appLaunchCheckInterval: UInt64 = 300_000_000
