@@ -43,7 +43,7 @@ enum TranslationResult {
 struct GoogleTranslationService {
     static func translate(_ text: String) async -> TranslationResult {
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh&dt=t&q=\(encodedText)") else {
+              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=\(AppConfig.Translation.sourceLanguage)&tl=\(AppConfig.Translation.targetLanguage)&dt=t&q=\(encodedText)") else {
             return .failed(text, error: "无效的翻译请求 URL")
         }
 
