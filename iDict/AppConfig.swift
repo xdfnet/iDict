@@ -64,6 +64,13 @@ struct AppConfig {
         static let maxTextLength = 5000
     }
 
+    // MARK: - 翻译常量
+
+    enum Translation {
+        static let sourceLanguage = "en"
+        static let targetLanguage = "zh"
+    }
+
     // MARK: - 应用配置结构
 
     struct App {

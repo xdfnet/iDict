@@ -139,21 +139,19 @@ struct SettingsView: View {
     }
     
     private func keyCodeToString(_ keyCode: UInt16) -> String {
-        let keyMap: [UInt16: String] = [
+        let keyChar: [UInt16: String] = [
             0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G",
             6: "Z", 7: "X", 8: "C", 9: "V", 11: "B", 12: "Q",
             13: "W", 14: "E", 15: "R", 16: "Y", 17: "T",
             18: "1", 19: "2", 20: "3", 21: "4", 22: "6",
             23: "5", 24: "=", 26: "9", 27: "7", 28: "-",
-            29: "=", 30: "0", 31: "]", 32: "[", 33: "\\",
-            34: ":", 35: "\"", 37: "<", 38: ",", 39: "/",
+            30: "0", 31: "]", 32: "[", 33: "\\", 34: ";",
+            35: "'", 36: "Return", 37: ",", 38: "K", 39: "/",
             40: "T", 41: "O", 42: "I", 43: "P", 45: "L",
-            46: "J", 47: "'", 48: ";", 49: "K", 51: "N",
-            52: "M", 53: ".", 54: "/", 58: " ",
-            59: "Tab", 60: "Return", 61: "Enter",
-            55: "Delete", 57: "Escape"
+            46: "J", 47: "'", 48: "N", 49: "M", 51: "Space",
+            52: ".", 53: "Delete", 57: "Escape"
         ]
-        return keyMap[keyCode] ?? "Key\(keyCode)"
+        return keyChar[keyCode] ?? "Key\(keyCode)"
     }
 }
 

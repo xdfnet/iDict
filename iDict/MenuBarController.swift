@@ -74,7 +74,7 @@ class MenuBarController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         // 退出
-        menu.addItem(createQuitMenu())
+        menu.addItem(createExitMenu())
 
         return menu
     }
@@ -113,7 +113,7 @@ class MenuBarController: NSObject {
     }
 
     /// 创建Exit菜单
-    private func createQuitMenu() -> NSMenuItem {
+    private func createExitMenu() -> NSMenuItem {
         let quitItem = NSMenuItem(title: "Exit", action: #selector(quitApp), keyEquivalent: "q")
         quitItem.target = self
         return quitItem
