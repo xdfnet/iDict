@@ -52,7 +52,7 @@ class ClipboardManager {
     }
     
     /// 清理剪贴板文本：去除空白、管道字符等
-    private func cleanClipboardText(_ text: String) -> String {
+    func cleanClipboardText(_ text: String) -> String {
         var cleaned = text
         cleaned = cleaned.replacingOccurrences(of: "│", with: "")
         cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
