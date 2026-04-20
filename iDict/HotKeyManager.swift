@@ -52,7 +52,7 @@ class HotKeyManager {
     /// - Returns: 注册结果，成功时为.success，失败时包含具体错误信息
     func registerHotKey(handler: @escaping () -> Void) async -> Result<Void, HotKeyError> {
         // 检查辅助功能权限
-        guard checkAccessibilityPermission() else {
+        guard PermissionManager.checkAccessibilityPermission() else {
             return .failure(.permissionDenied)
         }
         
@@ -120,13 +120,6 @@ class HotKeyManager {
         handler = nil
         currentConfig = nil
         isRegistered = false
-    }
-    
-    // MARK: - 权限检查
-    
-    /// 检查应用是否具有辅助功能权限。
-    private func checkAccessibilityPermission() -> Bool {
-        return PermissionManager.checkAccessibilityPermission()
     }
     
     // MARK: - 清理资源

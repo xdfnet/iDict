@@ -116,40 +116,6 @@ struct AppConfig {
         return getAppConfig(for: name)?.bundleId ?? "com.unknown.\(name.lowercased())"
     }
 
-    /// 获取应用路径
-    /// - Parameter name: 应用名称
-    /// - Returns: 应用路径，如果未找到则返回空字符串
-    static func getAppPath(for name: String) -> String {
-        return getAppConfig(for: name)?.path ?? ""
-    }
-
-    /// 获取应用显示名称
-    /// - Parameter name: 应用名称
-    /// - Returns: 显示名称，如果未找到则返回原始名称
-    static func getDisplayName(for name: String) -> String {
-        return getAppConfig(for: name)?.displayName ?? name
-    }
-
-    /// 检查应用是否受支持
-    /// - Parameter name: 应用名称
-    /// - Returns: 是否支持该应用
-    static func isAppSupported(_ name: String) -> Bool {
-        return supportedApps.keys.contains(name)
-    }
-
-    /// 获取所有支持的应用名称
-    /// - Returns: 支持的应用名称列表
-    static func getSupportedAppNames() -> [String] {
-        return Array(supportedApps.keys)
-    }
-
-    /// 获取所有支持的应用配置
-    /// - Returns: 应用配置列表（去重后的）
-    static func getAllApps() -> [App] {
-        let uniqueApps = Dictionary(grouping: supportedApps.values) { $0.bundleId }
-        return Array(uniqueApps.values.compactMap { $0.first })
-    }
-
     // MARK: - Bundle ID 常量（向后兼容）
 
     /// 登录窗口 Bundle ID（系统级）

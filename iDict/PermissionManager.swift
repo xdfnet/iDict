@@ -6,21 +6,6 @@
 import Foundation
 import ApplicationServices
 
-/// 权限类型枚举
-enum PermissionType: String {
-    case accessibility = "辅助功能"
-    case inputMonitoring = "输入监控"
-    
-    var systemSettingsPath: String {
-        switch self {
-        case .accessibility:
-            return "系统设置 > 隐私与安全性 > 辅助功能"
-        case .inputMonitoring:
-            return "系统设置 > 隐私与安全性 > 输入监控"
-        }
-    }
-}
-
 /// 权限管理工具类，统一处理辅助功能和输入监控权限
 struct PermissionManager {
 
@@ -32,38 +17,12 @@ struct PermissionManager {
         return AXIsProcessTrustedWithOptions(options as CFDictionary)
     }
 
-    /// 检查输入监控权限（别名，与辅助功能权限相同）
-    static func checkInputMonitoringPermission() -> Bool {
-        return checkAccessibilityPermission()
-    }
-    
-    /// 检查指定类型的权限
-    static func checkPermission(_ type: PermissionType) -> Bool {
-        switch type {
-        case .accessibility, .inputMonitoring:
-            return checkAccessibilityPermission()
-        }
-    }
-
     // MARK: - 权限请求
 
     /// 请求辅助功能权限
     static func requestAccessibilityPermission() {
         let options: [String: Any] = ["AXTrustedCheckOptionPrompt": true]
         _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-    }
-
-    /// 请求输入监控权限（别名，与辅助功能权限相同）
-    static func requestInputMonitoringPermission() {
-        requestAccessibilityPermission()
-    }
-    
-    /// 请求指定类型的权限
-    static func requestPermission(_ type: PermissionType) {
-        switch type {
-        case .accessibility, .inputMonitoring:
-            requestAccessibilityPermission()
-        }
     }
 
     // MARK: - 权限状态描述
@@ -74,15 +33,6 @@ struct PermissionManager {
             return "已获得辅助功能权限"
         } else {
             return "缺少辅助功能权限，请前往\"系统设置\" > \"隐私与安全性\" > \"辅助功能\"启用权限"
-        }
-    }
-    
-    /// 获取指定权限类型的状态描述
-    static func getPermissionStatusDescription(for type: PermissionType) -> String {
-        if checkPermission(type) {
-            return "已获得\(type.rawValue)权限"
-        } else {
-            return "缺少\(type.rawValue)权限，请前往\"\(type.systemSettingsPath)\"启用权限"
         }
     }
 }

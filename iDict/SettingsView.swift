@@ -149,47 +149,15 @@ struct SettingsView: View {
             34: ":", 35: "\"", 37: "<", 38: ",", 39: "/",
             40: "T", 41: "O", 42: "I", 43: "P", 45: "L",
             46: "J", 47: "'", 48: ";", 49: "K", 51: "N",
-            52: "M", 53: ".", 54: "/", 57: " ", 59: "Tab",
-            60: "Return", 51: "Enter",
-            53: "Space", 55: "Delete", 57: "Escape"
+            52: "M", 53: ".", 54: "/", 58: " ",
+            59: "Tab", 60: "Return", 61: "Enter",
+            55: "Delete", 57: "Escape"
         ]
         return keyMap[keyCode] ?? "Key\(keyCode)"
     }
 }
 
-// MARK: - 自定义按钮样式
-
-struct AlwaysVisibleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.accentColor)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-            .opacity(configuration.isPressed ? 0.8 : 1.0)
-    }
-}
-
 // MARK: - 表单字段组件
-
-struct FormField: View {
-    let label: String
-    let placeholder: String
-    @Binding var text: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            TextField(placeholder, text: $text)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
-        }
-    }
-}
 
 struct ConfigSection<Content: View>: View {
     let title: String

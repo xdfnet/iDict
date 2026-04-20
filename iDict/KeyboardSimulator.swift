@@ -29,8 +29,8 @@ final class KeyboardSimulator {
     
     /// 模拟Cmd+C复制操作。
     static func simulateCopyCommand() async -> Result<Void, KeyboardSimulatorError> {
-        // 模拟键盘事件需要“输入监视”权限。
-        guard checkInputMonitoringPermission() else {
+        // 模拟键盘事件需要”输入监视”权限。
+        guard PermissionManager.checkAccessibilityPermission() else {
             return .failure(.permissionDenied)
         }
         
@@ -40,16 +40,6 @@ final class KeyboardSimulator {
         } catch {
             return .failure(error as? KeyboardSimulatorError ?? .eventPostFailed)
         }
-    }
-    
-    /// 检查是否具有输入监视权限。
-    static func checkInputMonitoringPermission() -> Bool {
-        return PermissionManager.checkInputMonitoringPermission()
-    }
-
-    /// 请求输入监视权限。
-    static func requestInputMonitoringPermission() {
-        PermissionManager.requestInputMonitoringPermission()
     }
     
     // MARK: - 私有实现

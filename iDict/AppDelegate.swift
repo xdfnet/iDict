@@ -6,11 +6,6 @@
 import SwiftUI
 import Cocoa
 
-// MARK: - 自定义UI组件导入
-// 窗口相关类已分离到独立文件以提高可维护性
-
-
-
 // MARK: - 应用代理
 
 /// 应用核心代理类：管理热键、翻译服务和 UI 显示
