@@ -70,6 +70,7 @@ class MenuBarController: NSObject {
 
         // 版本信息（一级菜单）
         menu.addItem(createVersionMenu())
+        menu.addItem(createBuildMenu())
         menu.addItem(NSMenuItem.separator())
 
         // 退出
@@ -82,16 +83,19 @@ class MenuBarController: NSObject {
     private func createVersionMenu() -> NSMenuItem {
         let bundle = Bundle.main
         let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        let versionItem = NSMenuItem(title: "Version: \(version)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        return versionItem
+    }
+
+    /// 创建构建号菜单
+    private func createBuildMenu() -> NSMenuItem {
+        let bundle = Bundle.main
         let buildRaw = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
         let formattedBuild = formatBuildNumber(buildRaw)
-
-        let submenu = NSMenu()
-        submenu.addItem(NSMenuItem(title: "Version: \(version)", action: nil, keyEquivalent: ""))
-        submenu.addItem(NSMenuItem(title: "Build: \(formattedBuild)", action: nil, keyEquivalent: ""))
-
-        let versionItem = NSMenuItem(title: "iDict", action: nil, keyEquivalent: "")
-        versionItem.submenu = submenu
-        return versionItem
+        let buildItem = NSMenuItem(title: "Build: \(formattedBuild)", action: nil, keyEquivalent: "")
+        buildItem.isEnabled = false
+        return buildItem
     }
 
     /// 格式化构建号显示
