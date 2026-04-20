@@ -1,0 +1,74 @@
+name: iDict
+options:
+  bundleIdPrefix: David
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.2"
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: K9UF7A2D7Y
+
+targets:
+  iDict:
+    type: application
+    platform: macOS
+    sources:
+      - path: iDict
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: David.iDict
+        INFOPLIST_FILE: iDict/Info.plist
+        CODE_SIGN_ENTITLEMENTS: iDict/iDict.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0.29"
+    dependencies: []
+
+  iDictTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: iDictTests
+        excludes:
+          - "**/.DS_Store"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: David.iDictTests
+        INFOPLIST_FILE: iDictTests/Info.plist
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iDict.app/Contents/MacOS/iDict"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0.29"
+    dependencies:
+      - target: iDict
+
+schemes:
+  iDict:
+    build:
+      targets:
+        iDict: all
+        iDictTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - iDictTests
+    archive:
+      config: Release
