@@ -34,7 +34,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         GENERATE_INFOPLIST_FILE: YES
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: "1.0.31"
+        MARKETING_VERSION: "1.0.32"
     dependencies: []
 
   iDictTests:
@@ -54,7 +54,7 @@ targets:
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/iDict.app/Contents/MacOS/iDict"
         BUNDLE_LOADER: "$(TEST_HOST)"
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: "1.0.31"
+        MARKETING_VERSION: "1.0.32"
     dependencies:
       - target: iDict
 
