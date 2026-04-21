@@ -8,21 +8,30 @@
 
 /* Begin PBXBuildFile section */
 		0137550362B8888B6BC8D560 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B344A9F2C2CFC496EFF936 /* AppDelegate.swift */; };
+		07144C118B3B4016A32ECA29 /* HotKeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9537C55A63F03D933883AF /* HotKeyManagerTests.swift */; };
 		0E651858A0C5ED5A884E2E40 /* iDictController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A5A7DB6FE90F1C8DDAD551 /* iDictController.swift */; };
 		0F8059F8EBC71B259EE6D876 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 113ACD77FB6227BFF888FD5A /* Assets.xcassets */; };
 		101D3F9C0D611160C5A2FC71 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 365115ECE786C23EB7439789 /* PermissionManager.swift */; };
+		16783C21833009DEE627EE98 /* WindowPositionCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72CF791E163E1489E1769BEE /* WindowPositionCalculatorTests.swift */; };
 		22B0BC5CFE226A597B5691B1 /* qishui.png in Resources */ = {isa = PBXBuildFile; fileRef = 9659CB8CE741F4158974671F /* qishui.png */; };
 		372203818016262FDEC3C09C /* WindowPositionCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */; };
 		523E38C6B47EC31E866A5DD4 /* ClickableContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B58D06B03992F780190B51D9 /* ClickableContentView.swift */; };
 		5FC2FFA12523E5ED43E1CC68 /* KeyboardSimulator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA61A81D65F3A125B6C2FFFC /* KeyboardSimulator.swift */; };
+		76AA5149E32B6B6B0805960B /* MediaControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C9FCC4C6E23F7D5133EAC7C /* MediaControllerTests.swift */; };
+		8C79643A09876BA6586287E2 /* ClipboardManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC872AA3FB27D0F489559B5 /* ClipboardManagerTests.swift */; };
 		8EBC2D45C28B217F74F55E3E /* iDictTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7DFD448D8F91BC43FE310 /* iDictTests.swift */; };
 		900F2F8EDC572F7FE4BC0D94 /* ClipboardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311511BAECB682F109775143 /* ClipboardManager.swift */; };
 		91B4E1F52C33EA8108BA4BA4 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECCEA0BDB3749E14123EC18F /* MenuBarController.swift */; };
+		926BD1A1AA3024399BE4BF60 /* TranslationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948EDC4A10A913F642B7616B /* TranslationServiceTests.swift */; };
+		A51A93EECCD158E4B94D6BEB /* HTTPResponseHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3C46294E7B198DBB7BF0AD1 /* HTTPResponseHandlerTests.swift */; };
 		ACEBC9F17CDED8785E071CD1 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = D224972B3C08670D503A5840 /* AppConfig.swift */; };
 		B5D0C0DD1FFEF1FBE9DF1899 /* translationservice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A97E51585B57B365AEDEB09 /* translationservice.swift */; };
 		C541AA119A908ADBA060EA43 /* BorderlessWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5917AFAA47598EC13DBA96FE /* BorderlessWindow.swift */; };
+		CE6DFEFCB4ECBC777A2EA57E /* PermissionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74A7FD464F31D32D150DB96 /* PermissionManagerTests.swift */; };
+		CE70D85BB281B5DC5F996500 /* KeyboardSimulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D39918A796D3685E1E69BD /* KeyboardSimulatorTests.swift */; };
 		D406B48961698C97DEDBF195 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165CE66FB0257592CE60419C /* SettingsView.swift */; };
 		D9C4FDCB8B5C7BD6F074B517 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8950A35ADDFBB93F8657F1E /* HotKeyManager.swift */; };
+		E47F80A420A638B693AA6F36 /* MenuBarControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF0175C7CC055266F36959E /* MenuBarControllerTests.swift */; };
 		E9DCC62DC405F60E82E03569 /* douyin.png in Resources */ = {isa = PBXBuildFile; fileRef = C8C6988F83E7C1E0AE332C78 /* douyin.png */; };
 		FB6C44D33A55F989D3C9EA0B /* HTTPResponseHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F4B7B9AB2DFA8D53EB7B2FE /* HTTPResponseHandler.swift */; };
 		FE91F928287B0C86788EE844 /* iDictApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F04C07C00D0CD83C183D00 /* iDictApp.swift */; };
@@ -45,12 +54,17 @@
 		1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPositionCalculator.swift; sourceTree = "<group>"; };
 		311511BAECB682F109775143 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
 		365115ECE786C23EB7439789 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
+		3EC872AA3FB27D0F489559B5 /* ClipboardManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManagerTests.swift; sourceTree = "<group>"; };
 		3F4B7B9AB2DFA8D53EB7B2FE /* HTTPResponseHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPResponseHandler.swift; sourceTree = "<group>"; };
 		41A5A7DB6FE90F1C8DDAD551 /* iDictController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iDictController.swift; sourceTree = "<group>"; };
 		4A34A3FB7BE0410BE9F0BD49 /* iDictTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iDictTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C9FCC4C6E23F7D5133EAC7C /* MediaControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaControllerTests.swift; sourceTree = "<group>"; };
+		4D9537C55A63F03D933883AF /* HotKeyManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyManagerTests.swift; sourceTree = "<group>"; };
 		5917AFAA47598EC13DBA96FE /* BorderlessWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BorderlessWindow.swift; sourceTree = "<group>"; };
 		60B344A9F2C2CFC496EFF936 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		72CF791E163E1489E1769BEE /* WindowPositionCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPositionCalculatorTests.swift; sourceTree = "<group>"; };
 		8A97E51585B57B365AEDEB09 /* translationservice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = translationservice.swift; sourceTree = "<group>"; };
+		948EDC4A10A913F642B7616B /* TranslationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationServiceTests.swift; sourceTree = "<group>"; };
 		94F04C07C00D0CD83C183D00 /* iDictApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iDictApp.swift; sourceTree = "<group>"; };
 		9659CB8CE741F4158974671F /* qishui.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = qishui.png; sourceTree = "<group>"; };
 		A03D37D1983958E6D48967A2 /* iDict.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iDict.entitlements; sourceTree = "<group>"; };
@@ -62,7 +76,11 @@
 		CEC087D20C1DBFDD0622AE3B /* iDict.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iDict.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D224972B3C08670D503A5840 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		D8950A35ADDFBB93F8657F1E /* HotKeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyManager.swift; sourceTree = "<group>"; };
+		DDF0175C7CC055266F36959E /* MenuBarControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarControllerTests.swift; sourceTree = "<group>"; };
 		ECCEA0BDB3749E14123EC18F /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		F3C46294E7B198DBB7BF0AD1 /* HTTPResponseHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPResponseHandlerTests.swift; sourceTree = "<group>"; };
+		F74A7FD464F31D32D150DB96 /* PermissionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManagerTests.swift; sourceTree = "<group>"; };
+		F9D39918A796D3685E1E69BD /* KeyboardSimulatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSimulatorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -104,8 +122,17 @@
 		9FA7BDDA2B3207439424862D /* iDictTests */ = {
 			isa = PBXGroup;
 			children = (
+				3EC872AA3FB27D0F489559B5 /* ClipboardManagerTests.swift */,
+				4D9537C55A63F03D933883AF /* HotKeyManagerTests.swift */,
+				F3C46294E7B198DBB7BF0AD1 /* HTTPResponseHandlerTests.swift */,
 				B2E7DFD448D8F91BC43FE310 /* iDictTests.swift */,
 				B628D612AA08D6941F65C817 /* Info.plist */,
+				F9D39918A796D3685E1E69BD /* KeyboardSimulatorTests.swift */,
+				4C9FCC4C6E23F7D5133EAC7C /* MediaControllerTests.swift */,
+				DDF0175C7CC055266F36959E /* MenuBarControllerTests.swift */,
+				F74A7FD464F31D32D150DB96 /* PermissionManagerTests.swift */,
+				948EDC4A10A913F642B7616B /* TranslationServiceTests.swift */,
+				72CF791E163E1489E1769BEE /* WindowPositionCalculatorTests.swift */,
 			);
 			path = iDictTests;
 			sourceTree = "<group>";
@@ -224,6 +251,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C79643A09876BA6586287E2 /* ClipboardManagerTests.swift in Sources */,
+				A51A93EECCD158E4B94D6BEB /* HTTPResponseHandlerTests.swift in Sources */,
+				07144C118B3B4016A32ECA29 /* HotKeyManagerTests.swift in Sources */,
+				CE70D85BB281B5DC5F996500 /* KeyboardSimulatorTests.swift in Sources */,
+				76AA5149E32B6B6B0805960B /* MediaControllerTests.swift in Sources */,
+				E47F80A420A638B693AA6F36 /* MenuBarControllerTests.swift in Sources */,
+				CE6DFEFCB4ECBC777A2EA57E /* PermissionManagerTests.swift in Sources */,
+				926BD1A1AA3024399BE4BF60 /* TranslationServiceTests.swift in Sources */,
+				16783C21833009DEE627EE98 /* WindowPositionCalculatorTests.swift in Sources */,
 				8EBC2D45C28B217F74F55E3E /* iDictTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -266,7 +302,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20260420225352;
+				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDictTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -290,7 +326,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iDict/iDict.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20260420225352;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDict/Info.plist;
@@ -311,7 +347,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20260420225352;
+				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDictTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -401,7 +437,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iDict/iDict.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 20260420225352;
+				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDict/Info.plist;
