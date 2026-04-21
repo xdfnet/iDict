@@ -65,9 +65,19 @@ make push MSG="提交信息"
 
 ## 系统要求
 
-- macOS 13.0 (Ventura) 或更高版本
-- Xcode 命令行工具
-- Swift 5.9+
+- macOS 26.0+
+- Xcode 16.0
+- Swift 6.2
+
+## 项目配置
+
+| 配置项 | 值 |
+|--------|-----|
+| 最低 macOS | 26.0 |
+| Swift 版本 | 6.2 |
+| Xcode 版本 | 16.0 |
+| Bundle ID | David.iDict |
+| 开发团队 | K9UF7A2D7Y |
 
 ## 权限配置
 
