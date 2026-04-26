@@ -1,6 +1,6 @@
 //
 //  TranslationService.swift
-//  Google 翻译服务
+//  翻译服务接口
 //
 
 import Foundation
@@ -10,32 +10,6 @@ import Foundation
 enum TranslationResult {
     case success(String)
     case failed(String, error: String)
-
-    var isEmpty: Bool {
-        switch self {
-        case .success(let text): return text.isEmpty
-        case .failed: return true
-        }
-    }
-
-    var isFailure: Bool {
-        if case .failed = self { return true }
-        return false
-    }
-
-    var text: String? {
-        switch self {
-        case .success(let text): return text
-        case .failed(_, _): return nil
-        }
-    }
-
-    var errorMessage: String? {
-        switch self {
-        case .failed(_, let error): return error
-        case .success: return nil
-        }
-    }
 }
 
 // MARK: - Google翻译服务
@@ -67,12 +41,8 @@ struct GoogleTranslationService {
 @MainActor
 final class TranslationServiceManager {
 
-    func translateText(_ text: String) async -> TranslationResult {
-        return await GoogleTranslationService.translate(text)
-    }
-
-    func translateTextWithFallback(_ text: String) async -> String {
-        let result = await translateText(text)
+    func translateText(_ text: String) async -> String {
+        let result = await GoogleTranslationService.translate(text)
         switch result {
         case .success(let text):
             return text

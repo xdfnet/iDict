@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0137550362B8888B6BC8D560 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60B344A9F2C2CFC496EFF936 /* AppDelegate.swift */; };
+		111111111111111111111111 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 222222222222222222222222 /* index.html */; };
 		07144C118B3B4016A32ECA29 /* HotKeyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9537C55A63F03D933883AF /* HotKeyManagerTests.swift */; };
 		0E651858A0C5ED5A884E2E40 /* iDictController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A5A7DB6FE90F1C8DDAD551 /* iDictController.swift */; };
 		0F8059F8EBC71B259EE6D876 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 113ACD77FB6227BFF888FD5A /* Assets.xcassets */; };
@@ -49,6 +50,7 @@
 
 /* Begin PBXFileReference section */
 		0D5F4BC4195D9B832F6A2EC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		222222222222222222222222 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		113ACD77FB6227BFF888FD5A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		165CE66FB0257592CE60419C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPositionCalculator.swift; sourceTree = "<group>"; };
@@ -142,6 +144,7 @@
 			children = (
 				C8C6988F83E7C1E0AE332C78 /* douyin.png */,
 				9659CB8CE741F4158974671F /* qishui.png */,
+				222222222222222222222222 /* index.html */,
 			);
 			path = assets;
 			sourceTree = "<group>";
@@ -241,6 +244,7 @@
 				0F8059F8EBC71B259EE6D876 /* Assets.xcassets in Resources */,
 				E9DCC62DC405F60E82E03569 /* douyin.png in Resources */,
 				22B0BC5CFE226A597B5691B1 /* qishui.png in Resources */,
+				111111111111111111111111 /* index.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -418,7 +422,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -501,7 +505,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

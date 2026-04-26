@@ -57,9 +57,13 @@ debug:
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
 	@echo "$(GREEN)清理完成$(NC)"
-	@echo "$(YELLOW)3. 生成 Xcode 工程...$(NC)"
-	@xcodegen generate
-	@echo "$(GREEN)Xcode 工程已生成$(NC)"
+	@if [ -f project.yml ]; then \
+		echo "$(YELLOW)3. 生成 Xcode 工程...$(NC)"; \
+		xcodegen generate; \
+		echo "$(GREEN)Xcode 工程已生成$(NC)"; \
+	else \
+		echo "$(YELLOW)3. 使用已有 Xcode 工程$(NC)"; \
+	fi
 	@echo "$(YELLOW)4. 构建 Debug 版本...$(NC)"
 	@BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
 	xcodebuild \
@@ -93,9 +97,13 @@ install:
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
 	@echo "$(GREEN)清理完成$(NC)"
-	@echo "$(YELLOW)4. 生成 Xcode 工程...$(NC)"
-	@xcodegen generate
-	@echo "$(GREEN)Xcode 工程已生成$(NC)"
+	@if [ -f project.yml ]; then \
+		echo "$(YELLOW)4. 生成 Xcode 工程...$(NC)"; \
+		xcodegen generate; \
+		echo "$(GREEN)Xcode 工程已生成$(NC)"; \
+	else \
+		echo "$(YELLOW)4. 使用已有 Xcode 工程$(NC)"; \
+	fi
 	@echo "$(YELLOW)5. 构建 Release 版本...$(NC)"
 	@BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
 	xcodebuild \
