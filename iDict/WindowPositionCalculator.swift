@@ -39,19 +39,19 @@ struct WindowPositionCalculator {
         let adjustedMouseX = mouseLocation.x - screenFrame.origin.x
         let adjustedMouseY = mouseLocation.y - screenFrame.origin.y
 
-        // 计算窗口位置，使窗口在鼠标上方指定距离并水平居中
+        // 计算窗口位置，使窗口在鼠标下方指定距离并水平居中
         let windowX = adjustedMouseX - windowWidth / 2  // 窗口水平居中对齐鼠标
-        let windowY = adjustedMouseY + offsetFromMouse  // 窗口下边缘在鼠标上方
+        let windowY = adjustedMouseY - windowHeight - offsetFromMouse  // 窗口在鼠标下方
 
         // 确保窗口不会超出屏幕边界
         let finalX = max(0, min(windowX, visibleScreenFrame.width - windowWidth))
         var finalY = max(0, min(windowY, visibleScreenFrame.height - windowHeight))
 
-        // 如果上方空间不足，尝试显示在鼠标下方
-        if windowY > visibleScreenFrame.height - windowHeight {
-            let belowY = adjustedMouseY - windowHeight - offsetFromMouse
-            if belowY >= 0 {
-                finalY = belowY
+        // 如果下方空间不足，尝试显示在鼠标上方
+        if windowY < 0 {
+            let aboveY = adjustedMouseY + offsetFromMouse
+            if aboveY <= visibleScreenFrame.height - windowHeight {
+                finalY = aboveY
             }
         }
 

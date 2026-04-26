@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iDict 媒体控制</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #00d4ff;
+        }
+        .section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .section-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .btn {
+            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 10px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(145deg, #3d3d54, #2a2a3e);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-icon {
+            font-size: 24px;
+        }
+        .btn-app {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+        }
+        .btn-app:hover {
+            background: linear-gradient(145deg, #ff7b7b, #ff6a6a);
+        }
+        .btn-app.active {
+            background: linear-gradient(145deg, #51cf66, #40c057);
+        }
+        .btn-lock {
+            background: linear-gradient(145deg, #ffa94d, #ff922b);
+        }
+        .btn-lock:hover {
+            background: linear-gradient(145deg, #ffb94d, #ffa23b);
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.success { background: rgba(81, 207, 102, 0.2); color: #51cf66; }
+        .status.error { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+        .status.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>iDict 媒体控制</h1>
+
+        <div class="section">
+            <div class="section-title">播放控制</div>
+            <div class="grid">
+                <button class="btn" onclick="api('prev')">
+                    <span class="btn-icon">⏮</span>
+                    上一曲
+                </button>
+                <button class="btn" onclick="api('space')">
+                    <span class="btn-icon">⏯</span>
+                    播放/暂停
+                </button>
+                <button class="btn" onclick="api('next')">
+                    <span class="btn-icon">⏭</span>
+                    下一曲
+                </button>
+                <button class="btn" onclick="api('mute')">
+                    <span class="btn-icon">🔇</span>
+                    静音
+                </button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">音量控制</div>
+            <div class="grid">
+                <button class="btn" onclick="api('volumedown')">
+                    <span class="btn-icon">🔉</span>
+                    音量减
+                </button>
+                <button class="btn" onclick="api('volumeup')">
+                    <span class="btn-icon">🔊</span>
+                    音量加
+                </button>
+                <button class="btn" onclick="api('arrowup')">
+                    <span class="btn-icon">⬆</span>
+                    屏幕上移
+                </button>
+                <button class="btn" onclick="api('arrowdown')">
+                    <span class="btn-icon">⬇</span>
+                    屏幕下移
+                </button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">应用管理</div>
+            <div class="grid">
+                <button class="btn btn-app" id="btn-douyin" onclick="toggleApp('douyin')">
+                    <span class="btn-icon">📱</span>
+                    <span id="status-douyin">抖音</span>
+                </button>
+                <button class="btn btn-app" id="btn-qishui" onclick="toggleApp('qishui')">
+                    <span class="btn-icon">🎵</span>
+                    <span id="status-qishui">汽水音乐</span>
+                </button>
+            </div>
+            <div id="app-status" class="status"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">系统</div>
+            <div class="grid">
+                <button class="btn btn-lock" onclick="lock()">
+                    <span class="btn-icon">🔒</span>
+                    锁屏
+                </button>
+            </div>
+            <div id="lock-status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        let lockCheckInterval = null;
+
+        async function api(action) {
+            try {
+                const resp = await fetch(`/api/${action}`);
+                const data = await resp.json();
+                if (data.status === 'success' || data.status === 'lock_success') {
+                    showStatus('lock-status', '操作成功', 'success');
+                } else {
+                    showStatus('lock-status', data.error || '操作失败', 'error');
+                }
+            } catch (e) {
+                showStatus('lock-status', '请求失败: ' + e.message, 'error');
+            }
+        }
+
+        async function toggleApp(app) {
+            const action = `toggle_${app}`;
+            try {
+                const resp = await fetch(`/api/${action}`);
+                const data = await resp.json();
+                if (data.status === 'opened' || data.status === 'closed') {
+                    updateAppStatus();
+                    showStatus('app-status', `抖音已${data.status === 'opened' ? '启动' : '关闭'}`, 'success');
+                } else {
+                    showStatus('app-status', data.error || '操作失败', 'error');
+                }
+            } catch (e) {
+                showStatus('app-status', '请求失败: ' + e.message, 'error');
+            }
+        }
+
+        async function lock() {
+            try {
+                const resp = await fetch('/api/lock');
+                const data = await resp.json();
+                if (data.status === 'lock_success') {
+                    showStatus('lock-status', '锁屏成功', 'success');
+                } else {
+                    showStatus('lock-status', data.error || '锁屏失败', 'error');
+                }
+            } catch (e) {
+                showStatus('lock-status', '请求失败: ' + e.message, 'error');
+            }
+        }
+
+        async function updateAppStatus() {
+            try {
+                const resp = await fetch('/api/test_apps');
+                const data = await resp.json();
+                if (data.status) {
+                    const [douyin, qishui] = data.status.split(',');
+                    const douyinRunning = douyin.includes('running');
+                    const qishuiRunning = qishui.includes('running');
+
+                    document.getElementById('status-douyin').textContent = douyinRunning ? '运行中' : '已停止';
+                    document.getElementById('status-qishui').textContent = qishuiRunning ? '运行中' : '已停止';
+
+                    document.getElementById('btn-douyin').classList.toggle('active', douyinRunning);
+                    document.getElementById('btn-qishui').classList.toggle('active', qishuiRunning);
+                }
+            } catch (e) {}
+        }
+
+        function showStatus(id, msg, type) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = `status ${type} show`;
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        updateAppStatus();
+        setInterval(updateAppStatus, 5000);
+    </script>
+</body>
+</html>

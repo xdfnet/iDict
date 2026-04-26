@@ -47,14 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 await self?.showTranslationResult(message)
             }
         }
-        
-        // 设置消息显示回调
-        menuBarController?.showMessage = { [weak self] message in
-            Task { @MainActor in
-                await self?.showMessage(message)
-            }
-        }
-        
+
         // 异步任务，设置全局热键。
         Task {
             await setupHotKey()

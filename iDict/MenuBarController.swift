@@ -22,20 +22,11 @@ class MenuBarController: NSObject {
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
 
-    /// 显示消息的回调
-    var showMessage: ((String) -> Void)?
-
     // MARK: - 初始化
 
     override init() {
         super.init()
         setupStatusBar()
-    }
-
-    // MARK: - 生命周期
-
-    func cleanup() {
-        statusBarItem = nil
     }
 
     // MARK: - 私有方法
@@ -68,13 +59,15 @@ class MenuBarController: NSObject {
     private func createMenu() -> NSMenu {
         let menu = NSMenu()
 
-        // 版本信息（一级菜单）
+        // 版本信息
         menu.addItem(createVersionMenu())
         menu.addItem(createBuildMenu())
         menu.addItem(NSMenuItem.separator())
 
         // 退出
-        menu.addItem(createExitMenu())
+        let quitItem = NSMenuItem(title: "Exit", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
 
         return menu
     }
@@ -92,31 +85,9 @@ class MenuBarController: NSObject {
     private func createBuildMenu() -> NSMenuItem {
         let bundle = Bundle.main
         let buildRaw = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
-        let formattedBuild = formatBuildNumber(buildRaw)
-        let buildItem = NSMenuItem(title: "Build: \(formattedBuild)", action: nil, keyEquivalent: "")
+        let buildItem = NSMenuItem(title: "Build: \(buildRaw)", action: nil, keyEquivalent: "")
         buildItem.isEnabled = false
         return buildItem
-    }
-
-    /// 格式化构建号显示
-    private func formatBuildNumber(_ buildNumber: String) -> String {
-        if buildNumber.count == 14 && buildNumber.allSatisfy({ $0.isNumber }) {
-            let year = String(buildNumber.prefix(4))
-            let month = String(buildNumber.dropFirst(4).prefix(2))
-            let day = String(buildNumber.dropFirst(6).prefix(2))
-            let hour = String(buildNumber.dropFirst(8).prefix(2))
-            let minute = String(buildNumber.dropFirst(10).prefix(2))
-            let second = String(buildNumber.dropFirst(12).prefix(2))
-            return "\(year).\(month).\(day) \(hour):\(minute):\(second)"
-        }
-        return buildNumber
-    }
-
-    /// 创建Exit菜单
-    private func createExitMenu() -> NSMenuItem {
-        let quitItem = NSMenuItem(title: "Exit", action: #selector(quitApp), keyEquivalent: "q")
-        quitItem.target = self
-        return quitItem
     }
 
     // MARK: - 菜单事件处理
@@ -130,15 +101,10 @@ class MenuBarController: NSObject {
     /// 执行翻译
     private func performTranslation(text: String) {
         Task {
-            let result = await translationServiceManager.translateTextWithFallback(text)
+            let result = await translationServiceManager.translateText(text)
             self.showTranslationWindow?(result)
         }
     }
-}
-
-// MARK: - 公共接口
-
-extension MenuBarController {
 
     /// 执行快速翻译（供外部调用）
     func performQuickTranslation(text: String) {
