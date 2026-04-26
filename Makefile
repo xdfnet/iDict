@@ -144,7 +144,7 @@ _update_version:
 	NEW_PATCH=$$((PATCH + 1)); \
 	NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
 	echo "$(CYAN)新版本: $$NEW_VERSION$(NC)"; \
-	perl -i -pe 's/(<key>CFBundleShortVersionString<\/key>\s*<string>)[0-9.]*(<\/string>)/$${1}$$NEW_VERSION$${2}/' iDict/Info.plist; \
+	sed -i '' "s/<string>$$CURRENT_VERSION<\\/string>/<string>$$NEW_VERSION<\\/string>/" iDict/Info.plist; \
 	echo "$(GREEN)Info.plist 版本已更新$(NC)"; \
 	if grep -q "github.com/xdfnet/iDict/releases" README.md 2>/dev/null; then \
 		echo "$(YELLOW)更新 README.md release URL...$(NC)"; \
