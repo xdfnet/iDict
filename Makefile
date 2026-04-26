@@ -151,7 +151,7 @@ push: _require_msg _update_version install package
 		echo "$(GREEN)推送完成$(NC)"; \
 	fi
 	@echo "$(YELLOW)创建 GitHub Release...$(NC)"
-	@VERSION=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
+	@VERSION=$$(grep "MARKETING_VERSION = " iDict.xcodeproj/project.pbxproj | head -1 | sed 's/.*MARKETING_VERSION = \([0-9.]*\).*/\1/'); \
 	ZIP_PATH=$$(find $(PACKAGE_DIR) -name "$(PROJECT_NAME)-$$VERSION-*.zip" -type f | head -1); \
 	gh release create "v$$VERSION" --title "iDict v$$VERSION" --notes "$(MSG)"; \
 	if [ -n "$$ZIP_PATH" ]; then \
@@ -168,7 +168,7 @@ package:
 		echo "$(RED)错误: 找不到构建的应用程序$(NC)"; \
 		exit 1; \
 	fi; \
-	version=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
+	version=$$(grep "MARKETING_VERSION = " iDict.xcodeproj/project.pbxproj | head -1 | sed 's/.*MARKETING_VERSION = \([0-9.]*\).*/\1/'); \
 	build=$$(plutil -extract CFBundleVersion raw "$$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "0"); \
 	zip_path="$(PACKAGE_DIR)/$(PROJECT_NAME)-$$version-$$build.zip"; \
 	rm -f "$$zip_path"; \
