@@ -167,7 +167,7 @@ package:
 		echo "$(RED)错误: 找不到构建的应用程序$(NC)"; \
 		exit 1; \
 	fi; \
-	version=$$(plutil -extract CFBundleShortVersionString raw "$$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "1.0.0"); \
+	version=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
 	build=$$(plutil -extract CFBundleVersion raw "$$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "0"); \
 	zip_path="$(PACKAGE_DIR)/$(PROJECT_NAME)-$$version-$$build.zip"; \
 	rm -f "$$zip_path"; \
