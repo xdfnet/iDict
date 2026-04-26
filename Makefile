@@ -135,17 +135,20 @@ _require_msg:
 	fi
 
 _update_version:
-	@echo "$(YELLOW)更新 README.md 版本信息...$(NC)"
-	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
-	if [ -z "$$APP_PATH" ]; then \
-		echo "$(RED)错误: 找不到应用程序$(NC)"; \
-		exit 1; \
-	fi; \
-	CURRENT_VERSION=$$(plutil -extract CFBundleShortVersionString raw "$$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "1.0.0"); \
+	@echo "$(YELLOW)递增版本号...$(NC)"
+	@CURRENT_VERSION=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
 	echo "$(CYAN)当前版本: $$CURRENT_VERSION$(NC)"; \
+	MAJOR=$$(echo $$CURRENT_VERSION | cut -d. -f1); \
+	MINOR=$$(echo $$CURRENT_VERSION | cut -d. -f2); \
+	PATCH=$$(echo $$CURRENT_VERSION | cut -d. -f3); \
+	NEW_PATCH=$$((PATCH + 1)); \
+	NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
+	echo "$(CYAN)新版本: $$NEW_VERSION$(NC)"; \
+	perl -i -pe 's/(<key>CFBundleShortVersionString<\/key>\s*<string>)[0-9.]*(<\/string>)/$${1}$$NEW_VERSION$${2}/' iDict/Info.plist; \
+	echo "$(GREEN)Info.plist 版本已更新$(NC)"; \
 	if grep -q "github.com/xdfnet/iDict/releases" README.md 2>/dev/null; then \
 		echo "$(YELLOW)更新 README.md release URL...$(NC)"; \
-		sed -i "" "s|github.com/xdfnet/iDict/releases/tag/[^)]*|github.com/xdfnet/iDict/releases/tag/v$$CURRENT_VERSION|g" README.md; \
+		sed -i "" "s|github.com/xdfnet/iDict/releases/tag/[^)]*|github.com/xdfnet/iDict/releases/tag/v$$NEW_VERSION|g" README.md; \
 		echo "$(GREEN)README.md 已更新$(NC)"; \
 	fi
 
