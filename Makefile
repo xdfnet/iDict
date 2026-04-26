@@ -122,7 +122,7 @@ _require_msg:
 
 _update_version:
 	@echo "$(YELLOW)递增版本号...$(NC)"
-	@CURRENT_VERSION=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
+	@CURRENT_VERSION=$$(grep "MARKETING_VERSION = " iDict.xcodeproj/project.pbxproj | head -1 | sed 's/.*MARKETING_VERSION = \([0-9.]*\).*/\1/'); \
 	echo "$(CYAN)当前版本: $$CURRENT_VERSION$(NC)"; \
 	MAJOR=$$(echo $$CURRENT_VERSION | cut -d. -f1); \
 	MINOR=$$(echo $$CURRENT_VERSION | cut -d. -f2); \
@@ -130,8 +130,9 @@ _update_version:
 	NEW_PATCH=$$((PATCH + 1)); \
 	NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
 	echo "$(CYAN)新版本: $$NEW_VERSION$(NC)"; \
-	sed -i '' "s/<string>$$CURRENT_VERSION<\\/string>/<string>$$NEW_VERSION<\\/string>/" iDict/Info.plist; \
-	echo "$(GREEN)Info.plist 版本已更新$(NC)"; \
+	sed -i '' "s/MARKETING_VERSION = [0-9.]*/MARKETING_VERSION = $$NEW_VERSION/g" iDict.xcodeproj/project.pbxproj; \
+	sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = 1/g" iDict.xcodeproj/project.pbxproj; \
+	echo "$(GREEN)project.pbxproj 版本已更新$(NC)"; \
 	if grep -q "github.com/xdfnet/iDict/releases" README.md 2>/dev/null; then \
 		echo "$(YELLOW)更新 README.md release URL...$(NC)"; \
 		sed -i "" "s|github.com/xdfnet/iDict/releases/tag/[^)]*|github.com/xdfnet/iDict/releases/tag/v$$NEW_VERSION|g" README.md; \
