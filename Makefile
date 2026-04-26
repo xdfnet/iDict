@@ -57,14 +57,7 @@ debug:
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
 	@echo "$(GREEN)清理完成$(NC)"
-	@if [ -f project.yml ]; then \
-		echo "$(YELLOW)3. 生成 Xcode 工程...$(NC)"; \
-		xcodegen generate; \
-		echo "$(GREEN)Xcode 工程已生成$(NC)"; \
-	else \
-		echo "$(YELLOW)3. 使用已有 Xcode 工程$(NC)"; \
-	fi
-	@echo "$(YELLOW)4. 构建 Debug 版本...$(NC)"
+	@echo "$(YELLOW)3. 构建 Debug 版本...$(NC)"
 	@BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
 	xcodebuild \
 		-project $(XCODEPROJ) \
@@ -76,7 +69,7 @@ debug:
 		build
 	@echo "$(GREEN)Debug 构建完成$(NC)"
 
-	@echo "$(YELLOW)5. 启动 Debug 应用...$(NC)"
+	@echo "$(YELLOW)4. 启动 Debug 应用...$(NC)"
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \
 		open "$$APP_PATH"; \
@@ -97,14 +90,7 @@ install:
 	@rm -rf $(BUILD_DIR)
 	@rm -rf $(DERIVED_DATA_DIR)/$(PROJECT_NAME)-*
 	@echo "$(GREEN)清理完成$(NC)"
-	@if [ -f project.yml ]; then \
-		echo "$(YELLOW)4. 生成 Xcode 工程...$(NC)"; \
-		xcodegen generate; \
-		echo "$(GREEN)Xcode 工程已生成$(NC)"; \
-	else \
-		echo "$(YELLOW)4. 使用已有 Xcode 工程$(NC)"; \
-	fi
-	@echo "$(YELLOW)5. 构建 Release 版本...$(NC)"
+	@echo "$(YELLOW)4. 构建 Release 版本...$(NC)"
 	@BUILD_NUMBER=$$(date +%Y%m%d%H%M%S); \
 	xcodebuild \
 		-project $(XCODEPROJ) \
@@ -116,7 +102,7 @@ install:
 		build
 	@echo "$(GREEN)Release 构建完成$(NC)"
 
-	@echo "$(YELLOW)6. 安装到 Applications...$(NC)"
+	@echo "$(YELLOW)5. 安装到 Applications...$(NC)"
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \
 		cp -R "$$APP_PATH" $(INSTALL_DIR)/; \
@@ -165,7 +151,12 @@ push: _require_msg _update_version install package
 	fi
 	@echo "$(YELLOW)创建 GitHub Release...$(NC)"
 	@VERSION=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
+	ZIP_PATH=$$(find $(PACKAGE_DIR) -name "$(PROJECT_NAME)-$$VERSION-*.zip" -type f | head -1); \
 	gh release create "v$$VERSION" --title "iDict v$$VERSION" --notes "$(MSG)"; \
+	if [ -n "$$ZIP_PATH" ]; then \
+		gh release upload "v$$VERSION" "$$ZIP_PATH"; \
+		echo "$(GREEN)已上传: $$ZIP_PATH$(NC)"; \
+	fi; \
 	echo "$(GREEN)Release 创建完成: https://github.com/xdfnet/iDict/releases/tag/v$$VERSION$(NC)"
 
 package:
