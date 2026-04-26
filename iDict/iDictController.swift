@@ -493,7 +493,17 @@ class MediaHTTPServer: ObservableObject {
            let content = try? String(contentsOfFile: filepath, encoding: .utf8) {
             return content
         }
-        
+
+        // 尝试从 assets 目录加载
+        if let resourcePath = Bundle.main.resourcePath {
+            let assetsIndexPath = URL(fileURLWithPath: resourcePath)
+                .appendingPathComponent("assets")
+                .appendingPathComponent("index.html")
+            if let content = try? String(contentsOfFile: assetsIndexPath.path, encoding: .utf8) {
+                return content
+            }
+        }
+
         MediaController.logger.error("未找到 index.html 资源文件")
         return fallbackHTML
     }
