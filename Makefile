@@ -143,19 +143,23 @@ _update_version:
 	fi; \
 	CURRENT_VERSION=$$(plutil -extract CFBundleShortVersionString raw "$$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "1.0.0"); \
 	echo "$(CYAN)当前版本: $$CURRENT_VERSION$(NC)"; \
-	if grep -q "version-" README.md 2>/dev/null; then \
-		echo "$(YELLOW)更新 README.md 版本...$(NC)"; \
-		sed -i "" "s/version-[0-9.]*/version-$$CURRENT_VERSION/g" README.md; \
-		echo "$(GREEN)README.md 版本已更新$(NC)"; \
+	if grep -q "github.com/xdfnet/iDict/releases" README.md 2>/dev/null; then \
+		echo "$(YELLOW)更新 README.md release URL...$(NC)"; \
+		sed -i "" "s|github.com/xdfnet/iDict/releases/tag/[^)]*|github.com/xdfnet/iDict/releases/tag/v$$CURRENT_VERSION|g" README.md; \
+		echo "$(GREEN)README.md 已更新$(NC)"; \
 	fi
 
-push: _require_msg install package
+push: _require_msg _update_version install package
 	@echo "$(YELLOW)提交并推送...$(NC)"
-	@git add .
-	@git commit -m "$(MSG)"
-	@echo "$(GREEN)提交完成: $(MSG)$(NC)"
-	@git push
-	@echo "$(GREEN)推送完成$(NC)"
+	@if git diff --quiet && git diff --cached --quiet; then \
+		echo "$(CYAN)没有变更需要提交$(NC)"; \
+	else \
+		git add .; \
+		git commit -m "$(MSG)"; \
+		echo "$(GREEN)提交完成: $(MSG)$(NC)"; \
+		git push; \
+		echo "$(GREEN)推送完成$(NC)"; \
+	fi
 
 package:
 	@echo "$(BLUE)打包 Release 为 zip...$(NC)"
