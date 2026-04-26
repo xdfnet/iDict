@@ -135,29 +135,21 @@ _require_msg:
 	fi
 
 _update_version:
-	@echo "$(YELLOW)更新 project.yml 版本信息...$(NC)"
-	@CURRENT_VERSION=$$(grep "MARKETING_VERSION:" project.yml | head -1 | awk '{print $$2}' | tr -d '"'); \
-	if [ -z "$$CURRENT_VERSION" ]; then \
-		echo "$(RED)错误: 无法从 project.yml 获取当前版本$(NC)"; \
+	@echo "$(YELLOW)更新 README.md 版本信息...$(NC)"
+	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
+	if [ -z "$$APP_PATH" ]; then \
+		echo "$(RED)错误: 找不到应用程序$(NC)"; \
 		exit 1; \
 	fi; \
+	CURRENT_VERSION=$$(plutil -extract CFBundleShortVersionString raw "$$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "1.0.0"); \
 	echo "$(CYAN)当前版本: $$CURRENT_VERSION$(NC)"; \
-	MAJOR=$$(echo $$CURRENT_VERSION | cut -d. -f1); \
-	MINOR=$$(echo $$CURRENT_VERSION | cut -d. -f2); \
-	PATCH=$$(echo $$CURRENT_VERSION | cut -d. -f3 2>/dev/null || echo "0"); \
-	NEW_PATCH=$$((PATCH + 1)); \
-	NEW_VERSION="$$MAJOR.$$MINOR.$$NEW_PATCH"; \
-	echo "$(CYAN)新版本: $$NEW_VERSION$(NC)"; \
-	sed -i '' "s/MARKETING_VERSION: \"[^\"]*\"/MARKETING_VERSION: \"$$NEW_VERSION\"/g" project.yml; \
-	sed -i '' "s/CURRENT_PROJECT_VERSION: [0-9]*/CURRENT_PROJECT_VERSION: 1/g" project.yml; \
-	echo "$(GREEN)project.yml 版本信息已更新$(NC)"
-	@if grep -q "version-" README.md 2>/dev/null; then \
+	if grep -q "version-" README.md 2>/dev/null; then \
 		echo "$(YELLOW)更新 README.md 版本...$(NC)"; \
-		sed -i "" "s/version-[0-9.]*/version-$$NEW_VERSION/g" README.md; \
+		sed -i "" "s/version-[0-9.]*/version-$$CURRENT_VERSION/g" README.md; \
 		echo "$(GREEN)README.md 版本已更新$(NC)"; \
 	fi
 
-push: _require_msg _update_version install package
+push: _require_msg install package
 	@echo "$(YELLOW)提交并推送...$(NC)"
 	@git add .
 	@git commit -m "$(MSG)"
