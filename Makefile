@@ -1,7 +1,7 @@
 # iDict Makefile
 # 用于构建 macOS 应用程序
 
-.PHONY: help debug install push package _update_version _require_msg
+.PHONY: help debug install push package _update_version _require_msg _create_release
 
 # =============================================================================
 # 项目配置
@@ -163,6 +163,10 @@ push: _require_msg _update_version install package
 		git push; \
 		echo "$(GREEN)推送完成$(NC)"; \
 	fi
+	@echo "$(YELLOW)创建 GitHub Release...$(NC)"
+	@VERSION=$$(grep -A1 "CFBundleShortVersionString" iDict/Info.plist | grep "<string>" | sed 's/.*<string>\([0-9.]*\)<.*/\1/'); \
+	gh release create "v$$VERSION" --title "iDict v$$VERSION" --notes "$(MSG)"; \
+	echo "$(GREEN)Release 创建完成: https://github.com/xdfnet/iDict/releases/tag/v$$VERSION$(NC)"
 
 package:
 	@echo "$(BLUE)打包 Release 为 zip...$(NC)"
