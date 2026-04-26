@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-iDict 是一个 macOS 快速翻译工具，使用 Swift 和 SwiftUI 开发。它是一个菜单栏应用程序，提供全局热键翻译功能，支持多种翻译服务（腾讯、Google、Microsoft、DeepL）。
+iDict 是一个 macOS 快速翻译工具，使用 Swift 开发。它是一个菜单栏应用程序，提供全局热键翻译功能，默认使用 Google Translate（免费无需配置）。
 
 ## 构建和开发命令
 
@@ -33,8 +33,9 @@ make push MSG="提交信息"
 ### 关键组件
 
 #### 翻译服务
-- **翻译服务管理器**: [`translationservice.swift`](iDict/translationservice.swift) - 统一的翻译服务接口
-- 支持两种翻译服务：Google Translate（免费）和 OpenAI（可配置自定义 API 兼容接口）
+
+- **翻译服务管理器**: [`translationservice.swift`](iDict/translationservice.swift) - 翻译服务接口
+- 默认使用 Google Translate（免费无需配置）
 
 #### 系统集成
 - **全局热键**: [`HotKeyManager.swift`](iDict/HotKeyManager.swift) - Cmd+D 热键注册和处理
@@ -65,7 +66,7 @@ make push MSG="提交信息"
 
 ## 系统要求
 
-- macOS 26.0+
+- macOS 15.0+
 - Xcode 16.0
 - Swift 6.2
 
@@ -73,7 +74,7 @@ make push MSG="提交信息"
 
 | 配置项 | 值 |
 |--------|-----|
-| 最低 macOS | 26.0 |
+| 最低 macOS | 15.0 |
 | Swift 版本 | 6.2 |
 | Xcode 版本 | 16.0 |
 | Bundle ID | David.iDict |
@@ -90,18 +91,6 @@ make push MSG="提交信息"
 - **项目配置**: [`Info.plist`](iDict/Info.plist) - 应用信息和权限配置
 - **权限配置**: [`iDict.entitlements`](iDict/iDict.entitlements) - 系统权限声明
 - **构建配置**: [`Makefile`](Makefile) - 构建和发布脚本
-
-## API 密钥配置
-
-OpenAI 翻译服务可通过设置界面配置：
-1. `openAI_BASE_URL`：OpenAI 兼容接口地址（支持仅输入基础 URL，自动补全 `/chat/completions` 路径）
-2. `openAI_MODEL`：模型名称（如 `gpt-3.5-turbo`）
-3. `openAI_API_KEY`（可选）：如接口需要认证
-
-**UserDefaults 存储 Key：**
-- `OPENAI_BASE_URL`
-- `OPENAI_MODEL`
-- `OPENAI_API_KEY`
 
 ## 应用管理功能
 
