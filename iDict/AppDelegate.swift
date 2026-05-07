@@ -47,6 +47,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 await self?.showTranslationResult(message)
             }
         }
+        menuBarController?.showMessage = { [weak self] message in
+            Task { @MainActor in
+                await self?.showMessage(message)
+            }
+        }
+
+        setupTranslationConfig()
 
         // 异步任务，设置全局热键。
         Task {
@@ -59,7 +66,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     // MARK: - 私有方法
-    
+
+    /// 初始化翻译配置文件
+    private func setupTranslationConfig() {
+        do {
+            _ = try TranslationConfigStore().loadOrCreate()
+        } catch {
+            Task { @MainActor in
+                await showMessage("翻译配置初始化失败: \(error.localizedDescription)")
+            }
+        }
+    }
+
     /// 设置全局翻译热键
     private func setupHotKey() async {
         let registrationResult = await hotKeyManager.registerHotKey {

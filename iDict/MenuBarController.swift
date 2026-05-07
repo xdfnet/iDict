@@ -17,14 +17,22 @@ class MenuBarController: NSObject {
     private var statusBarItem: NSStatusItem?
 
     /// 翻译服务管理器
-    private let translationServiceManager: TranslationServiceManager = TranslationServiceManager()
+    private let translationServiceManager: TranslationServiceManager
+
+    /// 翻译配置存储
+    private let configStore: TranslationConfigStore
 
     /// 显示翻译窗口的回调
     var showTranslationWindow: ((String) -> Void)?
 
+    /// 显示普通消息的回调
+    var showMessage: ((String) -> Void)?
+
     // MARK: - 初始化
 
-    override init() {
+    init(configStore: TranslationConfigStore = TranslationConfigStore()) {
+        self.configStore = configStore
+        self.translationServiceManager = TranslationServiceManager(configStore: configStore)
         super.init()
         setupStatusBar()
     }
@@ -59,6 +67,9 @@ class MenuBarController: NSObject {
     private func createMenu() -> NSMenu {
         let menu = NSMenu()
 
+        menu.addItem(createTranslationProviderMenu())
+        menu.addItem(NSMenuItem.separator())
+
         // 版本信息
         menu.addItem(createVersionMenu())
         menu.addItem(createBuildMenu())
@@ -90,10 +101,45 @@ class MenuBarController: NSObject {
         return buildItem
     }
 
+    /// 创建翻译服务菜单
+    private func createTranslationProviderMenu() -> NSMenuItem {
+        let providerItem = NSMenuItem(title: "Translation Provider", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        let currentProvider = (try? configStore.loadOrCreate().provider) ?? TranslationConfig.defaultConfig.provider
+
+        for provider in TranslationProvider.allCases {
+            let item = NSMenuItem(
+                title: provider.menuTitle,
+                action: #selector(changeTranslationProvider(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = provider.rawValue
+            item.state = provider == currentProvider ? .on : .off
+            submenu.addItem(item)
+        }
+
+        providerItem.submenu = submenu
+        return providerItem
+    }
+
     // MARK: - 菜单事件处理
 
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+
+    @objc private func changeTranslationProvider(_ sender: NSMenuItem) {
+        guard let rawValue = sender.representedObject as? String,
+              let provider = TranslationProvider(rawValue: rawValue) else {
+            return
+        }
+
+        do {
+            try configStore.updateProvider(provider)
+        } catch {
+            showMessage?("切换翻译服务失败: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - 翻译功能
@@ -109,5 +155,13 @@ class MenuBarController: NSObject {
     /// 执行快速翻译（供外部调用）
     func performQuickTranslation(text: String) {
         performTranslation(text: text)
+    }
+
+    /// 清理状态栏资源
+    func cleanup() {
+        if let statusBarItem = statusBarItem {
+            NSStatusBar.system.removeStatusItem(statusBarItem)
+            self.statusBarItem = nil
+        }
     }
 }

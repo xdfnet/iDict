@@ -68,6 +68,120 @@ struct TranslationServiceTests {
         #expect(manager != nil)
     }
 
+    // MARK: - TranslationConfigStore Tests
+
+    @Test("TranslationConfigStore prepares full Google default config on first install")
+    func configStorePreparesFullGoogleDefaultConfigOnFirstInstall() throws {
+        let store = TranslationConfigStore(configURL: temporaryConfigURL())
+        let config = try store.loadOrCreate()
+        let savedData = try Data(contentsOf: store.configURL)
+        let savedJSON = try #require(String(data: savedData, encoding: .utf8))
+
+        #expect(config == TranslationConfig.defaultConfig)
+        #expect(config.provider == .google)
+        #expect(FileManager.default.fileExists(atPath: store.configURL.path))
+        #expect(savedJSON.contains("\"provider\""))
+        #expect(savedJSON.contains("\"baseURL\""))
+        #expect(savedJSON.contains("\"apiKey\""))
+        #expect(savedJSON.contains("\"model\""))
+        #expect(savedJSON.contains("\"systemPrompt\""))
+        #expect(savedJSON.contains("\"userPromptTemplate\""))
+        #expect(savedJSON.contains("\"timeoutSeconds\""))
+        #expect(!savedJSON.contains("\\/"))
+        #expect(fieldOrder(in: savedJSON) == [
+            "provider",
+            "baseURL",
+            "apiKey",
+            "model",
+            "systemPrompt",
+            "userPromptTemplate",
+            "timeoutSeconds"
+        ])
+    }
+
+    @Test("TranslationConfigStore default config path uses current user home")
+    func configStoreDefaultConfigPathUsesCurrentUserHome() {
+        let expectedURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config")
+            .appendingPathComponent("iDict")
+            .appendingPathComponent("config.json")
+
+        #expect(TranslationConfigStore.defaultConfigURL == expectedURL)
+    }
+
+    @Test("TranslationConfigStore reads existing config")
+    func configStoreReadsExistingConfig() throws {
+        let store = TranslationConfigStore(configURL: temporaryConfigURL())
+        let config = TranslationConfig(
+            provider: .openai,
+            baseURL: "https://example.com/v1",
+            apiKey: "test-key",
+            model: "test-model",
+            systemPrompt: "Translate only.",
+            userPromptTemplate: "翻译成{{target}}：\n{{text}}",
+            timeoutSeconds: 7
+        )
+
+        try store.save(config)
+
+        #expect(try store.loadOrCreate() == config)
+    }
+
+    @Test("TranslationConfigStore updateProvider preserves other fields")
+    func configStoreUpdateProviderPreservesOtherFields() throws {
+        let store = TranslationConfigStore(configURL: temporaryConfigURL())
+        let config = TranslationConfig(
+            provider: .google,
+            baseURL: "https://example.com/v1",
+            apiKey: "test-key",
+            model: "test-model",
+            systemPrompt: "Translate only.",
+            userPromptTemplate: "翻译成{{target}}：\n{{text}}",
+            timeoutSeconds: 7
+        )
+
+        try store.save(config)
+        try store.updateProvider(.openai)
+        let updated = try store.loadOrCreate()
+
+        #expect(updated.provider == .openai)
+        #expect(updated.baseURL == config.baseURL)
+        #expect(updated.apiKey == config.apiKey)
+        #expect(updated.model == config.model)
+        #expect(updated.systemPrompt == config.systemPrompt)
+        #expect(updated.userPromptTemplate == config.userPromptTemplate)
+        #expect(updated.timeoutSeconds == config.timeoutSeconds)
+    }
+
+    @Test("TranslationConfigStore fills missing prompt fields")
+    func configStoreFillsMissingPromptFields() throws {
+        let configURL = temporaryConfigURL()
+        try FileManager.default.createDirectory(
+            at: configURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        let oldJSON = """
+        {
+          "provider": "google",
+          "baseURL": "https://example.com/v1",
+          "apiKey": "test-key",
+          "model": "test-model",
+          "timeoutSeconds": 7
+        }
+        """
+        try Data(oldJSON.utf8).write(to: configURL)
+
+        let store = TranslationConfigStore(configURL: configURL)
+        let config = try store.loadOrCreate()
+        let savedData = try Data(contentsOf: configURL)
+        let savedJSON = try #require(String(data: savedData, encoding: .utf8))
+
+        #expect(config.systemPrompt == TranslationConfig.defaultConfig.systemPrompt)
+        #expect(config.userPromptTemplate == TranslationConfig.defaultConfig.userPromptTemplate)
+        #expect(savedJSON.contains("\"systemPrompt\""))
+        #expect(savedJSON.contains("\"userPromptTemplate\""))
+    }
+
     // MARK: - GoogleTranslationService Tests
 
     @Test("GoogleTranslationService translate handles empty string")
@@ -82,5 +196,75 @@ struct TranslationServiceTests {
         let result = await GoogleTranslationService.translate("test")
         #expect(result != nil)
         #expect(result is TranslationResult)
+    }
+
+    // MARK: - OpenAICompatibleTranslationService Tests
+
+    @Test("OpenAICompatibleTranslationService builds chat completions URL")
+    func openAICompatibleBuildsChatCompletionsURL() {
+        let url = OpenAICompatibleTranslationService.chatCompletionsURL(baseURL: "https://example.com/v1/")
+        #expect(url?.absoluteString == "https://example.com/v1/chat/completions")
+    }
+
+    @Test("OpenAICompatibleTranslationService parses translation response")
+    func openAICompatibleParsesTranslationResponse() throws {
+        let json = """
+        {
+          "choices": [
+            {
+              "message": {
+                "content": "你好"
+              }
+            }
+          ]
+        }
+        """
+        let result = OpenAICompatibleTranslationService.parseTranslation(
+            Data(json.utf8),
+            originalText: "Hello"
+        )
+
+        #expect(result.text == "你好")
+    }
+
+    @Test("OpenAICompatibleTranslationService renders user prompt template")
+    func openAICompatibleRendersUserPromptTemplate() {
+        let rendered = OpenAICompatibleTranslationService.renderUserPrompt(
+            "将下面的文本翻译为{{target}}：\n{{text}}",
+            text: "Hello"
+        )
+
+        #expect(rendered == "将下面的文本翻译为简体中文：\nHello")
+    }
+
+    @Test("OpenAICompatibleTranslationService fails when api key is missing")
+    func openAICompatibleFailsWhenAPIKeyIsMissing() async {
+        var config = TranslationConfig.defaultConfig
+        config.provider = .openai
+        config.apiKey = ""
+
+        let result = await OpenAICompatibleTranslationService.translate("Hello", config: config)
+
+        #expect(result.isFailure)
+        #expect(result.errorMessage?.contains("API Key") == true)
+    }
+
+    private func fieldOrder(in json: String) -> [String] {
+        json
+            .split(separator: "\n")
+            .compactMap { line -> String? in
+                let trimmedLine = line.trimmingCharacters(in: .whitespaces)
+                guard trimmedLine.hasPrefix("\""),
+                      let endQuote = trimmedLine.dropFirst().firstIndex(of: "\"") else {
+                    return nil
+                }
+                return String(trimmedLine[trimmedLine.index(after: trimmedLine.startIndex)..<endQuote])
+            }
+    }
+
+    private func temporaryConfigURL() -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathComponent("config.json")
     }
 }
