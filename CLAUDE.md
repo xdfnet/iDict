@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-iDict 是一个 macOS 快速翻译工具，使用 Swift 开发。它是一个菜单栏应用程序，提供全局热键翻译功能，默认使用 Google Translate（免费无需配置）。
+iDict 是一个 macOS 快速翻译工具，使用 Swift 开发。它是一个菜单栏应用程序，提供全局热键翻译功能，默认使用 Google Translate（免费无需配置），也支持 OpenAI 兼容翻译接口。
 
 ## 构建和开发命令
 
@@ -36,6 +36,10 @@ make push MSG="提交信息"
 
 - **翻译服务管理器**: [`translationservice.swift`](iDict/translationservice.swift) - 翻译服务接口
 - 默认使用 Google Translate（免费无需配置）
+- 支持 OpenAI 兼容接口，配置文件位于 `~/.config/iDict/config.json`
+- 首次启动自动创建完整配置，默认 `provider` 为 `google`
+- 菜单栏 `Translation Provider` 可切换 `Google` / `OpenAI Compatible`
+- 切换成功静默，切换失败才显示错误提示
 
 #### 系统集成
 - **全局热键**: [`HotKeyManager.swift`](iDict/HotKeyManager.swift) - Cmd+D 热键注册和处理
@@ -91,6 +95,21 @@ make push MSG="提交信息"
 - **项目配置**: [`Info.plist`](iDict/Info.plist) - 应用信息和权限配置
 - **权限配置**: [`iDict.entitlements`](iDict/iDict.entitlements) - 系统权限声明
 - **构建配置**: [`Makefile`](Makefile) - 构建和发布脚本
+- **翻译配置**: `~/.config/iDict/config.json`
+
+翻译配置字段：
+
+| 字段 | 说明 |
+|------|------|
+| `provider` | `google` 或 `openai` |
+| `baseURL` | OpenAI 兼容接口根地址 |
+| `apiKey` | OpenAI 兼容接口 Key |
+| `model` | 模型名 |
+| `systemPrompt` | 系统提示词 |
+| `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
+| `timeoutSeconds` | 请求超时时间 |
+
+配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`systemPrompt`、`userPromptTemplate`、`timeoutSeconds`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
 
 ## 应用管理功能
 
@@ -117,6 +136,7 @@ make push MSG="提交信息"
 - 应用采用 `LSUIElement = true`，不在 Dock 中显示图标
 - 翻译窗口支持拖拽移动，会自动适应屏幕边界
 - 媒体控制服务器默认在端口 8888 运行
+- `/api/status` 不需要辅助功能权限，可用于健康检查
 - 所有翻译操作都在主线程中执行UI更新
 - 窗口复用机制避免重复创建翻译窗口
 - 应用开关功能支持中英文应用名，自动识别并映射到正确的应用路径

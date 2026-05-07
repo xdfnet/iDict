@@ -367,6 +367,7 @@ class MediaHTTPServer: ObservableObject {
     /// 处理具体的 API 动作
     private func handleAPIAction(_ action: String) async -> (result: String, error: String?) {
         switch action {
+        case "status": return ("success", nil)
         case "space": _ = await MediaController.playPause(); return ("success", nil)
         case "next": _ = await MediaController.nextTrack(); return ("success", nil)
         case "prev": _ = await MediaController.previousTrack(); return ("success", nil)
