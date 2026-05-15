@@ -149,12 +149,23 @@ class MenuBarController: NSObject {
         Task {
             let result = await translationServiceManager.translateText(text)
             self.showTranslationWindow?(result)
+            speakWithISpeak(result)
         }
     }
 
     /// 执行快速翻译（供外部调用）
     func performQuickTranslation(text: String) {
         performTranslation(text: text)
+    }
+
+    /// 通过 iSpeak 朗读文本（非阻塞，ispeakd 未运行则静默失败）
+    private func speakWithISpeak(_ text: String) {
+        Task.detached {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/ispeak")
+            process.arguments = [text]
+            try? process.run()
+        }
     }
 
     /// 清理状态栏资源
