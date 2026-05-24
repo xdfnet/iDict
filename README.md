@@ -28,7 +28,7 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 首次启动会自动创建配置文件：
 
 ```text
-~/.config/iDict/config.json
+~/.config/idict/config.json
 ```
 
 默认翻译服务是 Google，无需 API Key。
@@ -54,7 +54,7 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 路径：
 
 ```text
-~/.config/iDict/config.json
+~/.config/idict/config.json
 ```
 
 默认配置：
@@ -67,7 +67,9 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
   "model" : "gpt-5-mini",
   "systemPrompt" : "You are a translation engine. Follow the user's translation instruction exactly. Return only the final translation.",
   "userPromptTemplate" : "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
-  "timeoutSeconds" : 20
+  "timeoutSeconds" : 20,
+  "speechEnabled" : true,
+  "speechCommandPath" : "/opt/homebrew/bin/ispeak"
 }
 ```
 
@@ -82,6 +84,8 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 | `systemPrompt` | 系统提示词 |
 | `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
 | `timeoutSeconds` | 请求超时时间 |
+| `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
+| `speechCommandPath` | iSpeak 命令路径 |
 
 如果只想固定翻译成简体中文，不需要 `{{target}}`：
 

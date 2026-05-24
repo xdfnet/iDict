@@ -149,8 +149,18 @@ class MenuBarController: NSObject {
         Task {
             let result = await translationServiceManager.translateText(text)
             self.showTranslationWindow?(result)
-            speakWithISpeak(result)
+            if let speechCommandPath = speechCommandPathForTranslationResult() {
+                speakWithISpeak(result, commandPath: speechCommandPath)
+            }
         }
+    }
+
+    private func speechCommandPathForTranslationResult() -> String? {
+        let config = (try? configStore.loadOrCreate()) ?? TranslationConfig.defaultConfig
+        guard config.speechEnabled else { return nil }
+
+        let commandPath = config.speechCommandPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        return commandPath.isEmpty ? TranslationConfig.defaultConfig.speechCommandPath : commandPath
     }
 
     /// 执行快速翻译（供外部调用）
@@ -159,10 +169,10 @@ class MenuBarController: NSObject {
     }
 
     /// 通过 iSpeak 朗读文本（非阻塞，ispeakd 未运行则静默失败）
-    private func speakWithISpeak(_ text: String) {
+    private func speakWithISpeak(_ text: String, commandPath: String) {
         Task.detached {
             let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/opt/homebrew/bin/ispeak")
+            process.executableURL = URL(fileURLWithPath: commandPath)
             process.arguments = [text]
             try? process.run()
         }

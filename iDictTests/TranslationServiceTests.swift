@@ -87,6 +87,8 @@ struct TranslationServiceTests {
         #expect(savedJSON.contains("\"systemPrompt\""))
         #expect(savedJSON.contains("\"userPromptTemplate\""))
         #expect(savedJSON.contains("\"timeoutSeconds\""))
+        #expect(savedJSON.contains("\"speechEnabled\""))
+        #expect(savedJSON.contains("\"speechCommandPath\""))
         #expect(!savedJSON.contains("\\/"))
         #expect(fieldOrder(in: savedJSON) == [
             "provider",
@@ -95,7 +97,9 @@ struct TranslationServiceTests {
             "model",
             "systemPrompt",
             "userPromptTemplate",
-            "timeoutSeconds"
+            "timeoutSeconds",
+            "speechEnabled",
+            "speechCommandPath"
         ])
     }
 
@@ -103,7 +107,7 @@ struct TranslationServiceTests {
     func configStoreDefaultConfigPathUsesCurrentUserHome() {
         let expectedURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".config")
-            .appendingPathComponent("iDict")
+            .appendingPathComponent("idict")
             .appendingPathComponent("config.json")
 
         #expect(TranslationConfigStore.defaultConfigURL == expectedURL)
@@ -151,10 +155,12 @@ struct TranslationServiceTests {
         #expect(updated.systemPrompt == config.systemPrompt)
         #expect(updated.userPromptTemplate == config.userPromptTemplate)
         #expect(updated.timeoutSeconds == config.timeoutSeconds)
+        #expect(updated.speechEnabled == config.speechEnabled)
+        #expect(updated.speechCommandPath == config.speechCommandPath)
     }
 
-    @Test("TranslationConfigStore fills missing prompt fields")
-    func configStoreFillsMissingPromptFields() throws {
+    @Test("TranslationConfigStore fills missing fields")
+    func configStoreFillsMissingFields() throws {
         let configURL = temporaryConfigURL()
         try FileManager.default.createDirectory(
             at: configURL.deletingLastPathComponent(),
@@ -178,8 +184,34 @@ struct TranslationServiceTests {
 
         #expect(config.systemPrompt == TranslationConfig.defaultConfig.systemPrompt)
         #expect(config.userPromptTemplate == TranslationConfig.defaultConfig.userPromptTemplate)
+        #expect(config.speechEnabled == TranslationConfig.defaultConfig.speechEnabled)
+        #expect(config.speechCommandPath == TranslationConfig.defaultConfig.speechCommandPath)
         #expect(savedJSON.contains("\"systemPrompt\""))
         #expect(savedJSON.contains("\"userPromptTemplate\""))
+        #expect(savedJSON.contains("\"speechEnabled\""))
+        #expect(savedJSON.contains("\"speechCommandPath\""))
+    }
+
+    @Test("TranslationConfigStore reads speech config")
+    func configStoreReadsSpeechConfig() throws {
+        let store = TranslationConfigStore(configURL: temporaryConfigURL())
+        let config = TranslationConfig(
+            provider: .google,
+            baseURL: "https://example.com/v1",
+            apiKey: "",
+            model: "test-model",
+            systemPrompt: "Translate only.",
+            userPromptTemplate: "翻译：\n{{text}}",
+            timeoutSeconds: 7,
+            speechEnabled: false,
+            speechCommandPath: "/usr/local/bin/ispeak"
+        )
+
+        try store.save(config)
+
+        let savedConfig = try store.loadOrCreate()
+        #expect(savedConfig.speechEnabled == false)
+        #expect(savedConfig.speechCommandPath == "/usr/local/bin/ispeak")
     }
 
     // MARK: - GoogleTranslationService Tests

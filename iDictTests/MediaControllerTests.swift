@@ -99,4 +99,28 @@ struct MediaControllerTests {
         let error: MediaHTTPServerError = .invalidPort
         #expect(error is LocalizedError)
     }
+
+    @Test("MediaHTTPServer parses request path")
+    func mediaHTTPServerParsesRequestPath() {
+        let request = "GET /api/status HTTP/1.1\r\nHost: localhost\r\n\r\n"
+        let path = MediaHTTPServer.requestPath(from: Data(request.utf8))
+
+        #expect(path == "/api/status")
+    }
+
+    @Test("MediaHTTPServer rejects malformed request")
+    func mediaHTTPServerRejectsMalformedRequest() {
+        let request = "GET\r\n\r\n"
+        let path = MediaHTTPServer.requestPath(from: Data(request.utf8))
+
+        #expect(path == nil)
+    }
+
+    @Test("MediaHTTPServer resolves common content types")
+    func mediaHTTPServerResolvesCommonContentTypes() {
+        #expect(MediaHTTPServer.getContentType(for: "png") == "image/png")
+        #expect(MediaHTTPServer.getContentType(for: "jpg") == "image/jpeg")
+        #expect(MediaHTTPServer.getContentType(for: "html") == "text/html")
+        #expect(MediaHTTPServer.getContentType(for: "bin") == "application/octet-stream")
+    }
 }
