@@ -56,11 +56,13 @@ struct TranslationConfig: Codable, Equatable {
     var systemPrompt: String
     var userPromptTemplate: String
     var timeoutSeconds: TimeInterval
+    var speechEnabled: Bool
+    var speechCommandPath: String
 
     enum CodingKeys: String, CodingKey, CaseIterable {
         case provider, baseURL, apiKey, model
         case systemPrompt, userPromptTemplate
-        case timeoutSeconds
+        case timeoutSeconds, speechEnabled, speechCommandPath
     }
 
     init(
@@ -70,7 +72,9 @@ struct TranslationConfig: Codable, Equatable {
         model: String,
         systemPrompt: String,
         userPromptTemplate: String,
-        timeoutSeconds: TimeInterval
+        timeoutSeconds: TimeInterval,
+        speechEnabled: Bool = true,
+        speechCommandPath: String = "/opt/homebrew/bin/ispeak"
     ) {
         self.provider = provider
         self.baseURL = baseURL
@@ -79,6 +83,8 @@ struct TranslationConfig: Codable, Equatable {
         self.systemPrompt = systemPrompt
         self.userPromptTemplate = userPromptTemplate
         self.timeoutSeconds = timeoutSeconds
+        self.speechEnabled = speechEnabled
+        self.speechCommandPath = speechCommandPath
     }
 
     init(from decoder: Decoder) throws {
@@ -90,6 +96,8 @@ struct TranslationConfig: Codable, Equatable {
         systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) ?? TranslationConfig.defaultConfig.systemPrompt
         userPromptTemplate = try container.decodeIfPresent(String.self, forKey: .userPromptTemplate) ?? TranslationConfig.defaultConfig.userPromptTemplate
         timeoutSeconds = try container.decodeIfPresent(TimeInterval.self, forKey: .timeoutSeconds) ?? TranslationConfig.defaultConfig.timeoutSeconds
+        speechEnabled = try container.decodeIfPresent(Bool.self, forKey: .speechEnabled) ?? TranslationConfig.defaultConfig.speechEnabled
+        speechCommandPath = try container.decodeIfPresent(String.self, forKey: .speechCommandPath) ?? TranslationConfig.defaultConfig.speechCommandPath
     }
 
     func encode(to encoder: Encoder) throws {
@@ -101,6 +109,8 @@ struct TranslationConfig: Codable, Equatable {
         try container.encode(systemPrompt, forKey: .systemPrompt)
         try container.encode(userPromptTemplate, forKey: .userPromptTemplate)
         try container.encode(timeoutSeconds, forKey: .timeoutSeconds)
+        try container.encode(speechEnabled, forKey: .speechEnabled)
+        try container.encode(speechCommandPath, forKey: .speechCommandPath)
     }
 
     static let defaultConfig = TranslationConfig(
@@ -110,7 +120,9 @@ struct TranslationConfig: Codable, Equatable {
         model: "gpt-5-mini",
         systemPrompt: "You are a translation engine. Follow the user's translation instruction exactly. Return only the final translation.",
         userPromptTemplate: "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
-        timeoutSeconds: 20
+        timeoutSeconds: 20,
+        speechEnabled: true,
+        speechCommandPath: "/opt/homebrew/bin/ispeak"
     )
 }
 
@@ -124,7 +136,7 @@ struct TranslationConfigStore {
     static var defaultConfigURL: URL {
         FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".config")
-            .appendingPathComponent("iDict")
+            .appendingPathComponent("idict")
             .appendingPathComponent("config.json")
     }
 
@@ -174,7 +186,9 @@ struct TranslationConfigStore {
           "model" : \(try jsonString(config.model)),
           "systemPrompt" : \(try jsonString(config.systemPrompt)),
           "userPromptTemplate" : \(try jsonString(config.userPromptTemplate)),
-          "timeoutSeconds" : \(jsonNumber(config.timeoutSeconds))
+          "timeoutSeconds" : \(jsonNumber(config.timeoutSeconds)),
+          "speechEnabled" : \(config.speechEnabled),
+          "speechCommandPath" : \(try jsonString(config.speechCommandPath))
         }
         """
     }
@@ -201,13 +215,19 @@ struct TranslationConfigStore {
 
 struct GoogleTranslationService {
     static func translate(_ text: String) async -> TranslationResult {
+        await translate(text, timeout: TranslationConfig.defaultConfig.timeoutSeconds)
+    }
+
+    static func translate(_ text: String, timeout: TimeInterval) async -> TranslationResult {
         guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=\(AppConfig.Translation.sourceLanguage)&tl=\(AppConfig.Translation.targetLanguage)&dt=t&q=\(encodedText)") else {
             return .failed(text, error: "无效的翻译请求 URL")
         }
 
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url)
+            request.timeoutInterval = timeout
+            let (data, _) = try await URLSession.shared.data(for: request)
             if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [Any],
                let sentences = jsonObject.first as? [[Any]] {
                 let translatedText = sentences.compactMap { $0.first as? String }.joined()
@@ -328,7 +348,7 @@ final class TranslationServiceManager {
             let config = try configStore.loadOrCreate()
             switch config.provider {
             case .google:
-                result = await GoogleTranslationService.translate(text)
+                result = await GoogleTranslationService.translate(text, timeout: config.timeoutSeconds)
             case .openai:
                 result = await OpenAICompatibleTranslationService.translate(text, config: config)
             }

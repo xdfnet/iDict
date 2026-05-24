@@ -14,7 +14,7 @@ import AppKit
 // MARK: - 媒体控制器
 
 final class MediaController {
-    fileprivate static let logger = Logger(subsystem: "com.idict.media", category: "MediaController")
+    nonisolated fileprivate static let logger = Logger(subsystem: "com.idict.media", category: "MediaController")
 
     private enum MediaKey: Int32 {
         case playPause = 16, nextTrack = 17, prevTrack = 18
@@ -316,17 +316,17 @@ class MediaHTTPServer: ObservableObject {
         connection.start(queue: .global())
         connection.receive(minimumIncompleteLength: 1, maximumLength: AppConfig.HTTPServer.maxRequestLength) { [weak self] data, _, isComplete, _ in
             if let data = data, !data.isEmpty {
-                Task { @MainActor in self?.processRequest(data: data, connection: connection) }
+                Task.detached { [weak self] in
+                    await self?.processRequest(data: data, connection: connection)
+                }
             }
             if isComplete { connection.cancel() }
         }
     }
     
     /// 处理 HTTP 请求
-    private func processRequest(data: Data, connection: NWConnection) {
-        guard let request = String(data: data, encoding: .utf8),
-              let line = request.components(separatedBy: "\r\n").first,
-              let path = line.components(separatedBy: " ").dropFirst().first else {
+    private nonisolated func processRequest(data: Data, connection: NWConnection) async {
+        guard let path = Self.requestPath(from: data) else {
             HTTPResponseHandler.sendBadRequest(connection, message: "Bad Request")
             return
         }
@@ -334,15 +334,26 @@ class MediaHTTPServer: ObservableObject {
         MediaController.logger.info("收到请求: \(path)")
   
         if path == "/" || path == "/index.html" {
-            HTTPResponseHandler.sendHTML(connection, generateHTML())
+            HTTPResponseHandler.sendHTML(connection, Self.generateHTML())
         } else if path.hasPrefix("/api/") {
-            handleAPI(path: path, connection: connection)
+            await handleAPI(path: path, connection: connection)
         } else if path.hasPrefix("/assets/") {
-            serveAsset(path: path, connection: connection)
+            Self.serveAsset(path: path, connection: connection)
         } else {
             MediaController.logger.warning("未找到路径: \(path)")
             HTTPResponseHandler.sendNotFound(connection)
         }
+    }
+
+    nonisolated static func requestPath(from data: Data) -> String? {
+        guard let request = String(data: data, encoding: .utf8),
+              let line = request.components(separatedBy: "\r\n").first else {
+            return nil
+        }
+
+        let parts = line.components(separatedBy: " ")
+        guard parts.count >= 2 else { return nil }
+        return parts[1]
     }
     
     /// 处理 API 请求
@@ -437,7 +448,7 @@ class MediaHTTPServer: ObservableObject {
         }
     }
 
-    private func serveAsset(path: String, connection: NWConnection) {
+    private nonisolated static func serveAsset(path: String, connection: NWConnection) {
         let filename = String(path.dropFirst(8))
         MediaController.logger.info("请求资源: \(filename)")
         
@@ -457,7 +468,7 @@ class MediaHTTPServer: ObservableObject {
     }
     
     /// 查找资源文件
-    private func findAssetFile(_ filename: String) -> URL? {
+    private nonisolated static func findAssetFile(_ filename: String) -> URL? {
         if let resourcePath = Bundle.main.resourcePath {
             let assetsPath = URL(fileURLWithPath: resourcePath)
                 .appendingPathComponent("assets")
@@ -480,16 +491,17 @@ class MediaHTTPServer: ObservableObject {
     }
     
     /// 获取内容类型
-    private func getContentType(for ext: String) -> String {
+    nonisolated static func getContentType(for ext: String) -> String {
         switch ext.lowercased() {
         case "png": return "image/png"
         case "jpg", "jpeg": return "image/jpeg"
         case "svg": return "image/svg+xml"
+        case "html": return "text/html"
         default: return "application/octet-stream"
         }
     }
     
-    private func generateHTML() -> String {
+    private nonisolated static func generateHTML() -> String {
         if let filepath = Bundle.main.path(forResource: "index", ofType: "html"),
            let content = try? String(contentsOfFile: filepath, encoding: .utf8) {
             return content
@@ -509,7 +521,7 @@ class MediaHTTPServer: ObservableObject {
         return fallbackHTML
     }
     
-    private var fallbackHTML: String {
+    private nonisolated static var fallbackHTML: String {
         """
         <!DOCTYPE html>
         <html>

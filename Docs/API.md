@@ -165,7 +165,7 @@ iDict 需要以下系统权限：
 翻译配置文件位于：
 
 ```text
-~/.config/iDict/config.json
+~/.config/idict/config.json
 ```
 
 首次启动会自动创建完整配置，默认 `provider` 为 `google`，无需 API Key 即可使用。OpenAI 兼容模式使用同一份配置：
@@ -178,7 +178,9 @@ iDict 需要以下系统权限：
   "model" : "gpt-5-mini",
   "systemPrompt" : "You are a translation engine. Follow the user's translation instruction exactly. Return only the final translation.",
   "userPromptTemplate" : "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
-  "timeoutSeconds" : 20
+  "timeoutSeconds" : 20,
+  "speechEnabled" : true,
+  "speechCommandPath" : "/opt/homebrew/bin/ispeak"
 }
 ```
 
@@ -193,6 +195,8 @@ iDict 需要以下系统权限：
 | `systemPrompt` | 系统提示词 |
 | `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
 | `timeoutSeconds` | 请求超时时间 |
+| `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
+| `speechCommandPath` | iSpeak 命令路径 |
 
 切换翻译服务可以通过菜单栏 `Translation Provider` 完成。切换成功时不会弹提示；失败时会显示错误。
 
@@ -309,7 +313,7 @@ if __name__ == "__main__":
    - 解决方案：检查系统状态和应用权限，重试操作
 
 4. **OpenAI 兼容翻译失败**
-   - 解决方案：检查 `~/.config/iDict/config.json` 中的 `baseURL`、`apiKey`、`model` 和本地服务状态
+   - 解决方案：检查 `~/.config/idict/config.json` 中的 `baseURL`、`apiKey`、`model` 和本地服务状态
 
 ## 应用管理配置
 

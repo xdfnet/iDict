@@ -16,7 +16,7 @@ struct HTTPResponseHandler {
         case badRequest = 400
         case notFound = 404
 
-        var statusText: String {
+        nonisolated var statusText: String {
             switch self {
             case .ok: return "OK"
             case .badRequest: return "Bad Request"
@@ -33,7 +33,7 @@ struct HTTPResponseHandler {
     ///   - code: HTTP 状态码
     ///   - body: 响应内容
     ///   - contentType: 内容类型
-    static func sendResponse(
+    nonisolated static func sendResponse(
         _ connection: NWConnection,
         code: Int,
         body: String,
@@ -58,7 +58,7 @@ struct HTTPResponseHandler {
     ///   - code: HTTP 状态码
     ///   - data: 响应数据
     ///   - contentType: 内容类型
-    static func sendDataResponse(
+    nonisolated static func sendDataResponse(
         _ connection: NWConnection,
         code: Int,
         data: Data,
@@ -82,32 +82,32 @@ struct HTTPResponseHandler {
     // MARK: - 便捷方法
 
     /// 发送 HTML 响应
-    static func sendHTML(_ connection: NWConnection, _ html: String) {
+    nonisolated static func sendHTML(_ connection: NWConnection, _ html: String) {
         sendResponse(connection, code: 200, body: html, contentType: "text/html")
     }
 
     /// 发送 JSON 响应
-    static func sendJSON(_ connection: NWConnection, _ json: String) {
+    nonisolated static func sendJSON(_ connection: NWConnection, _ json: String) {
         sendResponse(connection, code: 200, body: json, contentType: "application/json")
     }
 
     /// 发送错误响应
-    static func sendError(_ connection: NWConnection, code: Int, message: String) {
+    nonisolated static func sendError(_ connection: NWConnection, code: Int, message: String) {
         sendResponse(connection, code: code, body: message, contentType: "text/plain")
     }
 
     /// 发送 400 Bad Request 响应
-    static func sendBadRequest(_ connection: NWConnection, message: String = "Bad Request") {
+    nonisolated static func sendBadRequest(_ connection: NWConnection, message: String = "Bad Request") {
         sendError(connection, code: 400, message: message)
     }
 
     /// 发送 404 Not Found 响应
-    static func sendNotFound(_ connection: NWConnection, message: String = "Not Found") {
+    nonisolated static func sendNotFound(_ connection: NWConnection, message: String = "Not Found") {
         sendError(connection, code: 404, message: message)
     }
 
     /// 发送成功响应
-    static func sendSuccess(_ connection: NWConnection, data: Any? = nil) {
+    nonisolated static func sendSuccess(_ connection: NWConnection, data: Any? = nil) {
         if let jsonData = try? JSONSerialization.data(withJSONObject: data ?? ["status": "success"]),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             sendJSON(connection, jsonString)
@@ -124,7 +124,7 @@ struct HTTPResponseHandler {
     ///   - error: 错误信息（可选）
     ///   - additionalData: 额外数据（可选）
     /// - Returns: JSON 字符串
-    static func buildJSONResponse(
+    nonisolated static func buildJSONResponse(
         status: String,
         error: String? = nil,
         additionalData: [String: Any]? = nil
