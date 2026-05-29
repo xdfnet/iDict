@@ -69,7 +69,7 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
   "userPromptTemplate" : "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
   "timeoutSeconds" : 20,
   "speechEnabled" : true,
-  "speechCommandPath" : "/opt/homebrew/bin/ispeak"
+  "speechCommand" : "/Users/admin/.local/bin/iaura speak {{text}}"
 }
 ```
 
@@ -84,8 +84,8 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 | `systemPrompt` | 系统提示词 |
 | `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
 | `timeoutSeconds` | 请求超时时间 |
-| `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
-| `speechCommandPath` | iSpeak 命令路径 |
+| `speechEnabled` | 是否自动朗读翻译结果 |
+| `speechCommand` | 朗读命令模板，`{{text}}` 会被替换为翻译文本。支持 [iAura](https://github.com/xdfnet/iAura)、iSpeak 等 TTS 工具 |
 
 如果只想固定翻译成简体中文，不需要 `{{target}}`：
 
