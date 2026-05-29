@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## 项目概述
 
@@ -36,7 +36,7 @@ make push MSG="提交信息"
 
 - **翻译服务管理器**: [`translationservice.swift`](iDict/translationservice.swift) - 翻译服务接口
 - 默认使用 Google Translate（免费无需配置）
-- 支持 OpenAI 兼容接口，配置文件位于 `~/.config/idict/config.json`
+- 支持 OpenAI 兼容接口，配置文件位于 `~/.config/iDict/config.json`
 - 首次启动自动创建完整配置，默认 `provider` 为 `google`
 - 菜单栏 `Translation Provider` 可切换 `Google` / `OpenAI Compatible`
 - 切换成功静默，切换失败才显示错误提示
@@ -95,7 +95,7 @@ make push MSG="提交信息"
 - **项目配置**: [`Info.plist`](iDict/Info.plist) - 应用信息和权限配置
 - **权限配置**: [`iDict.entitlements`](iDict/iDict.entitlements) - 系统权限声明
 - **构建配置**: [`Makefile`](Makefile) - 构建和发布脚本
-- **翻译配置**: `~/.config/idict/config.json`
+- **翻译配置**: `~/.config/iDict/config.json`
 
 翻译配置字段：
 
@@ -108,10 +108,8 @@ make push MSG="提交信息"
 | `systemPrompt` | 系统提示词 |
 | `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
 | `timeoutSeconds` | 请求超时时间 |
-| `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
-| `speechCommand` | 播放命令模板，默认 `/Users/admin/.local/bin/ivox {{text}}`，`{{text}}` 会被替换为翻译文本 |
 
-配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`systemPrompt`、`userPromptTemplate`、`timeoutSeconds`、`speechEnabled`、`speechCommand`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
+配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`systemPrompt`、`userPromptTemplate`、`timeoutSeconds`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
 
 ## 应用管理功能
 

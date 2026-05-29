@@ -149,18 +149,18 @@ class MenuBarController: NSObject {
         Task {
             let result = await translationServiceManager.translateText(text)
             self.showTranslationWindow?(result)
-            if let speechCommandPath = speechCommandPathForTranslationResult() {
-                speakWithISpeak(result, commandPath: speechCommandPath)
+            if let speechCommand = speechCommandForTranslationResult() {
+                speakWithCommand(result, command: speechCommand)
             }
         }
     }
 
-    private func speechCommandPathForTranslationResult() -> String? {
+    private func speechCommandForTranslationResult() -> String? {
         let config = (try? configStore.loadOrCreate()) ?? TranslationConfig.defaultConfig
         guard config.speechEnabled else { return nil }
 
-        let commandPath = config.speechCommandPath.trimmingCharacters(in: .whitespacesAndNewlines)
-        return commandPath.isEmpty ? TranslationConfig.defaultConfig.speechCommandPath : commandPath
+        let command = config.speechCommand.trimmingCharacters(in: .whitespacesAndNewlines)
+        return command.isEmpty ? nil : command
     }
 
     /// 执行快速翻译（供外部调用）
@@ -168,12 +168,16 @@ class MenuBarController: NSObject {
         performTranslation(text: text)
     }
 
-    /// 通过 iSpeak 朗读文本（非阻塞，ispeakd 未运行则静默失败）
-    private func speakWithISpeak(_ text: String, commandPath: String) {
+    /// 通过命令模板播放翻译结果（非阻塞，静默失败）
+    /// 命令中的 {{text}} 会被替换为翻译文本
+    private func speakWithCommand(_ text: String, command: String) {
         Task.detached {
+            let escapedText = text.replacingOccurrences(of: "'", with: "'\\''")
+            let commandString = command.replacingOccurrences(of: "{{text}}", with: "'\(escapedText)'")
+
             let process = Process()
-            process.executableURL = URL(fileURLWithPath: commandPath)
-            process.arguments = [text]
+            process.executableURL = URL(fileURLWithPath: "/bin/sh")
+            process.arguments = ["-c", commandString]
             try? process.run()
         }
     }
