@@ -57,12 +57,12 @@ struct TranslationConfig: Codable, Equatable {
     var userPromptTemplate: String
     var timeoutSeconds: TimeInterval
     var speechEnabled: Bool
-    var speechCommandPath: String
+    var speechCommand: String
 
     enum CodingKeys: String, CodingKey, CaseIterable {
         case provider, baseURL, apiKey, model
         case systemPrompt, userPromptTemplate
-        case timeoutSeconds, speechEnabled, speechCommandPath
+        case timeoutSeconds, speechEnabled, speechCommand
     }
 
     init(
@@ -74,7 +74,7 @@ struct TranslationConfig: Codable, Equatable {
         userPromptTemplate: String,
         timeoutSeconds: TimeInterval,
         speechEnabled: Bool = true,
-        speechCommandPath: String = "/opt/homebrew/bin/ispeak"
+        speechCommand: String = ""
     ) {
         self.provider = provider
         self.baseURL = baseURL
@@ -84,7 +84,7 @@ struct TranslationConfig: Codable, Equatable {
         self.userPromptTemplate = userPromptTemplate
         self.timeoutSeconds = timeoutSeconds
         self.speechEnabled = speechEnabled
-        self.speechCommandPath = speechCommandPath
+        self.speechCommand = speechCommand
     }
 
     init(from decoder: Decoder) throws {
@@ -97,7 +97,27 @@ struct TranslationConfig: Codable, Equatable {
         userPromptTemplate = try container.decodeIfPresent(String.self, forKey: .userPromptTemplate) ?? TranslationConfig.defaultConfig.userPromptTemplate
         timeoutSeconds = try container.decodeIfPresent(TimeInterval.self, forKey: .timeoutSeconds) ?? TranslationConfig.defaultConfig.timeoutSeconds
         speechEnabled = try container.decodeIfPresent(Bool.self, forKey: .speechEnabled) ?? TranslationConfig.defaultConfig.speechEnabled
-        speechCommandPath = try container.decodeIfPresent(String.self, forKey: .speechCommandPath) ?? TranslationConfig.defaultConfig.speechCommandPath
+        speechCommand = try Self.decodeSpeechCommand(from: decoder) ?? TranslationConfig.defaultConfig.speechCommand
+    }
+
+    /// 解码 speechCommand，向后兼容旧版 speechCommandPath 字段
+    private static func decodeSpeechCommand(from decoder: Decoder) throws -> String? {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let command = try container.decodeIfPresent(String.self, forKey: .speechCommand) {
+            return command
+        }
+        // 尝试从旧字段 speechCommandPath 读取，自动补上 {{text}} 模板
+        struct LegacyKeys: CodingKey {
+            var stringValue: String
+            var intValue: Int? { nil }
+            init(stringValue: String) { self.stringValue = stringValue }
+            init?(intValue: Int) { nil }
+        }
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
+        guard let oldPath = try legacy.decodeIfPresent(String.self, forKey: LegacyKeys(stringValue: "speechCommandPath")) else {
+            return nil
+        }
+        return oldPath + " {{text}}"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -110,7 +130,7 @@ struct TranslationConfig: Codable, Equatable {
         try container.encode(userPromptTemplate, forKey: .userPromptTemplate)
         try container.encode(timeoutSeconds, forKey: .timeoutSeconds)
         try container.encode(speechEnabled, forKey: .speechEnabled)
-        try container.encode(speechCommandPath, forKey: .speechCommandPath)
+        try container.encode(speechCommand, forKey: .speechCommand)
     }
 
     static let defaultConfig = TranslationConfig(
@@ -122,7 +142,7 @@ struct TranslationConfig: Codable, Equatable {
         userPromptTemplate: "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
         timeoutSeconds: 20,
         speechEnabled: true,
-        speechCommandPath: "/opt/homebrew/bin/ispeak"
+        speechCommand: ""
     )
 }
 
@@ -188,7 +208,7 @@ struct TranslationConfigStore {
           "userPromptTemplate" : \(try jsonString(config.userPromptTemplate)),
           "timeoutSeconds" : \(jsonNumber(config.timeoutSeconds)),
           "speechEnabled" : \(config.speechEnabled),
-          "speechCommandPath" : \(try jsonString(config.speechCommandPath))
+          "speechCommand" : \(try jsonString(config.speechCommand))
         }
         """
     }

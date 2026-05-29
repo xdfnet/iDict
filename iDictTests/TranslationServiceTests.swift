@@ -88,7 +88,7 @@ struct TranslationServiceTests {
         #expect(savedJSON.contains("\"userPromptTemplate\""))
         #expect(savedJSON.contains("\"timeoutSeconds\""))
         #expect(savedJSON.contains("\"speechEnabled\""))
-        #expect(savedJSON.contains("\"speechCommandPath\""))
+        #expect(savedJSON.contains("\"speechCommand\""))
         #expect(!savedJSON.contains("\\/"))
         #expect(fieldOrder(in: savedJSON) == [
             "provider",
@@ -99,7 +99,7 @@ struct TranslationServiceTests {
             "userPromptTemplate",
             "timeoutSeconds",
             "speechEnabled",
-            "speechCommandPath"
+            "speechCommand"
         ])
     }
 
@@ -156,7 +156,7 @@ struct TranslationServiceTests {
         #expect(updated.userPromptTemplate == config.userPromptTemplate)
         #expect(updated.timeoutSeconds == config.timeoutSeconds)
         #expect(updated.speechEnabled == config.speechEnabled)
-        #expect(updated.speechCommandPath == config.speechCommandPath)
+        #expect(updated.speechCommand == config.speechCommand)
     }
 
     @Test("TranslationConfigStore fills missing fields")
@@ -185,11 +185,11 @@ struct TranslationServiceTests {
         #expect(config.systemPrompt == TranslationConfig.defaultConfig.systemPrompt)
         #expect(config.userPromptTemplate == TranslationConfig.defaultConfig.userPromptTemplate)
         #expect(config.speechEnabled == TranslationConfig.defaultConfig.speechEnabled)
-        #expect(config.speechCommandPath == TranslationConfig.defaultConfig.speechCommandPath)
+        #expect(config.speechCommand == TranslationConfig.defaultConfig.speechCommand)
         #expect(savedJSON.contains("\"systemPrompt\""))
         #expect(savedJSON.contains("\"userPromptTemplate\""))
         #expect(savedJSON.contains("\"speechEnabled\""))
-        #expect(savedJSON.contains("\"speechCommandPath\""))
+        #expect(savedJSON.contains("\"speechCommand\""))
     }
 
     @Test("TranslationConfigStore reads speech config")
@@ -204,14 +204,14 @@ struct TranslationServiceTests {
             userPromptTemplate: "翻译：\n{{text}}",
             timeoutSeconds: 7,
             speechEnabled: false,
-            speechCommandPath: "/usr/local/bin/ispeak"
+            speechCommand: "/usr/local/bin/ispeak {{text}}"
         )
 
         try store.save(config)
 
         let savedConfig = try store.loadOrCreate()
         #expect(savedConfig.speechEnabled == false)
-        #expect(savedConfig.speechCommandPath == "/usr/local/bin/ispeak")
+        #expect(savedConfig.speechCommand == "/usr/local/bin/ispeak {{text}}")
     }
 
     // MARK: - GoogleTranslationService Tests
