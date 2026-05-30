@@ -10,6 +10,51 @@ import CoreGraphics
 import ApplicationServices
 import OSLog
 import AppKit
+import Darwin
+
+// MARK: - 播放状态
+
+enum PlaybackState: String {
+    case playing, paused, unknown
+}
+
+// MARK: - MediaRemote 动态桥接
+
+/// 动态加载 MediaRemote 私有框架，发送精确的媒体控制命令
+struct MediaRemoteBridge {
+    private typealias SendCommandFunc = @convention(c) (
+        UInt32, UnsafeMutableRawPointer?
+    ) -> Bool
+
+    private static let handle: UnsafeMutableRawPointer? = {
+        let h = dlopen("/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote", RTLD_NOW)
+        if h == nil {
+            MediaController.logger.warning("MediaRemote 框架未加载: \(String(cString: dlerror()))")
+        }
+        return h
+    }()
+
+    /// 框架是否可用
+    static var isAvailable: Bool { handle != nil }
+
+    /// 发送媒体控制命令（同步，不回调）
+    @discardableResult
+    static func sendCommand(_ command: Command) -> Bool {
+        guard let h = handle,
+              let sym = dlsym(h, "MRMediaRemoteSendCommand") else {
+            return false
+        }
+        let sendCmd = unsafeBitCast(sym, to: SendCommandFunc.self)
+        return sendCmd(command.rawValue, nil)
+    }
+
+    /// 媒体控制命令
+    enum Command: UInt32 {
+        case play = 0
+        case pause = 1
+        case toggle = 2
+    }
+}
 
 // MARK: - 媒体控制器
 
@@ -23,8 +68,63 @@ final class MediaController {
         case lockScreen = 12
         case space = 49
     }
-    
-    static func playPause() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.playPause) }
+
+    // MARK: - 播放状态追踪
+
+    /// 自追踪的播放状态（非权威，仅反映我们最后一次操作）
+    nonisolated private static let _trackedState = OSAllocatedUnfairLock(initialState: PlaybackState.unknown)
+
+    /// 获取当前追踪的播放状态
+    static func currentPlaybackState() -> PlaybackState {
+        _trackedState.withLock { $0 }
+    }
+
+    /// 更新播放状态追踪
+    private static func trackState(_ state: PlaybackState) {
+        _trackedState.withLock { $0 = state }
+    }
+
+    // MARK: - 媒体控制
+
+    static func playPause() async -> Result<Void, MediaControllerError> {
+        if MediaRemoteBridge.isAvailable {
+            let current = currentPlaybackState()
+            let command: MediaRemoteBridge.Command = current == .playing ? .pause : .play
+            if MediaRemoteBridge.sendCommand(command) {
+                trackState(current == .playing ? .paused : .playing)
+                return .success(())
+            }
+            logger.warning("MediaRemote 发送命令失败，回退到按键模拟")
+        }
+        // 回退到盲切，状态设为 unknown
+        trackState(.unknown)
+        return await simulateMediaKey(.playPause)
+    }
+
+    static func play() async -> Result<Void, MediaControllerError> {
+        if MediaRemoteBridge.isAvailable {
+            if MediaRemoteBridge.sendCommand(.play) {
+                trackState(.playing)
+                return .success(())
+            }
+            logger.warning("MediaRemote play 失败，回退到按键模拟")
+        }
+        trackState(.unknown)
+        return await simulateMediaKey(.playPause)
+    }
+
+    static func pause() async -> Result<Void, MediaControllerError> {
+        if MediaRemoteBridge.isAvailable {
+            if MediaRemoteBridge.sendCommand(.pause) {
+                trackState(.paused)
+                return .success(())
+            }
+            logger.warning("MediaRemote pause 失败，回退到按键模拟")
+        }
+        trackState(.unknown)
+        return await simulateMediaKey(.playPause)
+    }
+
     static func nextTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.nextTrack) }
     static func previousTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.prevTrack) }
     static func volumeUp() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.volumeUp) }
@@ -365,8 +465,24 @@ class MediaHTTPServer: ObservableObject {
     /// 处理具体的 API 动作
     private func handleAPIAction(_ action: String) async -> (result: String, error: String?) {
         switch action {
-        case "status": return ("success", nil)
-        case "space": _ = await MediaController.playPause(); return ("success", nil)
+        case "status":
+            return (MediaController.currentPlaybackState().rawValue, nil)
+        case "space":
+            let before = MediaController.currentPlaybackState()
+            let spaceResult = await MediaController.playPause()
+            if case .failure(let err) = spaceResult {
+                return ("failed", err.errorDescription)
+            }
+            let after = before == .playing ? "paused" : "playing"
+            return (after, nil)
+        case "play":
+            let playResult = await MediaController.play()
+            if case .failure(let err) = playResult { return ("failed", err.errorDescription) }
+            return ("playing", nil)
+        case "pause":
+            let pauseResult = await MediaController.pause()
+            if case .failure(let err) = pauseResult { return ("failed", err.errorDescription) }
+            return ("paused", nil)
         case "next": _ = await MediaController.nextTrack(); return ("success", nil)
         case "prev": _ = await MediaController.previousTrack(); return ("success", nil)
         case "volumeup": _ = await MediaController.volumeUp(); return ("success", nil)
@@ -393,11 +509,6 @@ class MediaHTTPServer: ObservableObject {
             
         case "status_qishui":
             return (MediaController.isAppRunning("qishui") ? "running" : "stopped", nil)
-            
-        case "test_apps":
-            let douyinRunning = MediaController.isAppRunning("douyin")
-            let qishuiRunning = MediaController.isAppRunning("qishui")
-            return ("douyin:\(douyinRunning ? "running" : "stopped"),qishui:\(qishuiRunning ? "running" : "stopped")", nil)
             
         default:
             MediaController.logger.warning("未知API操作: \(action)")
