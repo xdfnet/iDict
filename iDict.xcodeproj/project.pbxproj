@@ -30,7 +30,6 @@
 		C541AA119A908ADBA060EA43 /* BorderlessWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5917AFAA47598EC13DBA96FE /* BorderlessWindow.swift */; };
 		CE6DFEFCB4ECBC777A2EA57E /* PermissionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74A7FD464F31D32D150DB96 /* PermissionManagerTests.swift */; };
 		CE70D85BB281B5DC5F996500 /* KeyboardSimulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D39918A796D3685E1E69BD /* KeyboardSimulatorTests.swift */; };
-		D406B48961698C97DEDBF195 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165CE66FB0257592CE60419C /* SettingsView.swift */; };
 		D9C4FDCB8B5C7BD6F074B517 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8950A35ADDFBB93F8657F1E /* HotKeyManager.swift */; };
 		E47F80A420A638B693AA6F36 /* MenuBarControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF0175C7CC055266F36959E /* MenuBarControllerTests.swift */; };
 		E9DCC62DC405F60E82E03569 /* douyin.png in Resources */ = {isa = PBXBuildFile; fileRef = C8C6988F83E7C1E0AE332C78 /* douyin.png */; };
@@ -52,7 +51,6 @@
 		0D5F4BC4195D9B832F6A2EC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		222222222222222222222222 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		113ACD77FB6227BFF888FD5A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		165CE66FB0257592CE60419C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPositionCalculator.swift; sourceTree = "<group>"; };
 		311511BAECB682F109775143 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
 		365115ECE786C23EB7439789 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
@@ -104,7 +102,6 @@
 				BA61A81D65F3A125B6C2FFFC /* KeyboardSimulator.swift */,
 				ECCEA0BDB3749E14123EC18F /* MenuBarController.swift */,
 				365115ECE786C23EB7439789 /* PermissionManager.swift */,
-				165CE66FB0257592CE60419C /* SettingsView.swift */,
 				8A97E51585B57B365AEDEB09 /* translationservice.swift */,
 				1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */,
 				C44BE05E1B24B33ED827201F /* assets */,
@@ -282,7 +279,6 @@
 				5FC2FFA12523E5ED43E1CC68 /* KeyboardSimulator.swift in Sources */,
 				91B4E1F52C33EA8108BA4BA4 /* MenuBarController.swift in Sources */,
 				101D3F9C0D611160C5A2FC71 /* PermissionManager.swift in Sources */,
-				D406B48961698C97DEDBF195 /* SettingsView.swift in Sources */,
 				372203818016262FDEC3C09C /* WindowPositionCalculator.swift in Sources */,
 				FE91F928287B0C86788EE844 /* iDictApp.swift in Sources */,
 				0E651858A0C5ED5A884E2E40 /* iDictController.swift in Sources */,
@@ -314,7 +310,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.4;
+				MARKETING_VERSION = 1.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDictTests;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -338,7 +334,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.4;
+				MARKETING_VERSION = 1.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDict;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -359,7 +355,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.4;
+				MARKETING_VERSION = 1.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDictTests;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -449,7 +445,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.4;
+				MARKETING_VERSION = 1.1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDict;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
