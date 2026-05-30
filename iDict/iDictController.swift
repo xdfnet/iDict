@@ -24,7 +24,7 @@ final class MediaController {
         case space = 49
     }
     
-    static func playPause() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.space) }
+    static func playPause() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.playPause) }
     static func nextTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.nextTrack) }
     static func previousTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.prevTrack) }
     static func volumeUp() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.volumeUp) }
@@ -34,19 +34,6 @@ final class MediaController {
     static func arrowDown() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.arrowDown) }
     static func pressSpace() async -> Result<Void, MediaControllerError> { await simulateArrowKey(.space) }
     
-    static func smartLockOrLogin() async -> Result<Void, MediaControllerError> {
-        let isLocked = isScreenLocked()
-        logger.info("屏幕锁定状态: \(isLocked ? "已锁定" : "未锁定")")
-        
-        if isLocked {
-            logger.warning("屏幕已锁定，无法通过软件唤醒")
-            return .failure(.eventCreationFailed)
-        } else {
-            logger.info("系统未锁定，执行锁屏操作")
-            return await simulateLockScreen()
-        }
-    }
-
     static func lockScreen() async -> Result<Void, MediaControllerError> { await simulateLockScreen() }
 
     // MARK: - 应用管理
@@ -424,7 +411,7 @@ class MediaHTTPServer: ObservableObject {
         if isLocked {
             return ("failed", "屏幕已锁定，无法通过软件唤醒")
         } else {
-            let lockResult = await MediaController.smartLockOrLogin()
+            let lockResult = await MediaController.lockScreen()
             if case .success = lockResult {
                 return ("lock_success", nil)
             } else {

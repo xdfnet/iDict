@@ -106,7 +106,7 @@ make push MSG="提交信息"
 | `apiKey` | OpenAI 兼容接口 Key |
 | `model` | 模型名 |
 | `systemPrompt` | 系统提示词 |
-| `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
+| `userPromptTemplate` | 用户提示词模板，`{{text}}` 会被替换为待翻译文本 |
 | `timeoutSeconds` | 请求超时时间 |
 | `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
 | `speechCommand` | 播放命令模板，默认 `/Users/admin/.local/bin/ivox {{text}}`，`{{text}}` 会被替换为翻译文本 |

@@ -100,24 +100,9 @@ struct TranslationConfig: Codable, Equatable {
         speechCommand = try Self.decodeSpeechCommand(from: decoder) ?? TranslationConfig.defaultConfig.speechCommand
     }
 
-    /// 解码 speechCommand，向后兼容旧版 speechCommandPath 字段
     private static func decodeSpeechCommand(from decoder: Decoder) throws -> String? {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let command = try container.decodeIfPresent(String.self, forKey: .speechCommand) {
-            return command
-        }
-        // 尝试从旧字段 speechCommandPath 读取，自动补上 {{text}} 模板
-        struct LegacyKeys: CodingKey {
-            var stringValue: String
-            var intValue: Int? { nil }
-            init(stringValue: String) { self.stringValue = stringValue }
-            init?(intValue: Int) { nil }
-        }
-        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
-        guard let oldPath = try legacy.decodeIfPresent(String.self, forKey: LegacyKeys(stringValue: "speechCommandPath")) else {
-            return nil
-        }
-        return oldPath + " {{text}}"
+        return try container.decodeIfPresent(String.self, forKey: .speechCommand)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -318,21 +303,12 @@ struct OpenAICompatibleTranslationService {
 
     static func renderUserPrompt(_ userPromptTemplate: String, text: String) -> String {
         let template = userPromptTemplate.isEmpty ? TranslationConfig.defaultConfig.userPromptTemplate : userPromptTemplate
-        return template
-            .replacingOccurrences(of: "{{target}}", with: targetDisplayName())
-            .replacingOccurrences(of: "{{text}}", with: text)
+        return template.replacingOccurrences(of: "{{text}}", with: text)
     }
 
     static func chatCompletionsURL(baseURL: String) -> URL? {
         let trimmedBaseURL = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         return URL(string: "\(trimmedBaseURL)/chat/completions")
-    }
-
-    private static func targetDisplayName() -> String {
-        switch AppConfig.Translation.targetLanguage {
-        case "zh": return "简体中文"
-        default: return AppConfig.Translation.targetLanguage
-        }
     }
 
     static func parseTranslation(_ data: Data, originalText: String) -> TranslationResult {

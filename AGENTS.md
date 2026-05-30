@@ -106,7 +106,7 @@ make push MSG="提交信息"
 | `apiKey` | OpenAI 兼容接口 Key |
 | `model` | 模型名 |
 | `systemPrompt` | 系统提示词 |
-| `userPromptTemplate` | 用户提示词模板，支持 `{{text}}` 和可选 `{{target}}` |
+| `userPromptTemplate` | 用户提示词模板，`{{text}}` 会被替换为待翻译文本 |
 | `timeoutSeconds` | 请求超时时间 |
 
 配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`systemPrompt`、`userPromptTemplate`、`timeoutSeconds`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
