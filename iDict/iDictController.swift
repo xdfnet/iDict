@@ -86,21 +86,6 @@ final class MediaController {
 
     // MARK: - 媒体控制
 
-    static func playPause() async -> Result<Void, MediaControllerError> {
-        if MediaRemoteBridge.isAvailable {
-            let current = currentPlaybackState()
-            let command: MediaRemoteBridge.Command = current == .playing ? .pause : .play
-            if MediaRemoteBridge.sendCommand(command) {
-                trackState(current == .playing ? .paused : .playing)
-                return .success(())
-            }
-            logger.warning("MediaRemote 发送命令失败，回退到按键模拟")
-        }
-        // 回退到盲切，状态设为 unknown
-        trackState(.unknown)
-        return await simulateMediaKey(.playPause)
-    }
-
     static func play() async -> Result<Void, MediaControllerError> {
         if MediaRemoteBridge.isAvailable {
             if MediaRemoteBridge.sendCommand(.play) {
@@ -467,14 +452,6 @@ class MediaHTTPServer: ObservableObject {
         switch action {
         case "status":
             return (MediaController.currentPlaybackState().rawValue, nil)
-        case "space":
-            let before = MediaController.currentPlaybackState()
-            let spaceResult = await MediaController.playPause()
-            if case .failure(let err) = spaceResult {
-                return ("failed", err.errorDescription)
-            }
-            let after = before == .playing ? "paused" : "playing"
-            return (after, nil)
         case "play":
             let playResult = await MediaController.play()
             if case .failure(let err) = playResult { return ("failed", err.errorDescription) }

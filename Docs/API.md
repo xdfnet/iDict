@@ -22,6 +22,8 @@
 
 | 状态码 | 说明 |
 |--------|------|
+| `playing` | 播放中 |
+| `paused` | 已暂停 |
 | `success` | 操作成功 |
 | `failed` | 操作失败 |
 | `lock_success` | 锁屏成功 |
@@ -29,6 +31,8 @@
 | `unlocked` | 未锁定状态 |
 | `opened` | 应用已打开 |
 | `closed` | 应用已关闭 |
+| `running` | 应用运行中 |
+| `stopped` | 应用未运行 |
 | `unknown` | 未知操作 |
 
 ## 服务状态接口
@@ -36,23 +40,31 @@
 ### 查询服务状态
 
 - **接口**: `GET /api/status`
-- **功能**: 查询远程控制服务是否可用
+- **功能**: 查询远程控制服务可用性及当前媒体播放状态
 - **权限**: 不需要辅助功能权限
 - **响应**:
 
 ```json
-{
-  "status": "success"
-}
+{"status":"playing"}   // 播放中
+{"status":"paused"}    // 已暂停
+{"status":"unknown"}   // 状态未知（尚未执行过媒体操作）
 ```
 
 ## 媒体控制接口
 
-### 播放/暂停
-- **接口**: `GET /api/space`
-- **功能**: 切换音乐/视频播放状态
-- **示例**: `curl http://localhost:8888/api/space`
-- **响应**: `{"status":"success"}`
+### 播放
+
+- **接口**: `GET /api/play`
+- **功能**: 播放媒体（通过 MediaRemote 精确命令，非盲切）
+- **权限**: 不需要辅助功能权限
+- **响应**: `{"status":"playing"}`
+
+### 暂停
+
+- **接口**: `GET /api/pause`
+- **功能**: 暂停媒体（通过 MediaRemote 精确命令，非盲切）
+- **权限**: 不需要辅助功能权限
+- **响应**: `{"status":"paused"}`
 
 ### 下一曲
 - **接口**: `GET /api/next`
@@ -143,7 +155,7 @@
 ### 辅助功能权限
 以下功能需要应用获得辅助功能权限：
 
-1. **媒体控制**: 所有媒体按键模拟
+1. **媒体控制**: play/pause 使用 MediaRemote 精确命令（无需辅助功能权限）；next/prev/volume 需要辅助功能权限
 2. **方向控制**: 箭头按键模拟
 3. **锁屏登录**: 密码输入和按键模拟
 4. **应用关闭**: 强制终止应用进程
@@ -208,8 +220,11 @@ iDict 需要以下系统权限：
 # 状态检查
 curl http://localhost:8888/api/status
 
-# 播放/暂停
-curl http://localhost:8888/api/space
+# 播放
+curl http://localhost:8888/api/play
+
+# 暂停
+curl http://localhost:8888/api/pause
 
 # 锁屏
 curl http://localhost:8888/api/lock
@@ -225,10 +240,23 @@ curl http://localhost:8888/api/lock_status
 
 ```javascript
 // 媒体控制
-async function playPause() {
-  const response = await fetch('http://localhost:8888/api/space');
-  const data = await response.json();
-  console.log('播放/暂停:', data.status);
+async function play() {
+  const r = await fetch('http://localhost:8888/api/play');
+  const d = await r.json();
+  console.log('播放:', d.status); // "playing"
+}
+
+async function pause() {
+  const r = await fetch('http://localhost:8888/api/pause');
+  const d = await r.json();
+  console.log('暂停:', d.status); // "paused"
+}
+
+// 状态查询
+async function getStatus() {
+  const r = await fetch('http://localhost:8888/api/status');
+  const d = await r.json();
+  console.log('播放状态:', d.status); // "playing" | "paused" | "unknown"
 }
 
 // 锁屏
@@ -263,10 +291,20 @@ class iDictAPI:
     def __init__(self, host='localhost', port=8888):
         self.base_url = f"http://{host}:{port}"
 
-    def play_pause(self):
-        """播放/暂停"""
-        response = requests.get(f"{self.base_url}/api/space")
-        return response.json()
+    def play(self):
+        """播放"""
+        r = requests.get(f"{self.base_url}/api/play")
+        return r.json()
+
+    def pause(self):
+        """暂停"""
+        r = requests.get(f"{self.base_url}/api/pause")
+        return r.json()
+
+    def get_status(self):
+        """获取播放状态"""
+        r = requests.get(f"{self.base_url}/api/status")
+        return r.json()
 
     def lock_screen(self):
         """锁屏"""
@@ -287,9 +325,13 @@ class iDictAPI:
 if __name__ == "__main__":
     api = iDictAPI()
     
-    # 播放/暂停
-    result = api.play_pause()
-    print(f"播放控制: {result['status']}")
+    # 播放
+    result = api.play()
+    print(f"播放: {result['status']}")
+    
+    # 暂停
+    result = api.pause()
+    print(f"暂停: {result['status']}")
     
     # 锁屏
     lock_result = api.lock_screen()
