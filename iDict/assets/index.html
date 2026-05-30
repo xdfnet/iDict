@@ -626,7 +626,8 @@
             }
         }
         function togglePlay() {
-            send('space').then(d => {
+            const a = playing ? 'pause' : 'play';
+            send(a).then(d => {
                 if (d && d.status) updatePlayIcon(d.status);
             });
         }

@@ -55,7 +55,7 @@ struct AppConfig {
     // MARK: - API 常量
 
     enum APIAction {
-        static let noPermissionRequired = Set(["status", "lock_status", "status_douyin", "status_qishui", "play", "pause", "space"])
+        static let noPermissionRequired = Set(["status", "lock_status", "status_douyin", "status_qishui", "play", "pause"])
     }
 
     // MARK: - 剪贴板常量
