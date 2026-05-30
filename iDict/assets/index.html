@@ -18,28 +18,22 @@
         }
 
         html {
-            position: fixed;
             width: 100%;
             height: 100%;
             background: #000000;
             background-image: linear-gradient(180deg, #1c1c1e 0%, #000000 100%);
             background-attachment: fixed;
+            overflow: hidden;
         }
 
         body {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             margin: 0;
             padding: 0;
             padding-bottom: env(safe-area-inset-bottom);
             font-family: -apple-system, sans-serif;
             background: transparent;
             color: #fff;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -47,9 +41,9 @@
             -webkit-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
-            padding-top: 0;
             padding-bottom: env(safe-area-inset-bottom, 16px);
-            overflow-x: hidden;
+            overflow: hidden;
+            overscroll-behavior: none;
         }
 
         .container {
@@ -333,11 +327,58 @@
             height: 100%;
             object-fit: cover;
         }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-60px);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .refresh-indicator.pulling {
+            transform: translateX(-50%) translateY(12px);
+        }
+
+        .refresh-indicator.refreshing {
+            transform: translateX(-50%) translateY(12px);
+        }
+
+        .refresh-spinner {
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .refresh-indicator.pulling .refresh-spinner,
+        .refresh-indicator.refreshing .refresh-spinner {
+            opacity: 1;
+        }
+
+        .refresh-indicator.refreshing .refresh-spinner {
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
 <body>
     <div id="toast" class="toast">已发送</div>
+    <div class="refresh-indicator" id="refreshIndicator"><div class="refresh-spinner"></div></div>
     <div class="container">
         <h1>iDict Remote</h1>
         <div class="status-row">
@@ -416,6 +457,8 @@
                     dot.classList.remove('offline');
                     label.textContent = '已连接';
                     online = true;
+                    const d = await r.json();
+                    if (d.status === 'playing' || d.status === 'paused') updatePlayIcon(d.status);
                 } else {
                     throw new Error();
                 }
@@ -427,6 +470,53 @@
         }
         checkStatus();
         setInterval(checkStatus, 15000);
+
+        // Pull-to-refresh
+        const refreshEl = document.getElementById('refreshIndicator');
+        const PULL_THRESHOLD = 60;
+        let pullStartY = 0, pullCurrentY = 0, pulling = false, refreshing = false;
+
+        function canPull(e) {
+            if (e.target.closest('#slider') || e.target.closest('button') || e.target.closest('.app-icon')) return false;
+            return true;
+        }
+
+        document.addEventListener('touchstart', e => {
+            if (refreshing) return;
+            if (!canPull(e)) return;
+            pullStartY = e.touches[0].clientY;
+            pullCurrentY = pullStartY;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (refreshing) return;
+            if (!canPull(e)) { pulling = false; return; }
+            pullCurrentY = e.touches[0].clientY;
+            const d = pullCurrentY - pullStartY;
+            if (d > 8) {
+                pulling = true;
+                e.preventDefault();
+                refreshEl.classList.add('pulling');
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', async () => {
+            if (!pulling) return;
+            const d = pullCurrentY - pullStartY;
+            if (d >= PULL_THRESHOLD && !refreshing) {
+                refreshing = true;
+                refreshEl.classList.remove('pulling');
+                refreshEl.classList.add('refreshing');
+                await checkStatus();
+                await new Promise(r => setTimeout(r, 500));
+                refreshing = false;
+                refreshEl.classList.remove('refreshing');
+                show('已刷新');
+            } else {
+                refreshEl.classList.remove('pulling');
+            }
+            pulling = false;
+        });
 
         // Slider Logic
         const slider = document.getElementById('slider');
@@ -522,14 +612,27 @@
         document.addEventListener('touchend', endDrag);
 
         let playing = false;
+        function updatePlayIcon(state) {
+            const playEl = document.getElementById('playIcon');
+            const pauseEl = document.getElementById('pauseIcon');
+            if (state === 'playing') {
+                playing = true;
+                playEl.style.display = 'none';
+                pauseEl.style.display = '';
+            } else {
+                playing = false;
+                playEl.style.display = '';
+                pauseEl.style.display = 'none';
+            }
+        }
         function togglePlay() {
-            playing = !playing;
-            document.getElementById('playIcon').style.display = playing ? 'none' : '';
-            document.getElementById('pauseIcon').style.display = playing ? '' : 'none';
-            send('space');
+            send('space').then(d => {
+                if (d && d.status) updatePlayIcon(d.status);
+            });
         }
         let t;
-        const okStatuses = new Set(['success', 'lock_success', 'opened', 'closed', 'running', 'stopped', 'locked', 'unlocked']);
+        const okStatuses = new Set(['success', 'lock_success', 'opened', 'closed', 'running', 'stopped', 'locked', 'unlocked', 'playing', 'paused', 'unknown']);
+        const statusLabels = { playing: '已播放', paused: '已暂停', opened: '已打开', closed: '已关闭', lock_success: '已锁定', unknown: '已发送' };
         async function send(a) {
             if (navigator.vibrate) navigator.vibrate(10);
             show('发送中...');
@@ -537,8 +640,10 @@
                 const r = await fetch('/api/' + a);
                 const d = await r.json();
                 const ok = okStatuses.has(d.status);
-                show(ok ? '成功' : '失败', !ok);
-            } catch (e) { show('错误', true) }
+                const msg = statusLabels[d.status] || (ok ? '成功' : '失败');
+                show(msg, !ok);
+                return d;
+            } catch (e) { show('错误', true); return null; }
         }
         function show(m, e) {
             const el = document.getElementById('toast');
