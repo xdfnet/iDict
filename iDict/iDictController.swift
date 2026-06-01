@@ -86,7 +86,26 @@ final class MediaController {
 
     // MARK: - 媒体控制
 
+    /// 已知支持 MediaRemote 的媒体 App Bundle ID
+    private static let mediaAppBundleIDs: Set<String> = [
+        "com.apple.Music",
+        "com.bytedance.douyin.desktop",
+        "com.soda.music",
+    ]
+
+    /// 是否有已知媒体 App 在运行（避免无播放器时唤醒 Apple Music）
+    private static func hasMediaAppRunning() -> Bool {
+        NSWorkspace.shared.runningApplications.contains { app in
+            guard let bundleID = app.bundleIdentifier else { return false }
+            return mediaAppBundleIDs.contains(bundleID)
+        }
+    }
+
     static func play() async -> Result<Void, MediaControllerError> {
+        guard hasMediaAppRunning() else {
+            logger.info("无媒体 App 运行，跳过播放")
+            return .success(())
+        }
         if MediaRemoteBridge.isAvailable {
             if MediaRemoteBridge.sendCommand(.play) {
                 trackState(.playing)
@@ -99,6 +118,10 @@ final class MediaController {
     }
 
     static func pause() async -> Result<Void, MediaControllerError> {
+        guard hasMediaAppRunning() else {
+            logger.info("无媒体 App 运行，跳过暂停")
+            return .success(())
+        }
         if MediaRemoteBridge.isAvailable {
             if MediaRemoteBridge.sendCommand(.pause) {
                 trackState(.paused)
