@@ -11,56 +11,69 @@ import ApplicationServices
 import OSLog
 import AppKit
 import Darwin
+// MARK: - 文件日志
 
-// MARK: - 播放状态
+nonisolated(unsafe) private let _logQueue = DispatchQueue(label: "com.idict.filelog")
+nonisolated private let _logPath = NSString(string: "~/.config/idict/daemon.log").expandingTildeInPath
+nonisolated private let _maxLogSize: UInt64 = 5 * 1024 * 1024
 
-enum PlaybackState: String {
-    case playing, paused, unknown
+nonisolated private func _writeLog(_ level: String, _ message: String) {
+    let line = "\(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)) [\(level)] \(message)\n"
+    guard let data = line.data(using: .utf8) else { return }
+    let dir = (_logPath as NSString).deletingLastPathComponent
+    try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+    if let attrs = try? FileManager.default.attributesOfItem(atPath: _logPath),
+       let size = attrs[.size] as? UInt64, size > _maxLogSize {
+        try? FileManager.default.removeItem(atPath: _logPath + ".old")
+        try? FileManager.default.moveItem(atPath: _logPath, toPath: _logPath + ".old")
+    }
+    if !FileManager.default.fileExists(atPath: _logPath) {
+        FileManager.default.createFile(atPath: _logPath, contents: data)
+        return
+    }
+    guard let handle = FileHandle(forWritingAtPath: _logPath) else { return }
+    defer { try? handle.close() }
+    try? handle.seekToEnd()
+    try? handle.write(contentsOf: data)
 }
+
+nonisolated private func _logInfo(_ message: String) { _logQueue.async { _writeLog("INFO", message) } }
+nonisolated private func _logWarn(_ message: String) { _logQueue.async { _writeLog("WARN", message) } }
+nonisolated private func _logErr(_ message: String) { _logQueue.async { _writeLog("ERROR", message) } }
 
 // MARK: - MediaRemote 动态桥接
 
-/// 动态加载 MediaRemote 私有框架，发送精确的媒体控制命令
-struct MediaRemoteBridge {
-    private typealias SendCommandFunc = @convention(c) (
-        UInt32, UnsafeMutableRawPointer?
-    ) -> Bool
-
+/// 动态加载 MediaRemote 私有框架
+private struct MediaRemoteBridge {
     private static let handle: UnsafeMutableRawPointer? = {
         let h = dlopen("/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote", RTLD_NOW)
-        if h == nil {
-            MediaController.logger.warning("MediaRemote 框架未加载: \(String(cString: dlerror()))")
-        }
+        if h == nil { _logWarn("MediaRemote 框架未加载") }
         return h
     }()
 
-    /// 框架是否可用
     static var isAvailable: Bool { handle != nil }
 
-    /// 发送媒体控制命令（同步，不回调）
+    // MARK: 命令
+
     @discardableResult
     static func sendCommand(_ command: Command) -> Bool {
-        guard let h = handle,
-              let sym = dlsym(h, "MRMediaRemoteSendCommand") else {
-            return false
-        }
-        let sendCmd = unsafeBitCast(sym, to: SendCommandFunc.self)
-        return sendCmd(command.rawValue, nil)
+        guard let h = handle, let sym = dlsym(h, "MRMediaRemoteSendCommand") else { return false }
+        typealias Func = @convention(c) (UInt32, UnsafeMutableRawPointer?) -> Bool
+        return unsafeBitCast(sym, to: Func.self)(command.rawValue, nil)
     }
 
-    /// 媒体控制命令
     enum Command: UInt32 {
-        case play = 0
-        case pause = 1
-        case toggle = 2
+        case play = 0, pause = 1, toggle = 2, stop = 3, nextTrack = 4, previousTrack = 5
+        case skipForward = 19, skipBackward = 20
     }
+
 }
 
 // MARK: - 媒体控制器
 
-final class MediaController {
-    nonisolated fileprivate static let logger = Logger(subsystem: "com.idict.media", category: "MediaController")
+// MARK: - 媒体控制器
 
+final class MediaController {
     private enum MediaKey: Int32 {
         case playPause = 16, nextTrack = 17, prevTrack = 18
         case volumeUp = 0, volumeDown = 1, mute = 7
@@ -69,32 +82,16 @@ final class MediaController {
         case space = 49
     }
 
-    // MARK: - 播放状态追踪
+    // MARK: - 播放状态
 
-    /// 自追踪的播放状态（非权威，仅反映我们最后一次操作）
-    nonisolated private static let _trackedState = OSAllocatedUnfairLock(initialState: PlaybackState.unknown)
-
-    /// 获取当前追踪的播放状态
-    static func currentPlaybackState() -> PlaybackState {
-        _trackedState.withLock { $0 }
-    }
-
-    /// 更新播放状态追踪
-    private static func trackState(_ state: PlaybackState) {
-        _trackedState.withLock { $0 = state }
-    }
-
-    // MARK: - 媒体控制
-
-    /// 已知支持 MediaRemote 的媒体 App Bundle ID
+    /// 支持的媒体 App Bundle ID
     private static let mediaAppBundleIDs: Set<String> = [
-        "com.apple.Music",
         "com.bytedance.douyin.desktop",
         "com.soda.music",
     ]
 
-    /// 是否有已知媒体 App 在运行（避免无播放器时唤醒 Apple Music）
-    private static func hasMediaAppRunning() -> Bool {
+    /// 是否有媒体 App 在运行
+    static func hasMediaAppRunning() -> Bool {
         NSWorkspace.shared.runningApplications.contains { app in
             guard let bundleID = app.bundleIdentifier else { return false }
             return mediaAppBundleIDs.contains(bundleID)
@@ -103,70 +100,55 @@ final class MediaController {
 
     static func play() async -> Result<Void, MediaControllerError> {
         guard hasMediaAppRunning() else {
-            logger.info("无媒体 App 运行，跳过播放")
+            _logInfo("无抖音或汽水音乐运行，跳过")
             return .success(())
         }
-        if MediaRemoteBridge.isAvailable, isAppRunning(bundleId: "com.apple.Music") {
-            if MediaRemoteBridge.sendCommand(.play) {
-                trackState(.playing)
-                return .success(())
-            }
-            logger.warning("MediaRemote play 失败")
-        } else {
-            return await postSpaceToMediaApp()
+        guard MediaRemoteBridge.isAvailable, MediaRemoteBridge.sendCommand(.play) else {
+            _logErr("MediaRemote 播放失败")
+            return .failure(.eventPostFailed)
         }
-        trackState(.unknown)
-        return await simulateMediaKey(.playPause)
+        _logInfo("MediaRemote 精确播放")
+        return .success(())
     }
 
     static func pause() async -> Result<Void, MediaControllerError> {
         guard hasMediaAppRunning() else {
-            logger.info("无媒体 App 运行，跳过暂停")
+            _logInfo("无抖音或汽水音乐运行，跳过")
             return .success(())
         }
-        if MediaRemoteBridge.isAvailable, isAppRunning(bundleId: "com.apple.Music") {
-            if MediaRemoteBridge.sendCommand(.pause) {
-                trackState(.paused)
-                return .success(())
-            }
-            logger.warning("MediaRemote pause 失败")
-        } else {
-            return await postSpaceToMediaApp()
+        guard MediaRemoteBridge.isAvailable, MediaRemoteBridge.sendCommand(.pause) else {
+            _logErr("MediaRemote 暂停失败")
+            return .failure(.eventPostFailed)
         }
-        trackState(.unknown)
-        return await simulateMediaKey(.playPause)
-    }
-
-    /// 向第三方媒体 App 进程发送 Space 键（通用播放/暂停）
-    private static func postSpaceToMediaApp() async -> Result<Void, MediaControllerError> {
-        guard let app = runningMediaApp(), app.processIdentifier > 0 else {
-            logger.info("未找到第三方媒体 App")
-            return .success(())
-        }
-        let pid = app.processIdentifier
-        logger.info("向 PID \(pid) 发送 Space 键")
-        let source = CGEventSource(stateID: .hidSystemState)
-        guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x31, keyDown: true),
-              let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x31, keyDown: false) else {
-            return .failure(.eventCreationFailed)
-        }
-        keyDown.postToPid(pid)
-        keyUp.postToPid(pid)
-        trackState(.unknown)
+        _logInfo("MediaRemote 精确暂停")
         return .success(())
     }
 
-    /// 查找正在运行的第三方媒体 App（排除 Apple Music）
-    private static func runningMediaApp() -> NSRunningApplication? {
-        let thirdParty = mediaAppBundleIDs.subtracting(["com.apple.Music"])
-        return NSWorkspace.shared.runningApplications.first { app in
-            guard let bundleID = app.bundleIdentifier else { return false }
-            return thirdParty.contains(bundleID)
+    static func nextTrack() async -> Result<Void, MediaControllerError> {
+        guard hasMediaAppRunning() else {
+            _logInfo("无抖音或汽水音乐运行，跳过")
+            return .success(())
         }
+        guard MediaRemoteBridge.isAvailable, MediaRemoteBridge.sendCommand(.nextTrack) else {
+            _logErr("MediaRemote 下一曲失败")
+            return .failure(.eventPostFailed)
+        }
+        _logInfo("MediaRemote 下一曲")
+        return .success(())
     }
 
-    static func nextTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.nextTrack) }
-    static func previousTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.prevTrack) }
+    static func previousTrack() async -> Result<Void, MediaControllerError> {
+        guard hasMediaAppRunning() else {
+            _logInfo("无抖音或汽水音乐运行，跳过")
+            return .success(())
+        }
+        guard MediaRemoteBridge.isAvailable, MediaRemoteBridge.sendCommand(.previousTrack) else {
+            _logErr("MediaRemote 上一曲失败")
+            return .failure(.eventPostFailed)
+        }
+        _logInfo("MediaRemote 上一曲")
+        return .success(())
+    }
     static func volumeUp() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.volumeUp) }
     static func volumeDown() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.volumeDown) }
     static func toggleMute() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.mute) }
@@ -182,7 +164,7 @@ final class MediaController {
     static func isAppRunning(_ appName: String) -> Bool {
         let bundleId = AppConfig.getBundleId(for: appName)
         let isRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == bundleId }
-        logger.info("应用状态: \(appName) = \(isRunning ? "运行" : "停止")")
+        _logInfo("应用状态: \(appName) = \(isRunning ? "运行" : "停止")")
         return isRunning
     }
     
@@ -250,7 +232,7 @@ final class MediaController {
         _ operation: () async -> Result<T, MediaControllerError>
     ) async -> Result<T, MediaControllerError> {
         guard checkInputMonitoringPermission() else {
-            logger.warning("无辅助功能权限")
+            _logWarn("无辅助功能权限")
             return .failure(.permissionDenied)
         }
         return await operation()
@@ -310,33 +292,33 @@ final class MediaController {
 
     /// 打开应用
     static func openApp(_ name: String) async -> Result<Void, MediaControllerError> {
-        logger.info("尝试打开应用: \(name)")
+        _logInfo("尝试打开应用: \(name)")
 
         guard let appConfig = AppConfig.getAppConfig(for: name) else {
-            logger.error("未知应用名称: \(name)")
+            _logErr("未知应用名称: \(name)")
             return .failure(.eventPostFailed)
         }
 
         guard FileManager.default.fileExists(atPath: appConfig.path) else {
-            logger.error("应用不存在: \(appConfig.path)")
+            _logErr("应用不存在: \(appConfig.path)")
             return .failure(.eventPostFailed)
         }
 
         // 启动应用
         guard let exitCode = try? executeProcess("/usr/bin/open", arguments: [appConfig.path]) else {
-            logger.error("执行open命令时发生异常: \(name)")
+            _logErr("执行open命令时发生异常: \(name)")
             return .failure(.eventPostFailed)
         }
         
         guard exitCode == 0 else {
-            logger.error("open命令执行失败: \(name), 退出码: \(exitCode)")
+            _logErr("open命令执行失败: \(name), 退出码: \(exitCode)")
             return .failure(.eventPostFailed)
         }
 
         // 等待应用启动
         let started = await waitForAppLaunch(bundleId: appConfig.bundleId)
         guard started else {
-            logger.warning("应用启动未确认: \(appConfig.displayName)")
+            _logWarn("应用启动未确认: \(appConfig.displayName)")
             return .failure(.eventPostFailed)
         }
         
@@ -347,9 +329,9 @@ final class MediaController {
             } else {
                 app.activate(options: .activateIgnoringOtherApps)
             }
-            logger.info("应用已激活到前台: \(appConfig.displayName)")
+            _logInfo("应用已激活到前台: \(appConfig.displayName)")
         } else {
-            logger.info("应用已启动但未找到运行实例: \(appConfig.displayName)")
+            _logInfo("应用已启动但未找到运行实例: \(appConfig.displayName)")
         }
         
         return .success(())
@@ -357,12 +339,12 @@ final class MediaController {
     
     /// 等待应用启动
     private static func waitForAppLaunch(bundleId: String) async -> Bool {
-        logger.info("等待应用启动: \(bundleId)")
+        _logInfo("等待应用启动: \(bundleId)")
         
         try? await Task.sleep(nanoseconds: AppConfig.Timing.appLaunchWait)
         if isAppRunning(bundleId: bundleId) { return true }
         
-        logger.info("再次检测应用状态: \(bundleId)")
+        _logInfo("再次检测应用状态: \(bundleId)")
         try? await Task.sleep(nanoseconds: AppConfig.Timing.appLaunchCheckInterval)
         return isAppRunning(bundleId: bundleId)
     }
@@ -458,7 +440,7 @@ class MediaHTTPServer: ObservableObject {
             return
         }
         
-        MediaController.logger.info("收到请求: \(path)")
+        _logInfo("收到请求: \(path)")
   
         if path == "/" || path == "/index.html" {
             HTTPResponseHandler.sendHTML(connection, Self.generateHTML())
@@ -467,7 +449,7 @@ class MediaHTTPServer: ObservableObject {
         } else if path.hasPrefix("/assets/") {
             Self.serveAsset(path: path, connection: connection)
         } else {
-            MediaController.logger.warning("未找到路径: \(path)")
+            _logWarn("未找到路径: \(path)")
             HTTPResponseHandler.sendNotFound(connection)
         }
     }
@@ -487,7 +469,7 @@ class MediaHTTPServer: ObservableObject {
     private func handleAPI(path: String, connection: NWConnection) {
         Task {
             let action = String(path.dropFirst(5))
-            MediaController.logger.info("处理API动作: \(action)")
+            _logInfo("处理API动作: \(action)")
             
             if !AppConfig.APIAction.noPermissionRequired.contains(action) && 
                !MediaController.checkInputMonitoringPermission() {
@@ -506,7 +488,7 @@ class MediaHTTPServer: ObservableObject {
     private func handleAPIAction(_ action: String) async -> (result: String, error: String?) {
         switch action {
         case "status":
-            return (MediaController.currentPlaybackState().rawValue, nil)
+            return (MediaController.hasMediaAppRunning() ? "running" : "stopped", nil)
         case "play":
             let playResult = await MediaController.play()
             if case .failure(let err) = playResult { return ("failed", err.errorDescription) }
@@ -543,7 +525,7 @@ class MediaHTTPServer: ObservableObject {
             return (MediaController.isAppRunning("qishui") ? "running" : "stopped", nil)
             
         default:
-            MediaController.logger.warning("未知API操作: \(action)")
+            _logWarn("未知API操作: \(action)")
             return ("unknown", "未知操作: \(action)")
         }
     }
@@ -566,12 +548,12 @@ class MediaHTTPServer: ObservableObject {
     /// 处理应用切换动作
     private func handleAppToggle(_ appName: String, displayName: String) async -> (result: String, error: String?) {
         let wasRunning = MediaController.isAppRunning(appName)
-        MediaController.logger.info("\(displayName)切换前状态: \(wasRunning ? "运行中" : "未运行")")
+        _logInfo("\(displayName)切换前状态: \(wasRunning ? "运行中" : "未运行")")
         
         let toggleResult = await MediaController.toggleApp(appName)
         if case .success = toggleResult {
             let result = wasRunning ? "closed" : "opened"
-            MediaController.logger.info("\(displayName)切换操作完成，结果: \(result)")
+            _logInfo("\(displayName)切换操作完成，结果: \(result)")
             return (result, nil)
         } else {
             return ("failed", "操作失败")
@@ -580,10 +562,10 @@ class MediaHTTPServer: ObservableObject {
 
     private nonisolated static func serveAsset(path: String, connection: NWConnection) {
         let filename = String(path.dropFirst(8))
-        MediaController.logger.info("请求资源: \(filename)")
+        _logInfo("请求资源: \(filename)")
         
         guard let fileURL = findAssetFile(filename) else {
-            MediaController.logger.error("未找到资源文件: \(filename)")
+            _logErr("未找到资源文件: \(filename)")
             HTTPResponseHandler.sendNotFound(connection, message: "Asset Not Found")
             return
         }
@@ -605,7 +587,7 @@ class MediaHTTPServer: ObservableObject {
                 .appendingPathComponent(filename)
             
             if FileManager.default.fileExists(atPath: assetsPath.path) {
-                MediaController.logger.info("在assets目录找到文件: \(assetsPath.path)")
+                _logInfo("在assets目录找到文件: \(assetsPath.path)")
                 return assetsPath
             }
         }
@@ -613,7 +595,7 @@ class MediaHTTPServer: ObservableObject {
         let name = (filename as NSString).deletingPathExtension
         let ext = (filename as NSString).pathExtension
         if let path = Bundle.main.path(forResource: name, ofType: ext) {
-            MediaController.logger.info("在Bundle根目录找到文件: \(path)")
+            _logInfo("在Bundle根目录找到文件: \(path)")
             return URL(fileURLWithPath: path)
         }
         
@@ -647,7 +629,7 @@ class MediaHTTPServer: ObservableObject {
             }
         }
 
-        MediaController.logger.error("未找到 index.html 资源文件")
+        _logErr("未找到 index.html 资源文件")
         return fallbackHTML
     }
     
