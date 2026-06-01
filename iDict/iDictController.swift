@@ -106,12 +106,14 @@ final class MediaController {
             logger.info("无媒体 App 运行，跳过播放")
             return .success(())
         }
-        if MediaRemoteBridge.isAvailable {
+        if MediaRemoteBridge.isAvailable, isAppRunning(bundleId: "com.apple.Music") {
             if MediaRemoteBridge.sendCommand(.play) {
                 trackState(.playing)
                 return .success(())
             }
-            logger.warning("MediaRemote play 失败，回退到按键模拟")
+            logger.warning("MediaRemote play 失败")
+        } else {
+            return await postSpaceToMediaApp()
         }
         trackState(.unknown)
         return await simulateMediaKey(.playPause)
@@ -122,15 +124,45 @@ final class MediaController {
             logger.info("无媒体 App 运行，跳过暂停")
             return .success(())
         }
-        if MediaRemoteBridge.isAvailable {
+        if MediaRemoteBridge.isAvailable, isAppRunning(bundleId: "com.apple.Music") {
             if MediaRemoteBridge.sendCommand(.pause) {
                 trackState(.paused)
                 return .success(())
             }
-            logger.warning("MediaRemote pause 失败，回退到按键模拟")
+            logger.warning("MediaRemote pause 失败")
+        } else {
+            return await postSpaceToMediaApp()
         }
         trackState(.unknown)
         return await simulateMediaKey(.playPause)
+    }
+
+    /// 向第三方媒体 App 进程发送 Space 键（通用播放/暂停）
+    private static func postSpaceToMediaApp() async -> Result<Void, MediaControllerError> {
+        guard let app = runningMediaApp(), app.processIdentifier > 0 else {
+            logger.info("未找到第三方媒体 App")
+            return .success(())
+        }
+        let pid = app.processIdentifier
+        logger.info("向 PID \(pid) 发送 Space 键")
+        let source = CGEventSource(stateID: .hidSystemState)
+        guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x31, keyDown: true),
+              let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x31, keyDown: false) else {
+            return .failure(.eventCreationFailed)
+        }
+        keyDown.postToPid(pid)
+        keyUp.postToPid(pid)
+        trackState(.unknown)
+        return .success(())
+    }
+
+    /// 查找正在运行的第三方媒体 App（排除 Apple Music）
+    private static func runningMediaApp() -> NSRunningApplication? {
+        let thirdParty = mediaAppBundleIDs.subtracting(["com.apple.Music"])
+        return NSWorkspace.shared.runningApplications.first { app in
+            guard let bundleID = app.bundleIdentifier else { return false }
+            return thirdParty.contains(bundleID)
+        }
     }
 
     static func nextTrack() async -> Result<Void, MediaControllerError> { await simulateMediaKey(.nextTrack) }
