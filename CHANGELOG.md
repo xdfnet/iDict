@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.12 — 2026-06-01
+
+- 媒体控制全部切为纯 MediaRemote：play/pause/next/prev 走 `MRMediaRemoteSendCommand`，去掉 CGEvent 备选
+- 移除播放状态追踪和 `OSAllocatedUnfairLock`
+- next/prev 免辅助功能权限
+- `/api/status` 返回 `running`/`stopped`（Electron 应用不注册 NowPlaying client 无法查询真实状态）
+- 清理不可用的 MediaRemote 查询/通知函数
+- 更新架构文档
+
+## 1.1.11 — 2026-06-01
+
+- 新增文件日志 `~/.config/idict/daemon.log`，5MB 自动轮转
+- 所有媒体控制操作同时输出到 OSLog 和日志文件
+
 ## 1.1.10 — 2026-06-01
 
 - 修复：汽水音乐运行时 play/pause 仍唤醒 Apple Music
