@@ -55,15 +55,15 @@
 ### 播放
 
 - **接口**: `GET /api/play`
-- **功能**: 播放媒体（通过 MediaRemote 精确命令，非盲切）
-- **权限**: 不需要辅助功能权限
+- **功能**: 播放媒体（Apple Music 运行时用 MediaRemote 精确命令；第三方 App 运行时用 CGEvent 模拟媒体键）
+- **权限**: Apple Music 模式不需要；第三方 App 模式需要辅助功能权限
 - **响应**: `{"status":"playing"}`
 
 ### 暂停
 
 - **接口**: `GET /api/pause`
-- **功能**: 暂停媒体（通过 MediaRemote 精确命令，非盲切）
-- **权限**: 不需要辅助功能权限
+- **功能**: 暂停媒体（Apple Music 运行时用 MediaRemote 精确命令；第三方 App 运行时用 CGEvent 模拟媒体键）
+- **权限**: Apple Music 模式不需要；第三方 App 模式需要辅助功能权限
 - **响应**: `{"status":"paused"}`
 
 ### 下一曲

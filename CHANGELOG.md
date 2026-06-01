@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.1.10 — 2026-06-01
+
+- 修复：汽水音乐运行时 play/pause 仍唤醒 Apple Music
+- play/pause 改为第三方 App 模式时通过 `CGEventPostToPid` 直接向目标进程发 Space 键，不走系统媒体路由
+
+## 1.1.9 — 2026-06-01
+
+- play/pause 发送前检查是否有媒体 App 进程在运行，无则跳过，不再唤醒 Apple Music
+- 媒体应用白名单：Apple Music、抖音、汽水音乐
+
+## 1.1.8
+
+- 补全架构文档
+
+## 1.1.7
+
+- 精简 API：移除 space 端点，play/pause 精确控制 + 更新文档
+
+## 1.1.6
+
+- MediaRemote 精确媒体控制 + 控制页面增强（下拉刷新、状态同步、播放/暂停/space 端点）
+
+## 1.1.5
+
+- 新增 `/api/play` 和 `/api/pause` 精确播放控制
+
+## 1.1.4
+
+- 精简代码，修复媒体控制播放/暂停
+- 更新 README 语音配置文档
+- 默认语音命令从 ivox 切换到 iAura
+
 ## 1.1.3
 
 - 翻译结果可通过配置项 `speechEnabled` 控制是否自动调用 iSpeak 朗读，并可用 `speechCommandPath` 配置命令路径（依赖 ispeakd 守护进程，未运行则静默跳过）。
