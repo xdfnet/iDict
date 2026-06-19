@@ -37,7 +37,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 设置应用为附件类型，不在Dock中显示图标。
         NSApp.setActivationPolicy(.accessory)
-        
+
+        // 检查并请求辅助功能权限
+        if !PermissionManager.checkAccessibilityPermission() {
+            PermissionManager.requestAccessibilityPermission()
+        }
+
         // 初始化菜单栏控制器
         menuBarController = MenuBarController()
         
