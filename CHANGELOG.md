@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.13 — 2026-06-19
+
+- 签名改为 ad-hoc（Manual + `-`），不再依赖开发者账号
+
 ## 1.1.12 — 2026-06-01
 
 - 媒体控制全部切为纯 MediaRemote：play/pause/next/prev 走 `MRMediaRemoteSendCommand`，去掉 CGEvent 备选
