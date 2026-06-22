@@ -5,29 +5,30 @@
 
 import SwiftUI
 import Cocoa
+@preconcurrency import ApplicationServices
 
 // MARK: - 应用代理
 
 /// 应用核心代理类：管理热键、翻译服务和 UI 显示
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
-    
+
     // MARK: - 属性
-    
+
     /// 对当前显示的翻译窗口的引用，用于管理其生命周期。
     private var currentTranslationWindow: NSWindow?
-    
+
     /// 菜单栏控制器
     private var menuBarController: MenuBarController?
-    
+
     /// 全局热键管理器
     let hotKeyManager = HotKeyManager()
-    
+
     /// 剪贴板管理器
     let clipboardManager = ClipboardManager()
-    
-    /// 媒体控制 HTTP 服务器
-    private let mediaHTTPServer = MediaHTTPServer()
+
+    /// 辅助功能权限轮询任务
+    private var permissionPollingTask: Task<Void, Never>?
 
 
 
@@ -38,14 +39,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 设置应用为附件类型，不在Dock中显示图标。
         NSApp.setActivationPolicy(.accessory)
 
-        // 检查并请求辅助功能权限
-        if !PermissionManager.checkAccessibilityPermission() {
-            PermissionManager.requestAccessibilityPermission()
-        }
-
         // 初始化菜单栏控制器
         menuBarController = MenuBarController()
-        
+
         // 设置翻译窗口显示回调
         menuBarController?.showTranslationWindow = { [weak self] message in
             Task { @MainActor in
@@ -60,14 +56,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupTranslationConfig()
 
-        // 异步任务，设置全局热键。
-        Task {
-            await setupHotKey()
-        }
-        
-        // 启动媒体控制HTTP服务器
-        setupMediaControlServer()
-
+        // 启动权限轮询 + 热键注册
+        startHotKeyWithPermissionPolling()
     }
     
     // MARK: - 私有方法
@@ -83,39 +73,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// 设置全局翻译热键
-    private func setupHotKey() async {
-        let registrationResult = await hotKeyManager.registerHotKey {
-            // 当热键被触发时，在主线程上执行翻译流程。
-            Task { @MainActor in
-                await self.performQuickTranslation()
+    /// 尝试注册热键，权限不足时启动轮询等待
+    private func startHotKeyWithPermissionPolling() {
+        Task { @MainActor in
+            // 首次尝试：弹系统对话框请求权限
+            if !PermissionManager.checkAccessibilityPermission() {
+                PermissionManager.requestAccessibilityPermission()
             }
-        }
-        
-        // 如果热键注册失败，显示错误信息。
-        if case .failure(let error) = registrationResult {
-            await showMessage("快捷键注册失败: \(error.localizedDescription)")
+
+            // 尝试注册热键
+            if await tryRegisterHotKey() { return }
+
+            // 权限不足，启动轮询
+            print("iDict: 等待辅助功能权限授权...")
+            startPermissionPolling()
         }
     }
-    
-    /// 设置媒体控制服务器
-    private func setupMediaControlServer() {
-        let result = mediaHTTPServer.start()
-        
-        switch result {
-        case .success:
-            print("✅ 媒体控制服务器启动成功")
-            if let url = mediaHTTPServer.serverURL {
-                print("🌐 访问地址: \(url)")
-                // 显示服务器地址给用户
-                Task { @MainActor in
-                    await showMessage("媒体控制服务器已启动\n访问地址: \(url)")
-                }
-            }
-        case .failure(let error):
-            print("❌ 媒体控制服务器启动失败: \(error.localizedDescription)")
+
+    /// 尝试注册热键，成功返回 true
+    private func tryRegisterHotKey() async -> Bool {
+        let result = await hotKeyManager.registerHotKey { [weak self] in
             Task { @MainActor in
-                await showMessage("媒体控制服务器启动失败: \(error.localizedDescription)")
+                await self?.performQuickTranslation()
+            }
+        }
+        if case .success = result {
+            print("iDict: Cmd+D 热键已注册")
+            permissionPollingTask?.cancel()
+            permissionPollingTask = nil
+            return true
+        }
+        return false
+    }
+
+    /// 轮询辅助功能权限，授权后自动注册热键
+    private func startPermissionPolling() {
+        permissionPollingTask?.cancel()
+        permissionPollingTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5))
+                let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true] as CFDictionary
+                guard AXIsProcessTrustedWithOptions(options) else { continue }
+                print("iDict: 辅助功能已授权，注册热键...")
+                _ = await self.tryRegisterHotKey()
+                return
             }
         }
     }
@@ -251,11 +253,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     /// 应用即将终止时清理资源
     func applicationWillTerminate(_ notification: Notification) {
+        permissionPollingTask?.cancel()
+        permissionPollingTask = nil
+
         // 关闭翻译窗口
         currentTranslationWindow?.close()
         currentTranslationWindow = nil
-        
-        // 停止媒体控制服务器
-        mediaHTTPServer.stop()
     }
 }
