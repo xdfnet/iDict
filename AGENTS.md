@@ -50,15 +50,6 @@ make push MSG="提交信息"
 - **无边框窗口**: [`BorderlessWindow.swift`](iDict/BorderlessWindow.swift) - 翻译结果显示窗口
 - **交互视图**: [`ClickableContentView.swift`](iDict/ClickableContentView.swift) - 支持拖拽和点击的窗口内容
 - **设置界面**: [`SettingsView.swift`](iDict/SettingsView.swift) - SwiftUI 设置界面
-
-#### 媒体控制
-- **HTTP 服务器**: [`iDictController.swift`](iDict/iDictController.swift) - 远程媒体控制服务器和应用管理
-- **常量配置**: 使用 `Constants` 枚举统一管理时间常量和重试次数
-  - `appTerminateWait`: 0.5秒 - 应用终止检测间隔
-  - `appLaunchWait`: 2秒 - 应用启动等待时间
-  - `appLaunchCheckInterval`: 0.3秒 - 应用启动二次检测间隔
-  - `appTerminateAttempts`: 10次 - 应用终止最大重试次数
-
 ### 工作流程
 
 1. 用户按下 `Cmd+D` 热键
@@ -82,7 +73,7 @@ make push MSG="提交信息"
 | Swift 版本 | 6.2 |
 | Xcode 版本 | 16.0 |
 | Bundle ID | David.iDict |
-| 开发团队 | K9UF7A2D7Y |
+| 签名 | ad-hoc |
 
 ## 权限配置
 
@@ -110,34 +101,10 @@ make push MSG="提交信息"
 | `timeoutSeconds` | 请求超时时间 |
 
 配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`systemPrompt`、`userPromptTemplate`、`timeoutSeconds`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
-
-## 应用管理功能
-
-支持远程控制应用开关：
-- **抖音应用**: Bundle ID `com.bytedance.douyin.desktop`
-- **汽水音乐**: Bundle ID `com.soda.music`
-- 通过 `/api/toggle_douyin` 和 `/api/toggle_qishui` 控制
-
-### 应用管理流程
-
-**打开应用**：
-1. 执行 `open` 命令启动应用
-2. 等待 2秒检测应用是否运行
-3. 如果未启动，再等待 0.3秒进行二次检测
-4. 激活应用到前台
-
-**关闭应用**：
-1. 调用 `terminate()` 正常终止
-2. 每隔 0.5秒检测一次，最多 10次（总计5秒）
-3. 如果超时，调用 `forceTerminate()` 强制关闭
-
 ## 注意事项
 
 - 应用采用 `LSUIElement = true`，不在 Dock 中显示图标
 - 翻译窗口支持拖拽移动，会自动适应屏幕边界
-- 媒体控制服务器默认在端口 8888 运行
-- `/api/status` 不需要辅助功能权限，可用于健康检查
+- 
 - 所有翻译操作都在主线程中执行UI更新
 - 窗口复用机制避免重复创建翻译窗口
-- 应用开关功能支持中英文应用名，自动识别并映射到正确的应用路径
-- 锁屏功能仅支持在未锁屏状态下执行，软件无法唤醒息屏

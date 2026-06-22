@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-06-22
+
+- **移除媒体控制功能**：删除远程控制 Web 界面、HTTP 服务器、MediaRemote 桥接、应用管理（抖音/汽水音乐）、锁屏、音量/方向控制
+- 删除 `iDictController.swift`、`HTTPResponseHandler.swift`、`assets/index.html`、`assets/douyin.png`、`assets/qishui.png`
+- 精简 `AppConfig.swift`，移除应用注册表和媒体相关常量
+- 更新项目配置和文档
+
 ## 1.1.14 — 2026-06-19
 
 - 启动时检查辅助功能权限，未授权时主动弹出系统授权对话框
