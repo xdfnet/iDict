@@ -33,6 +33,8 @@
 	</dict>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>iDict 需要控制 Terminal.app 以在 Finder 当前目录打开终端</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2025 iDict Team. All rights reserved.</string>
 	<key>NSMainStoryboardFile</key>

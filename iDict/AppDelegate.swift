@@ -5,6 +5,7 @@
 
 import SwiftUI
 import Cocoa
+import Carbon
 @preconcurrency import ApplicationServices
 
 // MARK: - 应用代理
@@ -90,7 +91,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// 尝试注册热键，成功返回 true
+    /// 尝试注册所有热键，成功返回 true
     private func tryRegisterHotKey() async -> Bool {
         let result = await hotKeyManager.registerHotKey { [weak self] in
             Task { @MainActor in
@@ -99,11 +100,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if case .success = result {
             print("iDict: Cmd+D 热键已注册")
+            await registerTerminalHotKey()
             permissionPollingTask?.cancel()
             permissionPollingTask = nil
             return true
         }
         return false
+    }
+
+    /// 注册 Opt+Z 在当前 Finder 目录打开终端
+    private func registerTerminalHotKey() async {
+        let config = HotKeyConfig(
+            keyCode: UInt32(kVK_ANSI_Z),
+            modifiers: UInt32(optionKey),
+            signature: 0x49444954,
+            id: 2
+        )
+        let result = await hotKeyManager.registerHotKey(config: config) {
+            FinderTerminalService.shared.openTerminalAtCurrentFinderLocation()
+        }
+        if case .success = result {
+            print("iDict: Opt+Z 热键已注册（Finder → Terminal）")
+        }
     }
 
     /// 轮询辅助功能权限，授权后自动注册热键

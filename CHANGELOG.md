@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1 — 2026-07-03
+
+- **新增 Opt+Z 全局热键**：在 Finder 当前目录打开 Terminal
+- HotKeyManager 重构为多热键架构，支持按 id 注册/分发
+- 新增 `FinderTerminalService.swift`，AppleScript 获取 Finder 路径 + 打开 Terminal
+- Info.plist 添加 `NSAppleEventsUsageDescription`
+
 ## 1.2.0 — 2026-06-22
 
 - **移除媒体控制功能**：删除远程控制 Web 界面、HTTP 服务器、MediaRemote 桥接、应用管理（抖音/汽水音乐）、锁屏、音量/方向控制

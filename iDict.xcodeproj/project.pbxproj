@@ -28,6 +28,7 @@
 		D9C4FDCB8B5C7BD6F074B517 /* HotKeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8950A35ADDFBB93F8657F1E /* HotKeyManager.swift */; };
 		E47F80A420A638B693AA6F36 /* MenuBarControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF0175C7CC055266F36959E /* MenuBarControllerTests.swift */; };
 		FE91F928287B0C86788EE844 /* iDictApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F04C07C00D0CD83C183D00 /* iDictApp.swift */; };
+		3629778684E24940A52AE80E /* FinderTerminalService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D484E161DB435D98E75DAC /* FinderTerminalService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +45,7 @@
 		0D5F4BC4195D9B832F6A2EC1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		113ACD77FB6227BFF888FD5A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPositionCalculator.swift; sourceTree = "<group>"; };
+		C1D484E161DB435D98E75DAC /* FinderTerminalService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderTerminalService.swift; sourceTree = "<group>"; };
 		311511BAECB682F109775143 /* ClipboardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManager.swift; sourceTree = "<group>"; };
 		365115ECE786C23EB7439789 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
 		3EC872AA3FB27D0F489559B5 /* ClipboardManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardManagerTests.swift; sourceTree = "<group>"; };
@@ -86,6 +88,7 @@
 				365115ECE786C23EB7439789 /* PermissionManager.swift */,
 				8A97E51585B57B365AEDEB09 /* translationservice.swift */,
 				1B3C065F14FDA1F3384A0F71 /* WindowPositionCalculator.swift */,
+				C1D484E161DB435D98E75DAC /* FinderTerminalService.swift */,
 			);
 			path = iDict;
 			sourceTree = "<group>";
@@ -170,7 +173,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					A185B35390DB57AB4206E185 = {
 						DevelopmentTeam = K9UF7A2D7Y;
@@ -245,6 +248,7 @@
 				372203818016262FDEC3C09C /* WindowPositionCalculator.swift in Sources */,
 				FE91F928287B0C86788EE844 /* iDictApp.swift in Sources */,
 				B5D0C0DD1FFEF1FBE9DF1899 /* translationservice.swift in Sources */,
+				3629778684E24940A52AE80E /* FinderTerminalService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -265,6 +269,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDictTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -288,6 +293,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDict/Info.plist;
@@ -309,6 +315,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDictTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -361,6 +368,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -385,6 +393,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.2;
@@ -398,6 +407,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iDict/Info.plist;
@@ -449,6 +459,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -466,6 +477,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.2;

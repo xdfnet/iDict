@@ -19,11 +19,11 @@ iDict 是一个 macOS 菜单栏翻译工具。采用 SwiftUI 生命周期 + AppK
 │  iDictApp.swift  →  AppDelegate      │
 ├─────────────────────────────────────┤
 │             功能层                    │
-│  ┌──────────┐                        │
-│  │ 翻译子系统 │                        │
-│  │          │                        │
-│  │ HotKey   │                        │
-│  │ Keyboard │                        │
+│  ┌──────────┐  ┌──────────────────┐  │
+│  │ 翻译子系统 │  │ 终端快速打开子系统 │  │
+│  │          │  │                  │  │
+│  │ HotKey   │  │ FinderTerminal   │  │
+│  │ Keyboard │  └──────────────────┘  │
 │  │ Clipboard│                        │
 │  │ Translate│                        │
 │  │ Window   │                        │
@@ -53,7 +53,8 @@ iDict 是一个 macOS 菜单栏翻译工具。采用 SwiftUI 生命周期 + AppK
 
 | 文件 | 职责 |
 |------|------|
-| `HotKeyManager.swift` | Carbon Event API 注册 `Cmd+D` 全局热键；需辅助功能权限 |
+| `HotKeyManager.swift` | Carbon Event API 注册全局热键（`Cmd+D` + `Opt+Z`）；多热键 id 分发；需辅助功能权限 |
+| `FinderTerminalService.swift` | AppleScript 获取 Finder 当前目录路径并在 Terminal 中打开；`Opt+Z` 触发 |
 | `KeyboardSimulator.swift` | 模拟 `Cmd+C` 复制、`Cmd+W` 关闭、`ESC` 按键 |
 | `ClipboardManager.swift` | 从系统剪贴板获取文本，长度校验（≤5000 字符） |
 | `translationservice.swift` | 翻译引擎：Google Translate（免费）/ OpenAI 兼容接口；配置持久化到 `~/.config/idict/config.json` |
@@ -90,9 +91,9 @@ iDict 是一个 macOS 菜单栏翻译工具。采用 SwiftUI 生命周期 + AppK
 
 ---
 
-## 核心数据流
+## 数据流
 
-### 翻译流程
+### 翻译流程 (Cmd+D)
 
 ```
 用户选中文本 → 按 Cmd+D
@@ -107,6 +108,20 @@ iDict 是一个 macOS 菜单栏翻译工具。采用 SwiftUI 生命周期 + AppK
     → AppDelegate.showMessage()
       → BorderlessWindow 在鼠标位置显示结果
       → 可选：朗读 (speechCommand)
+```
+
+### 打开终端流程 (Opt+Z)
+
+```
+Finder 中按 Opt+Z
+  → HotKeyManager 捕获全局热键 (id=2)
+  → FinderTerminalService.openTerminalAtCurrentFinderLocation()
+    → AppleScript: tell Finder → 获取当前路径
+      → 选中项（文件取父目录，文件夹直接用）
+      → 无选中取 Finder 窗口目录
+      → 无 Finder 窗口 → 桌面
+    → AppleScript: tell Terminal
+      → activate + do script "cd /path"
 ```
 
 ---
@@ -169,6 +184,7 @@ Authorization: Bearer <apiKey>
 |------|------|----------|
 | 辅助功能 (AX) | 全局热键注册 | 启动时提示授权 |
 | 输入监控 | 键盘事件模拟 | macOS 要求 |
+| Apple Events | 控制 Terminal.app（NSAppleScript） | 首次按 Opt+Z 时 TCC 弹窗 |
 
 ---
 
