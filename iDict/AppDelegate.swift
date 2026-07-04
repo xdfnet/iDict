@@ -108,19 +108,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
-    /// 注册 Opt+Z 在当前 Finder 目录打开终端
+    /// 注册 Opt+Z / Opt+A 在当前 Finder 目录打开终端
     private func registerTerminalHotKey() async {
-        let config = HotKeyConfig(
+        // Opt+Z → 打开终端并 cd 到 Finder 目录
+        let optZ = HotKeyConfig(
             keyCode: UInt32(kVK_ANSI_Z),
             modifiers: UInt32(optionKey),
             signature: 0x49444954,
             id: 2
         )
-        let result = await hotKeyManager.registerHotKey(config: config) {
+        let zResult = await hotKeyManager.registerHotKey(config: optZ) {
             FinderTerminalService.shared.openTerminalAtCurrentFinderLocation()
         }
-        if case .success = result {
-            print("iDict: Opt+Z 热键已注册（Finder → Terminal）")
+        if case .success = zResult {
+            print("iDict: Opt+Z 已注册（Finder → Terminal）")
+        }
+
+        // Opt+A → 打开终端并执行 claude
+        let optA = HotKeyConfig(
+            keyCode: UInt32(kVK_ANSI_A),
+            modifiers: UInt32(optionKey),
+            signature: 0x49444954,
+            id: 3
+        )
+        let aResult = await hotKeyManager.registerHotKey(config: optA) {
+            FinderTerminalService.shared.openTerminalAtCurrentFinderLocationAndRunClaude()
+        }
+        if case .success = aResult {
+            print("iDict: Opt+A 已注册（Finder → Terminal → claude）")
         }
     }
 

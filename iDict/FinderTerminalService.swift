@@ -52,16 +52,32 @@ class FinderTerminalService {
         return output.stringValue
     }
 
-    /// 在 Terminal 中 cd 到目标路径
-    private func openTerminal(at path: String) {
+    /// 一键操作：Finder 当前目录 → Terminal → 执行 claude
+    func openTerminalAtCurrentFinderLocationAndRunClaude() {
+        guard let path = getCurrentFinderPath() else { return }
+        openTerminal(at: path, command: "exec claude")
+    }
+
+    /// 在 Terminal 中 cd 到目标路径，可选执行额外命令
+    private func openTerminal(at path: String, command: String? = nil) {
         let escapedPath = path.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
-        let script = """
-        tell application "Terminal"
-            activate
-            do script "cd \\"\(escapedPath)\\""
-        end tell
-        """
+        let script: String
+        if let extraCmd = command {
+            script = """
+            tell application "Terminal"
+                activate
+                do script "cd \\"\(escapedPath)\\" && \(extraCmd)"
+            end tell
+            """
+        } else {
+            script = """
+            tell application "Terminal"
+                activate
+                do script "cd \\"\(escapedPath)\\""
+            end tell
+            """
+        }
 
         var error: NSDictionary?
         guard let scriptObject = NSAppleScript(source: script) else { return }
