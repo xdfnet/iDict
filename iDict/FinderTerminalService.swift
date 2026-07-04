@@ -25,7 +25,7 @@ class FinderTerminalService {
     private func getCurrentFinderPath() -> String? {
         let script = """
         tell application "Finder"
-            set sel to selection as alias list
+            set sel to selection
             if sel ≠ {} then
                 set theItem to item 1 of sel
                 if class of theItem is folder or class of theItem is disk then
