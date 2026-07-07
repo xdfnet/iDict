@@ -137,6 +137,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if case .success = aResult {
             print("iDict: Opt+A 已注册（Finder → Terminal → claude）")
         }
+
+        // Opt+C → 复制 Finder 选中项路径到剪贴板
+        let optC = HotKeyConfig(
+            keyCode: UInt32(kVK_ANSI_C),
+            modifiers: UInt32(optionKey),
+            signature: 0x49444954,
+            id: 4
+        )
+        let cResult = await hotKeyManager.registerHotKey(config: optC) {
+            FinderTerminalService.shared.copySelectedPathToClipboard()
+        }
+        if case .success = cResult {
+            print("iDict: Opt+C 已注册（Finder → 剪贴板）")
+        }
     }
 
     /// 轮询辅助功能权限，授权后自动注册热键

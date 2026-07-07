@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2 — 2026-07-07
+
+- **新增 Opt+C 全局热键**：复制 Finder 选中项（文件/文件夹）的 POSIX 路径到剪贴板
+  - 多选取第 1 个，无选中回退到当前 Finder 窗口路径
+  - 完全静默，无弹窗 / 通知
+- 新增 `FinderTerminalService.copySelectedPathToClipboard()` 和 `getSelectedItemPath()`
+
 ## 1.2.1 — 2026-07-04
 
 - **修复**: 选中文件夹按 Opt+Z 直接进入该目录（原 `selection as alias list` 使 `class of` 恒为 `alias`，文件夹路径判断失效）

@@ -46,6 +46,12 @@ make push MSG="提交信息"
 - **剪贴板管理**: [`ClipboardManager.swift`](iDict/ClipboardManager.swift) - 剪贴板文本获取和验证
 - **键盘模拟**: [`KeyboardSimulator.swift`](iDict/KeyboardSimulator.swift) - 模拟 Cmd+C 复制操作
 
+#### Finder 集成
+- **Finder 桥接**: [`FinderTerminalService.swift`](iDict/FinderTerminalService.swift) - AppleScript 获取 Finder 路径
+- `Opt+Z` 在 Finder 当前目录打开终端
+- `Opt+A` 在 Finder 当前目录打开终端并执行 claude
+- `Opt+C` 复制 Finder 选中项（文件/文件夹）的 POSIX 路径到剪贴板，多选取第 1 个，无选中回退到当前 Finder 窗口路径
+
 #### UI 组件
 - **无边框窗口**: [`BorderlessWindow.swift`](iDict/BorderlessWindow.swift) - 翻译结果显示窗口
 - **交互视图**: [`ClickableContentView.swift`](iDict/ClickableContentView.swift) - 支持拖拽和点击的窗口内容

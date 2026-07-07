@@ -87,4 +87,38 @@ class FinderTerminalService {
             print("iDict: 打开 Terminal 失败: \(error)")
         }
     }
+
+    /// 一键操作：Finder 选中项 → 剪贴板（POSIX 路径，多选取第 1 个，无选中回退窗口）
+    func copySelectedPathToClipboard() {
+        guard let path = getSelectedItemPath() else { return }
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(path, forType: .string)
+    }
+
+    /// 获取 Finder 选中项的 POSIX 路径，无选中回退窗口路径或 Desktop
+    private func getSelectedItemPath() -> String? {
+        let script = """
+        tell application "Finder"
+            set sel to selection
+            if sel ≠ {} then
+                set p to POSIX path of (item 1 of sel as text)
+            else
+                try
+                    set p to POSIX path of ((target of front Finder window) as text)
+                on error
+                    set p to POSIX path of (path to desktop folder)
+                end try
+            end if
+        end tell
+        return p
+        """
+
+        var error: NSDictionary?
+        guard let scriptObject = NSAppleScript(source: script) else { return nil }
+        let output = scriptObject.executeAndReturnError(&error)
+
+        if error != nil { return nil }
+        return output.stringValue
+    }
 }
