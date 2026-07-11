@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3 — 2026-07-11
+
+- **修复 Opt+Z/A 第一次打开 Terminal 只创建一个窗口**：将 `activate` 改为 `launch`，避免 macOS 为 Terminal 创建默认空白窗口
+
 ## 1.2.2 — 2026-07-07
 
 - **新增 Opt+C 全局热键**：复制 Finder 选中项（文件/文件夹）的 POSIX 路径到剪贴板
