@@ -12,17 +12,21 @@
 
 ## 一句话总结
 
-> `do script` 自己会激活 Terminal。**前置加 `launch` 或 `activate` 都是画蛇添足，反而触发双窗口 Bug。**
+> `do script` 自己会激活 Terminal。
+> - 前置加 `activate` → 触发双窗口 Bug（多 1 个默认空白窗）
+> - 前置加 `launch` → 不会双窗，但 Terminal 不抢前台，窗可能藏在其他 App 后
+> - 仅 `do script` → 1 个窗，行为最干净（隐式激活已够用）
 
 ## 现象对照（实测）
 
 | AppleScript 写法 | 首次按 Opt+Z 结果 | 后续按 |
 |----------------|----------------|--------|
-| `launch` + `do script` | 双窗口 | 1 个 |
-| `activate` + `do script` | 双窗口 | 1 个 |
+| `launch` + `do script` | 1 个窗（不抢前台，窗在当前 App 下面） | 1 个 |
+| `activate` + `do script` | 2 个窗（默认空白 + 命令窗，都抢到前台） | 1 个 |
 | **仅 `do script`** | 1 个（理想） | 1 个 |
 
 > 「双窗口」= 1 个 Terminal 默认空白窗 + 1 个跑 `cd ...` 命令的窗。
+> `launch` 不会触发双窗，但 Terminal 不会抢前台，新窗可能藏在其他 App 后面。
 
 ## 为什么 `do script` 会触发双窗口？
 
