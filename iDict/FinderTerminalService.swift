@@ -66,14 +66,14 @@ class FinderTerminalService {
         if let extraCmd = command {
             script = """
             tell application "Terminal"
-                launch
+                activate
                 do script "cd \\"\(escapedPath)\\" && \(extraCmd)"
             end tell
             """
         } else {
             script = """
             tell application "Terminal"
-                launch
+                activate
                 do script "cd \\"\(escapedPath)\\""
             end tell
             """

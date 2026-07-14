@@ -51,6 +51,7 @@ make push MSG="提交信息"
 - `Opt+Z` 在 Finder 当前目录打开终端
 - `Opt+A` 在 Finder 当前目录打开终端并执行 claude
 - `Opt+C` 复制 Finder 选中项（文件/文件夹）的 POSIX 路径到剪贴板，多选取第 1 个，无选中回退到当前 Finder 窗口路径
+- AppleScript 控制 Terminal.app 的踩坑笔记见 [Docs/AppleScript-Terminal-Launch-vs-Activate.md](Docs/AppleScript-Terminal-Launch-vs-Activate.md)
 
 #### UI 组件
 - **无边框窗口**: [`BorderlessWindow.swift`](iDict/BorderlessWindow.swift) - 翻译结果显示窗口
