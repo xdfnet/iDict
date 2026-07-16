@@ -34,6 +34,20 @@
                ReferencedContainer = "container:iDict.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "527D98EB703A4678BB73B453"
+               BuildableName = "iDictFinderExtension.appex"
+               BlueprintName = "iDictFinderExtension"
+               ReferencedContainer = "container:iDict.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

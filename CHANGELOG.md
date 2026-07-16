@@ -1,6 +1,13 @@
-# Changelog
 
-## 1.2.3 — 2026-07-11
+
+## 1.3.0 — 2026-07-16
+
+- **新增 Finder 右键菜单「Terminal」**：右键文件夹即可在 Finder 目录打开终端
+  - 基于 Finder Sync Extension（`iDictFinderExtension.appex`），出现在一级菜单
+  - 自动选中文件夹，无选中时使用当前 Finder 窗口目录
+  - 使用 `NSUserAppleScriptTask` 预编译 `.scpt` 脚本执行，兼容沙箱限制
+  - 系统设置 → 扩展 → Finder 扩展 中可开关
+- 新增 `iDictFinderExtension/` 扩展 Target，嵌入主应用 `Contents/PlugIns/`
 
 - **修复 Opt+Z/A 第一次打开 Terminal 只创建一个窗口**：将 `activate` 改为 `launch`，避免 macOS 为 Terminal 创建默认空白窗口
 

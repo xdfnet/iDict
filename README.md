@@ -14,6 +14,7 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 - 可切换 OpenAI 兼容翻译服务，适配本地模型和第三方兼容接口
 - 菜单栏快速切换翻译服务
 - 首次启动自动准备配置文件，不覆盖已有配置
+- Finder 右键菜单「Terminal」— 在 Finder 目录打开终端
 
 ## 安装
 
@@ -95,6 +96,7 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 | `Cmd+D`          | 翻译选中文本     |
 | `Opt+Z`          | 在 Finder 当前目录打开终端 |
 | `Opt+C`          | 复制 Finder 选中项路径到剪贴板 |
+| 右键 → Terminal  | 在 Finder 目录打开终端（Finder Sync Extension） |
 | `ESC` / `Cmd+W`  | 关闭翻译窗口     |
 
 ## 开发

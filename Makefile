@@ -68,6 +68,8 @@ debug:
 		CURRENT_PROJECT_VERSION=$$BUILD_NUMBER \
 		build
 	@echo "$(GREEN)Debug 构建完成$(NC)"
+	@$(call _sign_app,$$(APP_PATH))
+	@echo "$(GREEN)签名完成$(NC)"
 
 	@echo "$(YELLOW)4. 启动 Debug 应用...$(NC)"
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
@@ -102,7 +104,11 @@ install:
 		build
 	@echo "$(GREEN)Release 构建完成$(NC)"
 
-	@echo "$(YELLOW)5. 安装到 Applications...$(NC)"
+	@echo "$(YELLOW)5. 签名...$(NC)"
+	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
+	$(call _sign_app,$${APP_PATH})
+
+	@echo "$(YELLOW)6. 安装到 Applications...$(NC)"
 	@APP_PATH=$$(find $(BUILD_DIR) -name "$(PROJECT_NAME).app" -type d | head -1); \
 	if [ -n "$$APP_PATH" ]; then \
 		cp -R "$$APP_PATH" $(INSTALL_DIR)/; \

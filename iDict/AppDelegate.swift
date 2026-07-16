@@ -57,6 +57,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupTranslationConfig()
 
+        // 编译 Finder 扩展的 AppleScript
+        compileFinderScript()
+
         // 启动权限轮询 + 热键注册
         startHotKeyWithPermissionPolling()
     }
@@ -298,6 +301,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    /// 编译 Finder 扩展的 AppleScript
+    private func compileFinderScript() {
+        let bundleId = "David.iDict.iDictFinderExtension"
+        let dir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Scripts/\(bundleId)/")
+        let url = dir.appendingPathComponent("terminal.scpt")
+        guard !FileManager.default.fileExists(atPath: url.path) else { return }
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let src = """
+        on openTerminal(argv)
+            set targetPath to item 1 of argv
+            tell application "Terminal"
+                activate
+                do script "cd " & quoted form of targetPath
+            end tell
+        end openTerminal
+        """
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/osacompile")
+        p.arguments = ["-o", url.path, "-e", src]
+        try? p.run()
+        p.waitUntilExit()
+        print("iDict: terminal.scpt compiled")
+    }
+
     /// 应用即将终止时清理资源
     func applicationWillTerminate(_ notification: Notification) {
         permissionPollingTask?.cancel()
