@@ -179,6 +179,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if case .success = wResult {
             print("iDict: Opt+W 已注册（Finder → Terminal → codex）")
         }
+
+        // Opt+V → 模拟粘贴（Cmd+V）
+        let optV = HotKeyConfig(
+            keyCode: UInt32(kVK_ANSI_V),
+            modifiers: UInt32(optionKey),
+            signature: 0x49444954,
+            id: 7
+        )
+        let vResult = await hotKeyManager.registerHotKey(config: optV) {
+            Task { await KeyboardSimulator.simulatePasteCommand() }
+        }
+        if case .success = vResult {
+            print("iDict: Opt+V 已注册（模拟粘贴）")
+        }
     }
 
     /// 轮询辅助功能权限，授权后自动注册热键
