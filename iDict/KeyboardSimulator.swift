@@ -16,7 +16,6 @@ final class KeyboardSimulator {
     /// 定义了需要用到的虚拟键码。
     private enum KeyCode: CGKeyCode {
         case c = 0x08
-        case v = 0x09
         case command = 0x37
     }
 
@@ -27,19 +26,6 @@ final class KeyboardSimulator {
     }
     
     // MARK: - 公共静态方法
-    
-    /// 模拟Cmd+V粘贴操作。
-    static func simulatePasteCommand() async -> Result<Void, KeyboardSimulatorError> {
-        guard PermissionManager.checkAccessibilityPermission() else {
-            return .failure(.permissionDenied)
-        }
-        do {
-            try await performPasteKeySequence()
-            return .success(())
-        } catch {
-            return .failure(error as? KeyboardSimulatorError ?? .eventPostFailed)
-        }
-    }
 
     /// 模拟Cmd+C复制操作。
     static func simulateCopyCommand() async -> Result<Void, KeyboardSimulatorError> {
@@ -58,31 +44,6 @@ final class KeyboardSimulator {
     
     // MARK: - 私有实现
     
-    /// 执行粘贴操作的按键序列。
-    private static func performPasteKeySequence() async throws {
-        guard let eventSource = CGEventSource(stateID: .hidSystemState) else {
-            throw KeyboardSimulatorError.eventCreationFailed
-        }
-        let eventSequence: [(keyCode: KeyCode, isDown: Bool)] = [
-            (.command, true),
-            (.v, true),
-            (.v, false),
-            (.command, false)
-        ]
-        for (index, eventConfig) in eventSequence.enumerated() {
-            guard let event = CGEvent(keyboardEventSource: eventSource, virtualKey: eventConfig.keyCode.rawValue, keyDown: eventConfig.isDown) else {
-                throw KeyboardSimulatorError.eventCreationFailed
-            }
-            if eventConfig.keyCode != .command || eventConfig.isDown {
-                event.flags = .maskCommand
-            }
-            event.post(tap: .cghidEventTap)
-            if index < eventSequence.count - 1 {
-                try await Task.sleep(nanoseconds: Constants.keyPressInterval)
-            }
-        }
-    }
-
     /// 执行复制操作的按键序列。
     private static func performCopyKeySequence() async throws {
         guard let eventSource = CGEventSource(stateID: .hidSystemState) else {

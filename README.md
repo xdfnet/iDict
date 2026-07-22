@@ -98,8 +98,6 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 | `Opt+Q` | 在 Finder 当前目录打开终端并执行 qwen |
 | `Opt+W` | 在 Finder 当前目录打开终端并执行 codex |
 | `Opt+C` | 复制 Finder 选中项路径到剪贴板 |
-| `Opt+V` | 模拟粘贴（Cmd+V） |
-| `ESC` / `Cmd+W` | 关闭翻译窗口 |
 
 ## 开发
 
