@@ -32,14 +32,6 @@ make push MSG="提交信息"
 
 ### 关键组件
 
-#### Finder 扩展
-- **Finder Sync Extension**: [`iDictFinderExtension/FinderSync.swift`](iDictFinderExtension/FinderSync.swift) - 嵌入主应用的 Finder 右键菜单扩展
-- 注册为 `com.apple.FinderSync` 扩展点，自动出现在 Finder 右键一级菜单
-- 点击「Terminal」在 Finder 目录打开终端
-- 使用 `NSUserAppleScriptTask` 执行预编译 `.scpt`，兼容沙箱限制
-- 主 app 启动时自动编译脚本到 `~/Library/Application Scripts/<bundle-id>/`
-- 系统设置 → 扩展 → Finder 扩展 可开关
-
 #### 翻译服务
 
 - **翻译服务管理器**: [`translationservice.swift`](iDict/translationservice.swift) - 翻译服务接口
@@ -58,6 +50,8 @@ make push MSG="提交信息"
 - **Finder 桥接**: [`FinderTerminalService.swift`](iDict/FinderTerminalService.swift) - AppleScript 获取 Finder 路径
 - `Opt+Z` 在 Finder 当前目录打开终端
 - `Opt+A` 在 Finder 当前目录打开终端并执行 claude
+- `Opt+Q` 在 Finder 当前目录打开终端并执行 qwen
+- `Opt+W` 在 Finder 当前目录打开终端并执行 codex
 - `Opt+C` 复制 Finder 选中项（文件/文件夹）的 POSIX 路径到剪贴板，多选取第 1 个，无选中回退到当前 Finder 窗口路径
 - AppleScript 控制 Terminal.app 的踩坑笔记见 [Docs/AppleScript-Terminal-Launch-vs-Activate.md](Docs/AppleScript-Terminal-Launch-vs-Activate.md)
 
@@ -89,7 +83,6 @@ make push MSG="提交信息"
 | Xcode 版本 | 16.0 |
 | Bundle ID | David.iDict |
 | 签名 | ad-hoc |
-| Finder 扩展 | iDictFinderExtension.appex（内嵌 Contents/PlugIns/，右键打开 Terminal）|
 
 ## 权限配置
 

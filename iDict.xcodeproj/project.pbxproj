@@ -29,15 +29,6 @@
 		E47F80A420A638B693AA6F36 /* MenuBarControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDF0175C7CC055266F36959E /* MenuBarControllerTests.swift */; };
 		FE91F928287B0C86788EE844 /* iDictApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F04C07C00D0CD83C183D00 /* iDictApp.swift */; };
 		3629778684E24940A52AE80E /* FinderTerminalService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D484E161DB435D98E75DAC /* FinderTerminalService.swift */; };
-		6242BA5534854194A91846CD /* FinderSync.swift in Sources */ = {
-			isa = PBXBuildFile;
-			fileRef = C2AC895DACA44190B30636B0 /* FinderSync.swift */;
-		};
-		32EC532BA51C47E2A0BA3CDD /* iDictFinderExtension.appex in Embed App Extensions */ = {
-			isa = PBXBuildFile;
-			fileRef = 21E1E873EFFE4773A10401E1 /* iDictFinderExtension.appex */;
-			settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); };
-		};
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,13 +38,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = A185B35390DB57AB4206E185;
 			remoteInfo = iDict;
-		};
-		8F521619176B47B985A58AE3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 98C4756B566EF035A725F089 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 74540F15CE384E9D90ECA817;
-			remoteInfo = iDictFinderExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -84,9 +68,6 @@
 		ECCEA0BDB3749E14123EC18F /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		F74A7FD464F31D32D150DB96 /* PermissionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManagerTests.swift; sourceTree = "<group>"; };
 		F9D39918A796D3685E1E69BD /* KeyboardSimulatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardSimulatorTests.swift; sourceTree = "<group>"; };
-		C2AC895DACA44190B30636B0 /* FinderSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderSync.swift; sourceTree = "<group>"; };
-		C7212F9A6E2B44DD93026196 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		21E1E873EFFE4773A10401E1 /* iDictFinderExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = iDictFinderExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -117,7 +98,6 @@
 			children = (
 				CEC087D20C1DBFDD0622AE3B /* iDict.app */,
 				4A34A3FB7BE0410BE9F0BD49 /* iDictTests.xctest */,
-				21E1E873EFFE4773A10401E1 /* iDictFinderExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -142,19 +122,9 @@
 			isa = PBXGroup;
 			children = (
 				1FDBA9BDEFF79224484D751A /* iDict */,
-				F871D881E58D4CC0A8807300 /* iDictFinderExtension */,
 				9FA7BDDA2B3207439424862D /* iDictTests */,
 				4B546EA9BAE9CA9E0D2E6C3B /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		F871D881E58D4CC0A8807300 /* iDictFinderExtension */ = {
-			isa = PBXGroup;
-			children = (
-				C2AC895DACA44190B30636B0 /* FinderSync.swift */,
-				C7212F9A6E2B44DD93026196 /* Info.plist */,
-			);
-			path = iDictFinderExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -166,7 +136,6 @@
 			buildPhases = (
 				EA064B0EE32D8FF1797B7FAB /* Sources */,
 				70E159006E3E44EF0D064460 /* Resources */,
-				96824CFCEF8D484E88B86C19 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
@@ -196,23 +165,6 @@
 			productName = iDictTests;
 			productReference = 4A34A3FB7BE0410BE9F0BD49 /* iDictTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		74540F15CE384E9D90ECA817 /* iDictFinderExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BEE29D5415C34829B81549A7 /* Build configuration list for PBXNativeTarget "iDictFinderExtension" */;
-			buildPhases = (
-				E81665250A374C38AB989CC6 /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = iDictFinderExtension;
-			packageProductDependencies = (
-			);
-			productName = iDictFinderExtension;
-			productReference = 21E1E873EFFE4773A10401E1;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -249,7 +201,6 @@
 			targets = (
 				A185B35390DB57AB4206E185 /* iDict */,
 				DE8B03C69669CE7F50D8E78F /* iDictTests */,
-				74540F15CE384E9D90ECA817 /* iDictFinderExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -301,27 +252,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E81665250A374C38AB989CC6 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6242BA5534854194A91846CD /* FinderSync.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-/* Begin PBXCopyFilesBuildPhase section */
-		96824CFCEF8D484E88B86C19 /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				32EC532BA51C47E2A0BA3CDD /* iDictFinderExtension.appex in Embed App Extensions */,
-			);
-			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 
@@ -330,11 +260,6 @@
 			isa = PBXTargetDependency;
 			target = A185B35390DB57AB4206E185 /* iDict */;
 			targetProxy = 5958C2069D8159CA8661FB75 /* PBXContainerItemProxy */;
-		};
-		AA4EC184308A4E3FA3A2EBEA /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 74540F15CE384E9D90ECA817 /* iDictFinderExtension */;
-			targetProxy = 8F521619176B47B985A58AE3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -353,7 +278,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDictTests;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -377,7 +302,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDict;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -399,7 +324,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDictTests;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -491,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = David.iDict;
 				SDKROOT = macosx;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -560,54 +485,6 @@
 			};
 			name = Release;
 		};
-		CEA4BBB3F6BE477184985288 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				CODE_SIGN_ENTITLEMENTS = iDictFinderExtension/iDictFinderExtension.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iDictFinderExtension/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				MARKETING_VERSION = 1.3.0;
-				PRODUCT_BUNDLE_IDENTIFIER = David.iDict.iDictFinderExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_VERSION = 6.2;
-			};
-			name = Debug;
-		};
-		AD8C16C0D9E34731A538DF32 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
-				CODE_SIGN_ENTITLEMENTS = iDictFinderExtension/iDictFinderExtension.entitlements;
-				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = iDictFinderExtension/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				MARKETING_VERSION = 1.3.0;
-				PRODUCT_BUNDLE_IDENTIFIER = David.iDict.iDictFinderExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				SKIP_INSTALL = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_VERSION = 6.2;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -634,15 +511,6 @@
 			buildConfigurations = (
 				28D24E6539B0E0289CF70362 /* Debug */,
 				B7B0064DC6C50AFB13544466 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		BEE29D5415C34829B81549A7 /* Build configuration list for PBXNativeTarget "iDictFinderExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				CEA4BBB3F6BE477184985288 /* Debug */,
-				AD8C16C0D9E34731A538DF32 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

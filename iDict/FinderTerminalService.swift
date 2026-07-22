@@ -58,6 +58,18 @@ class FinderTerminalService {
         openTerminal(at: path, command: "exec claude")
     }
 
+    /// 一键操作：Finder 当前目录 → Terminal → 执行 qwen
+    func openTerminalAtCurrentFinderLocationAndRunQwen() {
+        guard let path = getCurrentFinderPath() else { return }
+        openTerminal(at: path, command: "exec qwen")
+    }
+
+    /// 一键操作：Finder 当前目录 → Terminal → 执行 codex
+    func openTerminalAtCurrentFinderLocationAndRunCodex() {
+        guard let path = getCurrentFinderPath() else { return }
+        openTerminal(at: path, command: "exec codex")
+    }
+
     /// 在 Terminal 中 cd 到目标路径，可选执行额外命令
     private func openTerminal(at path: String, command: String? = nil) {
         let escapedPath = path.replacingOccurrences(of: "\\", with: "\\\\")
