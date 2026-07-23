@@ -145,7 +145,7 @@ Authorization: Bearer <apiKey>
 {
   "model": "<model>",
   "messages": [
-    {"role": "developer", "content": "<systemPrompt>"},
+    {"role": "system", "content": "<systemPrompt>"},
     {"role": "user", "content": "<rendered userPromptTemplate>"}
   ]
 }
@@ -158,7 +158,7 @@ Authorization: Bearer <apiKey>
 - 路径: `~/.config/idict/config.json`
 - 首次启动自动创建默认配置
 - 字段缺失时自动补齐（向后兼容）
-- 保存时保持字段顺序：`provider` → `baseURL` → `apiKey` → `model` → `systemPrompt` → `userPromptTemplate` → `timeoutSeconds` → `speechEnabled` → `speechCommand`
+- 保存时保持字段顺序：`provider` → `baseURL` → `apiKey` → `model` → `speechEnabled` → `speechCommand`
 
 ## 构建与发布
 

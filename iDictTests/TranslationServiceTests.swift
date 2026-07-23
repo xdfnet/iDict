@@ -84,9 +84,6 @@ struct TranslationServiceTests {
         #expect(savedJSON.contains("\"baseURL\""))
         #expect(savedJSON.contains("\"apiKey\""))
         #expect(savedJSON.contains("\"model\""))
-        #expect(savedJSON.contains("\"systemPrompt\""))
-        #expect(savedJSON.contains("\"userPromptTemplate\""))
-        #expect(savedJSON.contains("\"timeoutSeconds\""))
         #expect(savedJSON.contains("\"speechEnabled\""))
         #expect(savedJSON.contains("\"speechCommand\""))
         #expect(!savedJSON.contains("\\/"))
@@ -95,9 +92,6 @@ struct TranslationServiceTests {
             "baseURL",
             "apiKey",
             "model",
-            "systemPrompt",
-            "userPromptTemplate",
-            "timeoutSeconds",
             "speechEnabled",
             "speechCommand"
         ])
@@ -120,10 +114,7 @@ struct TranslationServiceTests {
             provider: .openai,
             baseURL: "https://example.com/v1",
             apiKey: "test-key",
-            model: "test-model",
-            systemPrompt: "Translate only.",
-            userPromptTemplate: "翻译成{{target}}：\n{{text}}",
-            timeoutSeconds: 7
+            model: "test-model"
         )
 
         try store.save(config)
@@ -138,10 +129,7 @@ struct TranslationServiceTests {
             provider: .google,
             baseURL: "https://example.com/v1",
             apiKey: "test-key",
-            model: "test-model",
-            systemPrompt: "Translate only.",
-            userPromptTemplate: "翻译成{{target}}：\n{{text}}",
-            timeoutSeconds: 7
+            model: "test-model"
         )
 
         try store.save(config)
@@ -152,9 +140,6 @@ struct TranslationServiceTests {
         #expect(updated.baseURL == config.baseURL)
         #expect(updated.apiKey == config.apiKey)
         #expect(updated.model == config.model)
-        #expect(updated.systemPrompt == config.systemPrompt)
-        #expect(updated.userPromptTemplate == config.userPromptTemplate)
-        #expect(updated.timeoutSeconds == config.timeoutSeconds)
         #expect(updated.speechEnabled == config.speechEnabled)
         #expect(updated.speechCommand == config.speechCommand)
     }
@@ -171,8 +156,7 @@ struct TranslationServiceTests {
           "provider": "google",
           "baseURL": "https://example.com/v1",
           "apiKey": "test-key",
-          "model": "test-model",
-          "timeoutSeconds": 7
+          "model": "test-model"
         }
         """
         try Data(oldJSON.utf8).write(to: configURL)
@@ -182,12 +166,8 @@ struct TranslationServiceTests {
         let savedData = try Data(contentsOf: configURL)
         let savedJSON = try #require(String(data: savedData, encoding: .utf8))
 
-        #expect(config.systemPrompt == TranslationConfig.defaultConfig.systemPrompt)
-        #expect(config.userPromptTemplate == TranslationConfig.defaultConfig.userPromptTemplate)
         #expect(config.speechEnabled == TranslationConfig.defaultConfig.speechEnabled)
         #expect(config.speechCommand == TranslationConfig.defaultConfig.speechCommand)
-        #expect(savedJSON.contains("\"systemPrompt\""))
-        #expect(savedJSON.contains("\"userPromptTemplate\""))
         #expect(savedJSON.contains("\"speechEnabled\""))
         #expect(savedJSON.contains("\"speechCommand\""))
     }
@@ -200,9 +180,6 @@ struct TranslationServiceTests {
             baseURL: "https://example.com/v1",
             apiKey: "",
             model: "test-model",
-            systemPrompt: "Translate only.",
-            userPromptTemplate: "翻译：\n{{text}}",
-            timeoutSeconds: 7,
             speechEnabled: false,
             speechCommand: "/usr/local/bin/ispeak {{text}}"
         )
@@ -261,12 +238,9 @@ struct TranslationServiceTests {
 
     @Test("OpenAICompatibleTranslationService renders user prompt template")
     func openAICompatibleRendersUserPromptTemplate() {
-        let rendered = OpenAICompatibleTranslationService.renderUserPrompt(
-            "将下面的文本翻译为{{target}}：\n{{text}}",
-            text: "Hello"
-        )
+        let rendered = OpenAICompatibleTranslationService.renderUserPrompt("Hello")
 
-        #expect(rendered == "将下面的文本翻译为简体中文：\nHello")
+        #expect(rendered == "将下面的文本翻译为自然、准确的简体中文，只返回译文：\nHello")
     }
 
     @Test("OpenAICompatibleTranslationService fails when api key is missing")

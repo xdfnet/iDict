@@ -64,9 +64,6 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
   "baseURL" : "https://api.openai.com/v1",
   "apiKey" : "",
   "model" : "gpt-5-mini",
-  "systemPrompt" : "You are a translation engine. Follow the user's translation instruction exactly. Return only the final translation.",
-  "userPromptTemplate" : "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
-  "timeoutSeconds" : 20,
   "speechEnabled" : true,
   "speechCommand" : ""
 }
@@ -80,11 +77,8 @@ macOS 菜单栏翻译工具。选中文本后按 `Cmd+D`，在鼠标附近显示
 | `baseURL` | OpenAI 兼容接口地址，例如 `http://127.0.0.1:8000/v1` |
 | `apiKey` | OpenAI 兼容接口 Key，本地服务也可填占位值 |
 | `model` | 模型名 |
-| `systemPrompt` | 系统提示词 |
-| `userPromptTemplate` | 用户提示词模板，`{{text}}` 会被替换为待翻译文本 |
-| `timeoutSeconds` | 请求超时时间 |
-| `speechEnabled` | 是否自动朗读翻译结果 |
-| `speechCommand` | 朗读命令模板，`{{text}}` 会被替换为翻译文本。支持 [iAura](https://github.com/xdfnet/iAura)、iSpeak 等 TTS 工具 |
+| `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
+| `speechCommand` | 播放命令模板，`{{text}}` 会被替换为翻译文本。支持 [iAura](https://github.com/xdfnet/iAura)、iSpeak 等 TTS 工具 |
 
 已有配置会被保留；只有缺少字段时，应用才会补齐并重写为完整格式。
 

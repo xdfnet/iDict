@@ -105,17 +105,10 @@ make push MSG="提交信息"
 | `baseURL` | OpenAI 兼容接口根地址 |
 | `apiKey` | OpenAI 兼容接口 Key |
 | `model` | 模型名 |
-| `systemPrompt` | 系统提示词 |
-| `userPromptTemplate` | 用户提示词模板，`{{text}}` 会被替换为待翻译文本 |
-| `timeoutSeconds` | 请求超时时间 |
-| `speechEnabled` | 是否自动朗读翻译结果 |
-| `speechCommand` | 朗读命令模板，`{{text}}` 会被替换为翻译文本 |
-| `userPromptTemplate` | 用户提示词模板，`{{text}}` 会被替换为待翻译文本 |
-| `timeoutSeconds` | 请求超时时间 |
 | `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
 | `speechCommand` | 播放命令模板，默认 `/Users/admin/.local/bin/ivox {{text}}`，`{{text}}` 会被替换为翻译文本 |
 
-配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`systemPrompt`、`userPromptTemplate`、`timeoutSeconds`、`speechEnabled`、`speechCommand`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
+配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`speechEnabled`、`speechCommand`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
 
 ## 注意事项
 

@@ -47,5 +47,8 @@ struct AppConfig {
     enum Translation {
         static let sourceLanguage = "en"
         static let targetLanguage = "zh"
+        static let timeoutSeconds: TimeInterval = 20
+        static let systemPrompt = "You are a translation engine. Follow the user's translation instruction exactly. Return only the final translation."
+        static let userPromptTemplate = "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}"
     }
 }

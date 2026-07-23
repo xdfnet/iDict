@@ -53,16 +53,12 @@ struct TranslationConfig: Codable, Equatable {
     var baseURL: String
     var apiKey: String
     var model: String
-    var systemPrompt: String
-    var userPromptTemplate: String
-    var timeoutSeconds: TimeInterval
     var speechEnabled: Bool
     var speechCommand: String
 
     enum CodingKeys: String, CodingKey, CaseIterable {
         case provider, baseURL, apiKey, model
-        case systemPrompt, userPromptTemplate
-        case timeoutSeconds, speechEnabled, speechCommand
+        case speechEnabled, speechCommand
     }
 
     init(
@@ -70,9 +66,6 @@ struct TranslationConfig: Codable, Equatable {
         baseURL: String,
         apiKey: String,
         model: String,
-        systemPrompt: String,
-        userPromptTemplate: String,
-        timeoutSeconds: TimeInterval,
         speechEnabled: Bool = true,
         speechCommand: String = ""
     ) {
@@ -80,9 +73,6 @@ struct TranslationConfig: Codable, Equatable {
         self.baseURL = baseURL
         self.apiKey = apiKey
         self.model = model
-        self.systemPrompt = systemPrompt
-        self.userPromptTemplate = userPromptTemplate
-        self.timeoutSeconds = timeoutSeconds
         self.speechEnabled = speechEnabled
         self.speechCommand = speechCommand
     }
@@ -93,9 +83,6 @@ struct TranslationConfig: Codable, Equatable {
         baseURL = try container.decodeIfPresent(String.self, forKey: .baseURL) ?? TranslationConfig.defaultConfig.baseURL
         apiKey = try container.decodeIfPresent(String.self, forKey: .apiKey) ?? TranslationConfig.defaultConfig.apiKey
         model = try container.decodeIfPresent(String.self, forKey: .model) ?? TranslationConfig.defaultConfig.model
-        systemPrompt = try container.decodeIfPresent(String.self, forKey: .systemPrompt) ?? TranslationConfig.defaultConfig.systemPrompt
-        userPromptTemplate = try container.decodeIfPresent(String.self, forKey: .userPromptTemplate) ?? TranslationConfig.defaultConfig.userPromptTemplate
-        timeoutSeconds = try container.decodeIfPresent(TimeInterval.self, forKey: .timeoutSeconds) ?? TranslationConfig.defaultConfig.timeoutSeconds
         speechEnabled = try container.decodeIfPresent(Bool.self, forKey: .speechEnabled) ?? TranslationConfig.defaultConfig.speechEnabled
         speechCommand = try Self.decodeSpeechCommand(from: decoder) ?? TranslationConfig.defaultConfig.speechCommand
     }
@@ -111,9 +98,6 @@ struct TranslationConfig: Codable, Equatable {
         try container.encode(baseURL, forKey: .baseURL)
         try container.encode(apiKey, forKey: .apiKey)
         try container.encode(model, forKey: .model)
-        try container.encode(systemPrompt, forKey: .systemPrompt)
-        try container.encode(userPromptTemplate, forKey: .userPromptTemplate)
-        try container.encode(timeoutSeconds, forKey: .timeoutSeconds)
         try container.encode(speechEnabled, forKey: .speechEnabled)
         try container.encode(speechCommand, forKey: .speechCommand)
     }
@@ -123,9 +107,6 @@ struct TranslationConfig: Codable, Equatable {
         baseURL: "https://api.openai.com/v1",
         apiKey: "",
         model: "gpt-5-mini",
-        systemPrompt: "You are a translation engine. Follow the user's translation instruction exactly. Return only the final translation.",
-        userPromptTemplate: "将下面的文本翻译为自然、准确的简体中文，只返回译文：\n{{text}}",
-        timeoutSeconds: 20,
         speechEnabled: true,
         speechCommand: ""
     )
@@ -189,9 +170,6 @@ struct TranslationConfigStore {
           "baseURL" : \(try jsonString(config.baseURL)),
           "apiKey" : \(try jsonString(config.apiKey)),
           "model" : \(try jsonString(config.model)),
-          "systemPrompt" : \(try jsonString(config.systemPrompt)),
-          "userPromptTemplate" : \(try jsonString(config.userPromptTemplate)),
-          "timeoutSeconds" : \(jsonNumber(config.timeoutSeconds)),
           "speechEnabled" : \(config.speechEnabled),
           "speechCommand" : \(try jsonString(config.speechCommand))
         }
@@ -203,24 +181,13 @@ struct TranslationConfigStore {
         let encoded = String(data: data, encoding: .utf8) ?? "\"\""
         return encoded.replacingOccurrences(of: "\\/", with: "/")
     }
-
-    private func jsonNumber(_ value: TimeInterval) -> String {
-        guard value.isFinite else {
-            return String(Int(TranslationConfig.defaultConfig.timeoutSeconds))
-        }
-        let rounded = value.rounded()
-        if rounded == value {
-            return String(Int(rounded))
-        }
-        return String(value)
-    }
 }
 
 // MARK: - Google翻译服务
 
 struct GoogleTranslationService {
     static func translate(_ text: String) async -> TranslationResult {
-        await translate(text, timeout: TranslationConfig.defaultConfig.timeoutSeconds)
+        await translate(text, timeout: AppConfig.Translation.timeoutSeconds)
     }
 
     static func translate(_ text: String, timeout: TimeInterval) async -> TranslationResult {
@@ -273,15 +240,15 @@ struct OpenAICompatibleTranslationService {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = config.timeoutSeconds
+        request.timeoutInterval = AppConfig.Translation.timeoutSeconds
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
 
         let body: [String: Any] = [
             "model": config.model,
             "messages": [
-                ["role": "developer", "content": config.systemPrompt],
-                ["role": "user", "content": renderUserPrompt(config.userPromptTemplate, text: text)]
+                ["role": "system", "content": AppConfig.Translation.systemPrompt],
+                ["role": "user", "content": renderUserPrompt(text)]
             ]
         ]
 
@@ -301,9 +268,9 @@ struct OpenAICompatibleTranslationService {
         }
     }
 
-    static func renderUserPrompt(_ userPromptTemplate: String, text: String) -> String {
-        let template = userPromptTemplate.isEmpty ? TranslationConfig.defaultConfig.userPromptTemplate : userPromptTemplate
-        return template.replacingOccurrences(of: "{{text}}", with: text)
+    static func renderUserPrompt(_ text: String) -> String {
+        AppConfig.Translation.userPromptTemplate
+            .replacingOccurrences(of: "{{text}}", with: text)
     }
 
     static func chatCompletionsURL(baseURL: String) -> URL? {
@@ -344,7 +311,7 @@ final class TranslationServiceManager {
             let config = try configStore.loadOrCreate()
             switch config.provider {
             case .google:
-                result = await GoogleTranslationService.translate(text, timeout: config.timeoutSeconds)
+                result = await GoogleTranslationService.translate(text, timeout: AppConfig.Translation.timeoutSeconds)
             case .openai:
                 result = await OpenAICompatibleTranslationService.translate(text, config: config)
             }
