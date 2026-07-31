@@ -5,11 +5,21 @@
 - **更新应用图标**：App 图标改用 `translate` SF Symbol，与菜单栏图标统一；黑渐变圆角底 + 天蓝配色不变
 - 新增图标生成脚本 `scripts/gen_icon.swift`，可按需重新生成各尺寸图标
 
-## 1.4.0 — 2026-07-23
+## 1.3.3 — 2026-07-23
 
 - **精简配置**：`systemPrompt`、`userPromptTemplate`、`timeoutSeconds` 移出配置文件，改为代码常量
   - 配置文件不再包含这三个字段，减少用户困惑
   - 旧配置中存在这些字段时自动忽略，无需手动清理
+- **移除 Opt+V 粘贴功能**
+
+## 1.3.2 — 2026-07-22
+
+- **新增 Opt+V 模拟粘贴**
+
+## 1.3.1 — 2026-07-22
+
+- **新增 Opt+Q/Opt+W 热键**：在 Finder 当前目录打开终端并分别执行 `qwen` / `codex`
+- **移除 Finder Sync Extension**
 
 ## 1.3.0 — 2026-07-16
 
@@ -20,6 +30,16 @@
   - 系统设置 → 扩展 → Finder 扩展 中可开关
 - 新增 `iDictFinderExtension/` 扩展 Target，嵌入主应用 `Contents/PlugIns/`
 
+## 1.2.7 — 2026-07-15
+
+- **修正 AppleScript 踩坑文档**：`launch`/`activate` 双窗描述
+
+## 1.2.6 — 2026-07-15
+
+- **修复 Opt+Z 加回 `activate` 抢前台**，新增 AppleScript 踩坑文档
+
+## 1.2.3 — 2026-07-11
+
 - **修复 Opt+Z/A 第一次打开 Terminal 只创建一个窗口**：将 `activate` 改为 `launch`，避免 macOS 为 Terminal 创建默认空白窗口
 
 ## 1.2.2 — 2026-07-07
@@ -27,6 +47,7 @@
 - **新增 Opt+C 全局热键**：复制 Finder 选中项（文件/文件夹）的 POSIX 路径到剪贴板
   - 多选取第 1 个，无选中回退到当前 Finder 窗口路径
   - 完全静默，无弹窗 / 通知
+- **新增 Opt+A 全局热键**：在 Finder 当前目录打开终端并执行 `claude`
 - 新增 `FinderTerminalService.copySelectedPathToClipboard()` 和 `getSelectedItemPath()`
 
 ## 1.2.1 — 2026-07-04
@@ -56,12 +77,9 @@
 - next/prev 免辅助功能权限
 - `/api/status` 返回 `running`/`stopped`（Electron 应用不注册 NowPlaying client 无法查询真实状态）
 - 清理不可用的 MediaRemote 查询/通知函数
-- 更新架构文档
-
-## 1.1.11 — 2026-06-01
-
 - 新增文件日志 `~/.config/idict/daemon.log`，5MB 自动轮转
 - 所有媒体控制操作同时输出到 OSLog 和日志文件
+- 更新架构文档
 
 ## 1.1.10 — 2026-06-01
 
