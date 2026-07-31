@@ -1,5 +1,10 @@
 
 
+## 1.3.4 — 2026-08-01
+
+- **更新应用图标**：App 图标改用 `translate` SF Symbol，与菜单栏图标统一；黑渐变圆角底 + 天蓝配色不变
+- 新增图标生成脚本 `scripts/gen_icon.swift`，可按需重新生成各尺寸图标
+
 ## 1.4.0 — 2026-07-23
 
 - **精简配置**：`systemPrompt`、`userPromptTemplate`、`timeoutSeconds` 移出配置文件，改为代码常量
