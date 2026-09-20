@@ -1,5 +1,11 @@
 
 
+## Unreleased
+
+- **修复默认语音命令无效**：默认 `speechCommand` 从 `ivox {{text}}` 改为 `ivox speak {{text}}`（ivox 需通过 `speak` 子命令播报）
+  - 老配置中 `speechCommand` 缺失或为空字符串时，自动回退到默认命令
+  - 默认路径基于当前用户 Home 拼接（`~/.local/bin/ivox`），不写死用户名
+
 ## 1.3.4 — 2026-08-01
 
 - **更新应用图标**：App 图标改用 `translate` SF Symbol，与菜单栏图标统一；黑渐变圆角底 + 天蓝配色不变

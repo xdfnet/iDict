@@ -106,7 +106,7 @@ make push MSG="提交信息"
 | `apiKey` | OpenAI 兼容接口 Key |
 | `model` | 模型名 |
 | `speechEnabled` | 是否通过 iSpeak 自动朗读翻译结果 |
-| `speechCommand` | 播放命令模板，默认 `/Users/admin/.local/bin/ivox {{text}}`，`{{text}}` 会被替换为翻译文本 |
+| `speechCommand` | 播放命令模板，默认 `~/.local/bin/ivox speak {{text}}`，`{{text}}` 会被替换为带单引号包裹的翻译文本 |
 
 配置文件保存时应保持字段顺序：`provider`、`baseURL`、`apiKey`、`model`、`speechEnabled`、`speechCommand`。不要把路径写死为 `/Users/admin`，应使用当前用户 Home。
 

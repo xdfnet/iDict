@@ -67,7 +67,7 @@ struct TranslationConfig: Codable, Equatable {
         apiKey: String,
         model: String,
         speechEnabled: Bool = true,
-        speechCommand: String = ""
+        speechCommand: String = TranslationConfig.defaultSpeechCommand
     ) {
         self.provider = provider
         self.baseURL = baseURL
@@ -89,7 +89,10 @@ struct TranslationConfig: Codable, Equatable {
 
     private static func decodeSpeechCommand(from decoder: Decoder) throws -> String? {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        return try container.decodeIfPresent(String.self, forKey: .speechCommand)
+        let command = try container.decodeIfPresent(String.self, forKey: .speechCommand)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        // 缺省字段或老配置中的空字符串都回退到默认命令
+        return (command?.isEmpty == false) ? command : nil
     }
 
     func encode(to encoder: Encoder) throws {
@@ -102,13 +105,19 @@ struct TranslationConfig: Codable, Equatable {
         try container.encode(speechCommand, forKey: .speechCommand)
     }
 
+    static let defaultSpeechCommand: String = {
+        let ivox = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".local/bin/ivox").path
+        return "\(ivox) speak {{text}}"
+    }()
+
     static let defaultConfig = TranslationConfig(
         provider: .google,
         baseURL: "https://api.openai.com/v1",
         apiKey: "",
         model: "gpt-5-mini",
         speechEnabled: true,
-        speechCommand: ""
+        speechCommand: defaultSpeechCommand
     )
 }
 
