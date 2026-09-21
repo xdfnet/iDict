@@ -199,27 +199,52 @@ struct GoogleTranslationService {
         await translate(text, timeout: AppConfig.Translation.timeoutSeconds)
     }
 
+    // 用 translate_a/t（POST）而非 translate_a/single：同一 IP 下 single 易被
+    // Google 限流（302 跳 sorry 页），t 端点更稳。单段 q 响应为 ["译文"]。
     static func translate(_ text: String, timeout: TimeInterval) async -> TranslationResult {
-        guard let encodedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=\(AppConfig.Translation.sourceLanguage)&tl=\(AppConfig.Translation.targetLanguage)&dt=t&q=\(encodedText)") else {
+        guard let url = URL(string: "https://translate.googleapis.com/translate_a/t?client=gtx&sl=\(AppConfig.Translation.sourceLanguage)&tl=\(AppConfig.Translation.targetLanguage)&dt=t") else {
             return .failed(text, error: "无效的翻译请求 URL")
         }
 
+        var components = URLComponents()
+        components.queryItems = [URLQueryItem(name: "q", value: text)]
+
         do {
             var request = URLRequest(url: url)
+            request.httpMethod = "POST"
             request.timeoutInterval = timeout
-            let (data, _) = try await URLSession.shared.data(for: request)
-            if let jsonObject = try JSONSerialization.jsonObject(with: data) as? [Any],
-               let sentences = jsonObject.first as? [[Any]] {
-                let translatedText = sentences.compactMap { $0.first as? String }.joined()
-                if !translatedText.isEmpty {
-                    return .success(translatedText)
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            request.httpBody = components.percentEncodedQuery?.data(using: .utf8)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 429 {
+                    return .failed(text, error: "Google 限流：当前网络/代理 IP 被判定为异常流量，请稍后重试或切换网络")
                 }
+                if !(200...299).contains(httpResponse.statusCode) {
+                    return .failed(text, error: "Google 翻译请求失败：HTTP \(httpResponse.statusCode)")
+                }
+            }
+            if let translatedText = parseResponse(data), !translatedText.isEmpty {
+                return .success(translatedText)
             }
         } catch {
             return .failed(text, error: "Google 翻译请求失败: \(error.localizedDescription)")
         }
         return .failed(text, error: "Google 翻译返回空结果")
+    }
+
+    // t 端点正常返回 ["译文"]；兼容旧版 data[0] 为数组的格式
+    private static func parseResponse(_ data: Data) -> String? {
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [Any] else {
+            return nil
+        }
+        if let strings = array as? [String] {
+            return strings.first
+        }
+        if let sentences = array.first as? [[Any]] {
+            return sentences.compactMap { $0.first as? String }.joined()
+        }
+        return nil
     }
 }
 

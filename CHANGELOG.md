@@ -1,7 +1,10 @@
 
 
-## Unreleased
+## 1.3.5 — 2026-09-21
 
+- **修复 Google 翻译失败**：翻译端点从 `translate_a/single`（GET）改为 `translate_a/t`（POST）
+  - 同一 IP 下 `single` 端点易被 Google 限流（302 跳转 `sorry` 验证页，最终 429），`t` 端点稳定可用
+  - 新增 HTTP 状态码检测：429 明确提示限流，其他非 2xx 报出具体状态码，不再笼统报「返回空结果」
 - **修复默认语音命令无效**：默认 `speechCommand` 从 `ivox {{text}}` 改为 `ivox speak {{text}}`（ivox 需通过 `speak` 子命令播报）
   - 老配置中 `speechCommand` 缺失或为空字符串时，自动回退到默认命令
   - 默认路径基于当前用户 Home 拼接（`~/.local/bin/ivox`），不写死用户名
