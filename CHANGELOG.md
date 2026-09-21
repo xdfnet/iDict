@@ -1,5 +1,11 @@
 
 
+## Unreleased
+
+- **Google 翻译新增双通道容灾**：主通道 `translate_a/t` 失败（限流/网络错误/空结果）时自动切换备用通道 `translate-pa.googleapis.com/v1/translateHtml`
+  - 备用通道内置谷歌公共 key，无需配置，与迷你翻译扩展使用同一套双通道
+  - 备用通道也失败时才提示错误（429 仍明确提示限流）
+
 ## 1.3.5 — 2026-09-21
 
 - **修复 Google 翻译失败**：翻译端点从 `translate_a/single`（GET）改为 `translate_a/t`（POST）

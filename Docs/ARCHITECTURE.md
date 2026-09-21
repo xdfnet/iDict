@@ -128,14 +128,26 @@ Finder 中按 Opt+Z
 
 ## 翻译服务
 
-### Google Translate（默认）
+### Google Translate（默认，双通道容灾）
+
+主通道：
 
 ```
-GET https://translate.googleapis.com/translate_a/single
-  ?client=gtx&sl=en&tl=zh&dt=t&q=<urlencoded text>
+POST https://translate.googleapis.com/translate_a/t
+  ?client=gtx&sl=en&tl=zh-CN&dt=t
+body: q=<urlencoded text>
 ```
 
-响应为嵌套数组 `[[["译文","原文",...]]]`，取第一层所有首个元素拼接。
+响应为 `["译文"]`（兼容旧版嵌套数组格式）。主通道任意失败（限流/HTTP 错误/网络错误/空结果）自动切换备用通道：
+
+```
+POST https://translate-pa.googleapis.com/v1/translateHtml
+Content-Type: application/json+protobuf
+x-goog-api-key: <内置谷歌公共 key>
+body: [[[文本], "en", "zh-CN"], "te_lib"]
+```
+
+响应为 `[["译文"]]`。备用通道也失败时才返回错误。
 
 ### OpenAI 兼容
 

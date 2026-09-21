@@ -207,6 +207,12 @@ struct TranslationServiceTests {
         #expect(result is TranslationResult)
     }
 
+    @Test("GoogleTranslationService parses backup channel response")
+    func parsesBackupChannelResponse() {
+        let json = Data(#"[["你好，世界"]]"#.utf8)
+        #expect(GoogleTranslationService.parseBackupResponse(json) == "你好，世界")
+    }
+
     // MARK: - OpenAICompatibleTranslationService Tests
 
     @Test("OpenAICompatibleTranslationService builds chat completions URL")

@@ -199,11 +199,22 @@ struct GoogleTranslationService {
         await translate(text, timeout: AppConfig.Translation.timeoutSeconds)
     }
 
-    // 用 translate_a/t（POST）而非 translate_a/single：同一 IP 下 single 易被
-    // Google 限流（302 跳 sorry 页），t 端点更稳。单段 q 响应为 ["译文"]。
+    // 双通道容灾（与迷你翻译扩展一致）：
+    //   主通道 translate.googleapis.com/translate_a/t（t 端点比 single 稳，
+    //   single 在同一 IP 下易被 302 跳 sorry 页限流）
+    //   备用通道 translate-pa.googleapis.com/v1/translateHtml（内置谷歌公共 key）
+    //   主通道任意失败自动切备用。
     static func translate(_ text: String, timeout: TimeInterval) async -> TranslationResult {
+        if let translated = await translateViaPrimary(text, timeout: timeout), !translated.isEmpty {
+            return .success(translated)
+        }
+        return await translateViaBackup(text, timeout: timeout)
+    }
+
+    // 主通道；成功返回译文，任何失败/空结果返回 nil（由调用方切备用）
+    private static func translateViaPrimary(_ text: String, timeout: TimeInterval) async -> String? {
         guard let url = URL(string: "https://translate.googleapis.com/translate_a/t?client=gtx&sl=\(AppConfig.Translation.sourceLanguage)&tl=\(AppConfig.Translation.targetLanguage)&dt=t") else {
-            return .failed(text, error: "无效的翻译请求 URL")
+            return nil
         }
 
         var components = URLComponents()
@@ -216,6 +227,38 @@ struct GoogleTranslationService {
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
             request.httpBody = components.percentEncodedQuery?.data(using: .utf8)
             let (data, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                return nil
+            }
+            return parsePrimaryResponse(data)
+        } catch {
+            return nil
+        }
+    }
+
+    // 备用通道：正文 [[[文本], 源语言, 目标语言], "te_lib"]，响应 [["译文"]]
+    private static func translateViaBackup(_ text: String, timeout: TimeInterval) async -> TranslationResult {
+        guard let url = URL(string: "https://translate-pa.googleapis.com/v1/translateHtml") else {
+            return .failed(text, error: "无效的翻译请求 URL")
+        }
+
+        let payload: [Any] = [
+            [[text], AppConfig.Translation.sourceLanguage, AppConfig.Translation.targetLanguage],
+            "te_lib"
+        ]
+        guard let body = try? JSONSerialization.data(withJSONObject: payload) else {
+            return .failed(text, error: "Google 翻译请求构造失败")
+        }
+
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.timeoutInterval = timeout
+            request.setValue("application/json+protobuf", forHTTPHeaderField: "Content-Type")
+            request.setValue(GOOGLE_PUBLIC_KEY, forHTTPHeaderField: "x-goog-api-key")
+            request.httpBody = body
+            let (data, response) = try await URLSession.shared.data(for: request)
             if let httpResponse = response as? HTTPURLResponse {
                 if httpResponse.statusCode == 429 {
                     return .failed(text, error: "Google 限流：当前网络/代理 IP 被判定为异常流量，请稍后重试或切换网络")
@@ -224,7 +267,7 @@ struct GoogleTranslationService {
                     return .failed(text, error: "Google 翻译请求失败：HTTP \(httpResponse.statusCode)")
                 }
             }
-            if let translatedText = parseResponse(data), !translatedText.isEmpty {
+            if let translatedText = parseBackupResponse(data), !translatedText.isEmpty {
                 return .success(translatedText)
             }
         } catch {
@@ -233,8 +276,11 @@ struct GoogleTranslationService {
         return .failed(text, error: "Google 翻译返回空结果")
     }
 
+    // 备用通道内置的谷歌公共 key（与迷你翻译扩展 config.js 中同一个）
+    private static let GOOGLE_PUBLIC_KEY = "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520"
+
     // t 端点正常返回 ["译文"]；兼容旧版 data[0] 为数组的格式
-    private static func parseResponse(_ data: Data) -> String? {
+    private static func parsePrimaryResponse(_ data: Data) -> String? {
         guard let array = try? JSONSerialization.jsonObject(with: data) as? [Any] else {
             return nil
         }
@@ -245,6 +291,21 @@ struct GoogleTranslationService {
             return sentences.compactMap { $0.first as? String }.joined()
         }
         return nil
+    }
+
+    // translateHtml 返回 [["译文"]]；兼容外层直接为 ["译文"] 的情况
+    static func parseBackupResponse(_ data: Data) -> String? {
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [Any] else {
+            return nil
+        }
+        if let strings = array as? [String] {
+            return strings.first
+        }
+        guard let inner = array.first as? [Any] else { return nil }
+        if let strings = inner as? [String] {
+            return strings.first
+        }
+        return (inner.first as? [Any])?.first as? String
     }
 }
 
