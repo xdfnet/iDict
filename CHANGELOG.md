@@ -1,6 +1,6 @@
 
 
-## Unreleased
+## 1.3.6 — 2026-09-21
 
 - **Google 翻译新增双通道容灾**：主通道 `translate_a/t` 失败（限流/网络错误/空结果）时自动切换备用通道 `translate-pa.googleapis.com/v1/translateHtml`
   - 备用通道内置谷歌公共 key，无需配置，与迷你翻译扩展使用同一套双通道
